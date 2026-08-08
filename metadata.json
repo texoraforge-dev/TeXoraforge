@@ -1,0 +1,8 @@
+{
+  "name": "Remix TeXora Forge",
+  "description": "Next-gen school lesson and academic management platform supporting multi-school accounts, strict role-based access for admins and teachers, structured lesson note submission and approvals, attendance tracking, and real-time notifications.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

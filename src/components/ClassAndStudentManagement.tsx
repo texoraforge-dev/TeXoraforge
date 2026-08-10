@@ -14,11 +14,13 @@ import {
   CheckCircle2,
   X,
   FileSpreadsheet,
-  BookOpen
+  BookOpen,
+  TrendingUp
 } from 'lucide-react';
 import { useAppStore } from '../storage';
 import { SchoolClass, Student } from '../types';
 import { DEFAULT_SCHOOL_SUBJECTS } from '../mockData';
+import { StudentPromotionModal } from './modals/StudentPromotionModal';
 
 export const ClassAndStudentManagement: React.FC = () => {
   const { school, classes, students, actions } = useAppStore();
@@ -27,6 +29,8 @@ export const ClassAndStudentManagement: React.FC = () => {
   const [selectedClassId, setSelectedClassId] = useState<string>('cls_prenursery');
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddStudentModal, setShowAddStudentModal] = useState(false);
+  const [isPromotionModalOpen, setIsPromotionModalOpen] = useState(false);
+  const [selectedStudentForPromotion, setSelectedStudentForPromotion] = useState<Student | null>(null);
 
   // New Student form
   const [fullName, setFullName] = useState('');
@@ -80,12 +84,24 @@ export const ClassAndStudentManagement: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={() => setShowAddStudentModal(true)}
-          className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-2 shadow-md shadow-indigo-600/30 transition-all cursor-pointer shrink-0"
-        >
-          <UserPlus className="h-4 w-4" /> Enroll New Student to {currentClass?.name}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              setSelectedStudentForPromotion(null);
+              setIsPromotionModalOpen(true);
+            }}
+            className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-2 shadow-md shadow-emerald-600/30 transition-all cursor-pointer shrink-0"
+          >
+            <TrendingUp className="h-4 w-4" /> Promote {currentClass?.name || 'Class'} Students
+          </button>
+
+          <button
+            onClick={() => setShowAddStudentModal(true)}
+            className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-2 shadow-md shadow-indigo-600/30 transition-all cursor-pointer shrink-0"
+          >
+            <UserPlus className="h-4 w-4" /> Enroll New Student to {currentClass?.name}
+          </button>
+        </div>
       </div>
 
       {/* Tier Tabs (Pre-Nursery & Nursery, Primary, Junior Secondary, Senior Secondary) */}
@@ -303,6 +319,14 @@ export const ClassAndStudentManagement: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Student Promotion Modal */}
+      <StudentPromotionModal
+        isOpen={isPromotionModalOpen}
+        onClose={() => setIsPromotionModalOpen(false)}
+        student={selectedStudentForPromotion}
+        initialClassId={selectedClassId}
+      />
 
     </div>
   );

@@ -45,6 +45,18 @@ export interface SchoolClass {
   capacity: number;
 }
 
+export interface PromotionRecord {
+  id: string;
+  fromClassId: string;
+  fromClassName: string;
+  toClassId: string;
+  toClassName: string;
+  academicSession: string;
+  promotedAt: string;
+  status: 'PROMOTED' | 'REPEATED' | 'GRADUATED';
+  remarks?: string;
+}
+
 export interface Student {
   id: string;
   schoolId: string;
@@ -62,6 +74,8 @@ export interface Student {
   accessCode: string; // Unique access code for parent/student portal
   enrolledSubjects?: string[]; // Specific subjects student/pupil is studying
   active: boolean;
+  promotionStatus?: 'PROMOTED' | 'REPEATED' | 'GRADUATED' | 'ACTIVE';
+  promotionHistory?: PromotionRecord[];
 }
 
 export interface SubjectScore {

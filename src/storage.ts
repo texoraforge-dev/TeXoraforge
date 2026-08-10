@@ -661,6 +661,90 @@ export class AppStorage {
     }
   }
 
+  static promoteStudent(
+    studentId: string,
+    targetClassId: string,
+    academicSession: string,
+    status: 'PROMOTED' | 'REPEATED' | 'GRADUATED' = 'PROMOTED',
+    remarks?: string
+  ): Student | null {
+    const students = getStored<Student[]>(STORAGE_KEYS.STUDENTS, INITIAL_STUDENTS);
+    const classes = this.getClasses();
+    const idx = students.findIndex(s => s.id === studentId);
+    if (idx === -1) return null;
+
+    const student = students[idx];
+    const fromClass = classes.find(c => c.id === student.classId);
+    const toClass = classes.find(c => c.id === targetClassId);
+
+    const fromClassName = fromClass ? `${fromClass.name} ${fromClass.arm || ''}`.trim() : 'Previous Class';
+    const toClassName = toClass ? `${toClass.name} ${toClass.arm || ''}`.trim() : (status === 'GRADUATED' ? 'Graduated Alumni' : 'Next Class');
+
+    const newRecord = {
+      id: 'prom_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+      fromClassId: student.classId,
+      fromClassName,
+      toClassId: targetClassId,
+      toClassName,
+      academicSession,
+      promotedAt: new Date().toISOString(),
+      status,
+      remarks: remarks || `Academic Transition: ${status.toLowerCase()} to ${toClassName}`
+    };
+
+    const history = student.promotionHistory || [];
+
+    const updatedStudent: Student = {
+      ...student,
+      classId: status === 'REPEATED' ? student.classId : targetClassId,
+      promotionStatus: status,
+      promotionHistory: [newRecord, ...history]
+    };
+
+    students[idx] = updatedStudent;
+    setStored(STORAGE_KEYS.STUDENTS, students);
+
+    if (isSupabaseConfigured()) {
+      SupabaseService.upsertStudent(updatedStudent).catch(console.error);
+    }
+
+    // Send notification to linked parents
+    const users = getStored<User[]>(STORAGE_KEYS.USERS, INITIAL_USERS);
+    const linkedParents = users.filter(u => u.role === 'PARENT' && u.linkedStudentAccessCodes?.includes(student.accessCode));
+
+    linkedParents.forEach(p => {
+      this.sendNotification({
+        schoolId: student.schoolId,
+        recipientUserId: p.id,
+        senderName: 'School Management',
+        title: status === 'PROMOTED' ? `Academic Promotion Notice: ${student.fullName} 🎉` : `Academic Status Update: ${student.fullName}`,
+        message: status === 'PROMOTED'
+          ? `Congratulations! ${student.fullName} has been officially PROMOTED from ${fromClassName} to ${toClassName} for the ${academicSession} session.`
+          : status === 'GRADUATED'
+          ? `Congratulations! ${student.fullName} has successfully GRADUATED from ${fromClassName} as an Alumni!`
+          : `${student.fullName} will be repeating ${fromClassName} for the ${academicSession} academic session.`,
+        type: 'SYSTEM'
+      });
+    });
+
+    return updatedStudent;
+  }
+
+  static promoteStudentsBatch(
+    studentIds: string[],
+    targetClassId: string,
+    academicSession: string,
+    status: 'PROMOTED' | 'REPEATED' | 'GRADUATED' = 'PROMOTED',
+    remarks?: string
+  ): number {
+    let count = 0;
+    studentIds.forEach(id => {
+      const res = this.promoteStudent(id, targetClassId, academicSession, status, remarks);
+      if (res) count++;
+    });
+    return count;
+  }
+
   static deleteStudent(studentId: string) {
     let students = getStored<Student[]>(STORAGE_KEYS.STUDENTS, INITIAL_STUDENTS);
     students = students.filter(s => s.id !== studentId);

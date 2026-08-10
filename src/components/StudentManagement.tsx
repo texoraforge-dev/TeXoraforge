@@ -21,13 +21,15 @@ import {
   Eye,
   Key,
   Download,
-  BookOpen
+  BookOpen,
+  TrendingUp
 } from 'lucide-react';
 import { useAppStore } from '../storage';
 import { Student } from '../types';
 import { DEFAULT_SCHOOL_SUBJECTS } from '../mockData';
 import { AdmitStudentModal } from './modals/AdmitStudentModal';
 import { StudentIdCardModal } from './modals/StudentIdCardModal';
+import { StudentPromotionModal } from './modals/StudentPromotionModal';
 import { generateAdmissionLetterPDF, generateReportCardPDF } from '../lib/pdfGenerator';
 
 interface StudentManagementProps {
@@ -53,6 +55,9 @@ export function StudentManagement({ onSelectStudentForReportCard }: StudentManag
 
   const [isIdCardModalOpen, setIsIdCardModalOpen] = useState(false);
   const [selectedStudentForIdCard, setSelectedStudentForIdCard] = useState<Student | null>(null);
+
+  const [isPromotionModalOpen, setIsPromotionModalOpen] = useState(false);
+  const [selectedStudentForPromotion, setSelectedStudentForPromotion] = useState<Student | null>(null);
 
   // Filtering
   const filteredStudents = students.filter(s => {
@@ -91,6 +96,16 @@ export function StudentManagement({ onSelectStudentForReportCard }: StudentManag
     setIsIdCardModalOpen(true);
   };
 
+  const handlePromoteSingleStudent = (student: Student) => {
+    setSelectedStudentForPromotion(student);
+    setIsPromotionModalOpen(true);
+  };
+
+  const handleOpenBatchPromotion = () => {
+    setSelectedStudentForPromotion(null);
+    setIsPromotionModalOpen(true);
+  };
+
   const handlePrintAdmissionLetter = (student: Student) => {
     const studentClass = classes.find(c => c.id === student.classId);
     generateAdmissionLetterPDF(student, studentClass, school);
@@ -121,17 +136,27 @@ export function StudentManagement({ onSelectStudentForReportCard }: StudentManag
             Student Admission & Management
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Admit students, manage academic profiles, issue secure parent codes, and print official credentials
+            Admit students, manage academic profiles, promote pupils to next classes, and issue credentials
           </p>
         </div>
 
-        <button
-          onClick={handleOpenAdmitModal}
-          className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition-colors shadow-lg shadow-indigo-600/20"
-        >
-          <UserPlus className="w-5 h-5" />
-          <span>+ Admit New Student</span>
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleOpenBatchPromotion}
+            className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-colors shadow-lg shadow-emerald-600/20 cursor-pointer"
+          >
+            <TrendingUp className="w-5 h-5" />
+            <span>Promote / Transition Class</span>
+          </button>
+
+          <button
+            onClick={handleOpenAdmitModal}
+            className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition-colors shadow-lg shadow-indigo-600/20 cursor-pointer"
+          >
+            <UserPlus className="w-5 h-5" />
+            <span>+ Admit Student</span>
+          </button>
+        </div>
       </div>
 
       {/* Analytics Summary Cards */}
@@ -329,6 +354,15 @@ export function StudentManagement({ onSelectStudentForReportCard }: StudentManag
                       {/* Actions */}
                       <td className="py-3.5 px-4 text-right">
                         <div className="flex items-center justify-end space-x-1">
+                          {/* Promote Student / Class Transition */}
+                          <button
+                            onClick={() => handlePromoteSingleStudent(std)}
+                            title="Promote / Transition Class"
+                            className="p-2 rounded-lg text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 transition-colors"
+                          >
+                            <TrendingUp className="w-4 h-4" />
+                          </button>
+
                           {/* Student ID Card */}
                           <button
                             onClick={() => handleViewIdCard(std)}
@@ -397,6 +431,13 @@ export function StudentManagement({ onSelectStudentForReportCard }: StudentManag
         student={selectedStudentForIdCard}
         studentClass={classes.find(c => c.id === selectedStudentForIdCard?.classId)}
         school={school}
+      />
+
+      <StudentPromotionModal
+        isOpen={isPromotionModalOpen}
+        onClose={() => setIsPromotionModalOpen(false)}
+        student={selectedStudentForPromotion}
+        initialClassId={selectedClassId !== 'ALL' ? selectedClassId : undefined}
       />
     </div>
   );

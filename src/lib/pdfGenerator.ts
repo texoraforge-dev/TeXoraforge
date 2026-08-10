@@ -730,3 +730,150 @@ export function generateReportCardPDF(
 
   doc.save(`ReportCard_${reportCard.studentName.replace(' ', '_')}_${reportCard.academicTerm.replace(' ', '_')}.pdf`);
 }
+
+export function generatePromotionCertificatePDF(
+  student: Student,
+  fromClass: SchoolClass | undefined,
+  toClass: SchoolClass | undefined,
+  school: School | null | undefined,
+  academicSession: string,
+  status: 'PROMOTED' | 'REPEATED' | 'GRADUATED' = 'PROMOTED',
+  remarks?: string
+) {
+  const doc = new jsPDF({
+    orientation: 'landscape',
+    unit: 'mm',
+    format: 'a4'
+  });
+
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+
+  // Outer Fancy Border
+  doc.setLineWidth(1.5);
+  doc.setDrawColor(79, 70, 229); // Indigo 600
+  doc.rect(8, 8, pageWidth - 16, pageHeight - 16);
+
+  doc.setLineWidth(0.5);
+  doc.setDrawColor(199, 210, 254); // Indigo 200
+  doc.rect(11, 11, pageWidth - 22, pageHeight - 22);
+
+  // Background tint
+  doc.setFillColor(250, 250, 255);
+  doc.rect(12, 12, pageWidth - 24, pageHeight - 24, 'F');
+
+  let y = 24;
+
+  // School Header
+  doc.setTextColor(30, 41, 59);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(22);
+  doc.text(school?.name || 'TeXora International School', pageWidth / 2, y, { align: 'center' });
+
+  y += 7;
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(10);
+  doc.setTextColor(100, 116, 139);
+  doc.text(school?.motto || 'Moulding Leaders of Tomorrow through Excellence & Integrity', pageWidth / 2, y, { align: 'center' });
+
+  y += 6;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.text(school?.address || 'Lagos, Nigeria', pageWidth / 2, y, { align: 'center' });
+
+  y += 12;
+
+  // Title Banner
+  doc.setFillColor(79, 70, 229);
+  doc.rect(30, y, pageWidth - 60, 14, 'F');
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  const titleText = status === 'PROMOTED'
+    ? 'OFFICIAL CERTIFICATE OF CLASS PROMOTION'
+    : status === 'GRADUATED'
+    ? 'OFFICIAL CERTIFICATE OF GRADUATION'
+    : 'OFFICIAL ACADEMIC PROGRESS NOTICE';
+  doc.text(titleText, pageWidth / 2, y + 9.5, { align: 'center' });
+
+  y += 24;
+
+  // Body text
+  doc.setTextColor(51, 65, 85);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  doc.text('This is to officially certify that', pageWidth / 2, y, { align: 'center' });
+
+  y += 10;
+
+  // Student Name
+  doc.setTextColor(15, 23, 42);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(20);
+  doc.text(student.fullName.toUpperCase(), pageWidth / 2, y, { align: 'center' });
+
+  y += 6;
+  doc.setTextColor(100, 116, 139);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text(`Admission Number: ${student.admissionNo}  |  Parent Code: ${student.accessCode}`, pageWidth / 2, y, { align: 'center' });
+
+  y += 12;
+
+  // Promotion details block
+  const fromName = fromClass ? `${fromClass.name} ${fromClass.arm || ''}`.trim() : 'Previous Class';
+  const toName = toClass ? `${toClass.name} ${toClass.arm || ''}`.trim() : (status === 'GRADUATED' ? 'Graduated Alumni' : 'Next Level');
+
+  doc.setTextColor(51, 65, 85);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+
+  if (status === 'PROMOTED') {
+    doc.text(`Having successfully satisfied the academic requirements for the ${academicSession} session, is hereby`, pageWidth / 2, y, { align: 'center' });
+    y += 8;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(15);
+    doc.setTextColor(16, 185, 129); // Emerald
+    doc.text(`PROMOTED FROM ${fromName.toUpperCase()} TO ${toName.toUpperCase()}`, pageWidth / 2, y, { align: 'center' });
+  } else if (status === 'GRADUATED') {
+    doc.text(`Having successfully completed the curriculum requirements for ${fromName}, is hereby officially declared as`, pageWidth / 2, y, { align: 'center' });
+    y += 8;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(15);
+    doc.setTextColor(79, 70, 229);
+    doc.text(`GRADUATED ALUMNI OF ${school?.name || 'THE INSTITUTION'}`, pageWidth / 2, y, { align: 'center' });
+  } else {
+    doc.text(`Has completed the ${academicSession} session in ${fromName} and will be repeating the class to strengthen core foundations.`, pageWidth / 2, y, { align: 'center' });
+  }
+
+  y += 14;
+
+  if (remarks) {
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(9.5);
+    doc.setTextColor(71, 85, 105);
+    doc.text(`"Remarks: ${remarks}"`, pageWidth / 2, y, { align: 'center' });
+    y += 10;
+  }
+
+  // Signatures
+  y = pageHeight - 35;
+
+  doc.setDrawColor(148, 163, 184);
+  doc.line(35, y, 95, y);
+  doc.line(pageWidth - 95, y, pageWidth - 35, y);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(30, 41, 59);
+  doc.text('Form Teacher / Registrar', 65, y + 5, { align: 'center' });
+  doc.text('Principal / Head of School', pageWidth - 65, y + 5, { align: 'center' });
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(148, 163, 184);
+  doc.text(`Issued Date: ${new Date().toLocaleDateString('en-GB')}`, pageWidth / 2, pageHeight - 14, { align: 'center' });
+
+  doc.save(`Promotion_Certificate_${student.fullName.replace(/\s+/g, '_')}.pdf`);
+}

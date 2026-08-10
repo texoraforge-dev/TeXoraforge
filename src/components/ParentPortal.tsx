@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { useAppStore } from '../storage';
 import { Student, StudentReportCard } from '../types';
-import { generateReportCardPDF } from '../lib/pdfGenerator';
+import { generateReportCardPDF, generatePromotionCertificatePDF } from '../lib/pdfGenerator';
 import {
   BarChart,
   Bar,
@@ -77,6 +77,22 @@ export function ParentPortal() {
     } else {
       alert('Report card not generated yet.');
     }
+  };
+
+  const handleDownloadPromotionCert = () => {
+    if (!activeStudent) return;
+    const latestProm = activeStudent.promotionHistory?.[0];
+    const fromCls = classes.find(c => c.id === latestProm?.fromClassId) || activeClass;
+    const toCls = classes.find(c => c.id === (latestProm?.toClassId || activeStudent.classId));
+    generatePromotionCertificatePDF(
+      activeStudent,
+      fromCls,
+      toCls,
+      school,
+      latestProm?.academicSession || '2026/2027',
+      activeStudent.promotionStatus || 'PROMOTED',
+      latestProm?.remarks || 'Officially transitioned to the next academic level.'
+    );
   };
 
   // Prepare chart data for subject performance
@@ -207,6 +223,41 @@ export function ParentPortal() {
                 </span>
               </div>
             </div>
+          </div>
+
+          {/* Academic Promotion & Transition Status Banner */}
+          <div className="bg-gradient-to-r from-emerald-900/90 via-slate-900 to-indigo-950 text-white rounded-2xl p-5 border border-emerald-500/30 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center space-x-3.5">
+              <div className="p-3 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0">
+                <Award className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-emerald-500 text-slate-950">
+                    ACADEMIC TRANSITION
+                  </span>
+                  <span className="text-xs font-bold text-emerald-300">
+                    Status: {activeStudent.promotionStatus || 'PROMOTED'}
+                  </span>
+                </div>
+                <h4 className="text-base font-extrabold mt-0.5">
+                  {activeStudent.fullName} is Enrolled in {activeClass?.name} {activeClass?.arm ? `(${activeClass.arm})` : ''}
+                </h4>
+                <p className="text-xs text-slate-300 mt-0.5">
+                  {activeStudent.promotionHistory && activeStudent.promotionHistory.length > 0
+                    ? `Transition Record: Promoted from ${activeStudent.promotionHistory[0].fromClassName} to ${activeStudent.promotionHistory[0].toClassName} (${activeStudent.promotionHistory[0].academicSession})`
+                    : `Active academic status verified for session ${school?.academicSession || '2025/2026'}.`}
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={handleDownloadPromotionCert}
+              className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs shadow-md flex items-center space-x-2 transition-all cursor-pointer shrink-0"
+            >
+              <Download className="w-4 h-4" />
+              <span>Download Promotion Certificate</span>
+            </button>
           </div>
 
           {/* Navigation Tabs */}

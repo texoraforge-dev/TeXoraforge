@@ -98,11 +98,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <Plus className="h-4 w-4" /> Provision Teacher
             </button>
             <button
-              onClick={handleDownloadCSVReport}
+              onClick={() => onNavigate('students')}
               className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-2 shadow-md transition-all cursor-pointer"
+            >
+              <TrendingUp className="h-4 w-4" /> Class Transition & Promotion
+            </button>
+            <button
+              onClick={handleDownloadCSVReport}
+              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold flex items-center gap-2 transition-all cursor-pointer"
               title="Export complete attendance & submission statistics as CSV"
             >
-              <Download className="h-4 w-4" /> Download Report (CSV)
+              <Download className="h-4 w-4" /> Export Report (CSV)
             </button>
           </div>
         </div>

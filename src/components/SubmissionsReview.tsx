@@ -280,7 +280,7 @@ export const SubmissionsReview: React.FC<SubmissionsReviewProps> = ({
                     </div>
 
                     {/* Objectives */}
-                    {activeInspectionSub.lessonNoteContent.behavioralObjectives?.length > 0 && (
+                    {activeInspectionSub.lessonNoteContent.behavioralObjectives && activeInspectionSub.lessonNoteContent.behavioralObjectives.length > 0 && (
                       <div className="p-4 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800/60 space-y-1.5">
                         <h4 className="font-bold text-indigo-900 dark:text-indigo-200 uppercase text-[10px] tracking-wider">Behavioral Objectives</h4>
                         <ul className="list-disc list-inside space-y-1">
@@ -292,7 +292,7 @@ export const SubmissionsReview: React.FC<SubmissionsReviewProps> = ({
                     )}
 
                     {/* Instructional Materials */}
-                    {activeInspectionSub.lessonNoteContent.instructionalMaterials?.length > 0 && (
+                    {activeInspectionSub.lessonNoteContent.instructionalMaterials && activeInspectionSub.lessonNoteContent.instructionalMaterials.length > 0 && (
                       <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                         <h4 className="font-bold uppercase text-[10px] text-slate-500 mb-1">Instructional Materials / Teaching Aids</h4>
                         <p>{activeInspectionSub.lessonNoteContent.instructionalMaterials.join(', ')}</p>
@@ -300,7 +300,7 @@ export const SubmissionsReview: React.FC<SubmissionsReviewProps> = ({
                     )}
 
                     {/* Presentation Steps */}
-                    {activeInspectionSub.lessonNoteContent.coreContentSteps?.length > 0 && (
+                    {activeInspectionSub.lessonNoteContent.coreContentSteps && activeInspectionSub.lessonNoteContent.coreContentSteps.length > 0 && (
                       <div className="space-y-3">
                         <h4 className="font-bold uppercase text-[10px] text-slate-500">Presentation Steps & Activities</h4>
                         {activeInspectionSub.lessonNoteContent.coreContentSteps.map((step, idx) => (
@@ -323,7 +323,7 @@ export const SubmissionsReview: React.FC<SubmissionsReviewProps> = ({
 
                     {/* Evaluation & Assignment */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {activeInspectionSub.lessonNoteContent.evaluationQuestions?.length > 0 && (
+                      {activeInspectionSub.lessonNoteContent.evaluationQuestions && activeInspectionSub.lessonNoteContent.evaluationQuestions.length > 0 && (
                         <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                           <h4 className="font-bold uppercase text-[10px] text-slate-500 mb-1">Evaluation Questions</h4>
                           <ul className="list-disc list-inside space-y-1">

@@ -51,7 +51,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
   const pendingCount = mySubmissions.filter(s => s.status === 'PENDING').length;
   const revisionCount = mySubmissions.filter(s => s.status === 'REVISION_REQUESTED').length;
 
-  const assignedClassNames = currentUser.assignedClassIds
+  const assignedClassNames = (currentUser.assignedClassIds || [])
     .map(id => classes.find(c => c.id === id)?.name)
     .filter(Boolean);
 
@@ -85,7 +85,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
             )}
 
             <span className="text-xs text-slate-400 font-bold ml-2">Subjects:</span>
-            {currentUser.assignedSubjects.map((s, i) => (
+            {(currentUser.assignedSubjects || []).map((s, i) => (
               <span key={i} className="px-2.5 py-0.5 rounded-md bg-slate-800 text-slate-200 text-xs font-semibold border border-slate-700">
                 {s}
               </span>
@@ -114,7 +114,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
       <div className="p-3.5 rounded-xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 text-sky-900 dark:text-sky-300 text-xs flex items-center gap-2.5">
         <ShieldAlert className="h-4 w-4 text-sky-600 dark:text-sky-400 shrink-0" />
         <span>
-          <strong className="font-bold">Strict Access Control Engaged:</strong> Your view is isolated exclusively to your assigned classes ({assignedClassNames.join(', ') || 'None'}) and subjects ({currentUser.assignedSubjects.join(', ')}).
+          <strong className="font-bold">Strict Access Control Engaged:</strong> Your view is isolated exclusively to your assigned classes ({assignedClassNames.join(', ') || 'None'}) and subjects ({(currentUser.assignedSubjects || []).join(', ')}).
         </span>
       </div>
 

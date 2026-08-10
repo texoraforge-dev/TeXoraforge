@@ -5,9 +5,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { X, UserPlus, Upload, Camera, FileText, Key, CheckCircle2, RefreshCw } from 'lucide-react';
+import { X, UserPlus, Upload, Camera, FileText, Key, CheckCircle2, RefreshCw, BookOpen, Check, Plus } from 'lucide-react';
 import { Student, SchoolClass, School } from '../../types';
 import { useAppStore } from '../../storage';
+import { DEFAULT_SCHOOL_SUBJECTS } from '../../mockData';
 import { generateAdmissionLetterPDF } from '../../lib/pdfGenerator';
 
 interface AdmitStudentModalProps {
@@ -25,6 +26,10 @@ export function AdmitStudentModal({
 }: AdmitStudentModalProps) {
   const { classes, school, actions } = useAppStore();
 
+  const availableSubjects = (school?.subjects && school.subjects.length > 0)
+    ? school.subjects
+    : DEFAULT_SCHOOL_SUBJECTS;
+
   const [fullName, setFullName] = useState('');
   const [gender, setGender] = useState<'Male' | 'Female'>('Male');
   const [classId, setClassId] = useState('');
@@ -36,6 +41,28 @@ export function AdmitStudentModal({
   const [photoUrl, setPhotoUrl] = useState('');
   const [admissionNo, setAdmissionNo] = useState('');
   const [accessCode, setAccessCode] = useState('');
+  const [enrolledSubjects, setEnrolledSubjects] = useState<string[]>([]);
+  const [customSubjectInput, setCustomSubjectInput] = useState('');
+
+  const handleAddCustomSubject = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const trimmed = customSubjectInput.trim();
+    if (!trimmed) return;
+
+    // Support comma-separated subjects typed at once
+    const subjectsToAdd = trimmed.split(',').map(s => s.trim()).filter(Boolean);
+    
+    subjectsToAdd.forEach(sub => {
+      if (school?.id) {
+        actions.addSchoolSubject(school.id, sub);
+      }
+      if (!enrolledSubjects.includes(sub)) {
+        setEnrolledSubjects(prev => [...prev, sub]);
+      }
+    });
+
+    setCustomSubjectInput('');
+  };
 
   // Auto generate credentials when opening modal for new admission
   useEffect(() => {
@@ -52,6 +79,7 @@ export function AdmitStudentModal({
         setPhotoUrl(existingStudent.photoUrl || '');
         setAdmissionNo(existingStudent.admissionNo);
         setAccessCode(existingStudent.accessCode);
+        setEnrolledSubjects(existingStudent.enrolledSubjects || availableSubjects);
       } else {
         const yr = new Date().getFullYear();
         const randNum = Math.floor(100 + Math.random() * 900);
@@ -67,9 +95,10 @@ export function AdmitStudentModal({
         setPhotoUrl('https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80');
         setAdmissionNo(`APX/${yr}/${randNum}`);
         setAccessCode(`PAR-${yr}-${codeSuffix}`);
+        setEnrolledSubjects(availableSubjects);
       }
     }
-  }, [isOpen, existingStudent, classes]);
+  }, [isOpen, existingStudent, classes, school]);
 
   if (!isOpen) return null;
 
@@ -111,7 +140,8 @@ export function AdmitStudentModal({
         address: address.trim(),
         photoUrl,
         admissionNo,
-        accessCode
+        accessCode,
+        enrolledSubjects
       });
     } else {
       actions.createStudent({
@@ -128,6 +158,7 @@ export function AdmitStudentModal({
         dateAdmitted: new Date().toISOString().split('T')[0],
         photoUrl,
         accessCode,
+        enrolledSubjects,
         active: true
       });
     }
@@ -382,6 +413,99 @@ export function AdmitStudentModal({
                   className="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                 />
               </div>
+            </div>
+          </div>
+
+          {/* Offered Academic Subjects Selection */}
+          <div className="space-y-3 pt-2 border-t border-slate-200 dark:border-slate-800">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <BookOpen className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                  Offered Academic Subjects ({enrolledSubjects.length} of {availableSubjects.length} Selected)
+                </h4>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Select which subjects this student/pupil will study and offer this term.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEnrolledSubjects([...availableSubjects])}
+                  className="px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-[11px] font-bold hover:bg-indigo-100 transition-colors"
+                >
+                  Select All
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEnrolledSubjects([])}
+                  className="px-2.5 py-1 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 text-[11px] font-bold hover:bg-rose-100 transition-colors"
+                >
+                  Deselect All
+                </button>
+              </div>
+            </div>
+
+            {/* Manual Type-In Subject Field */}
+            <div className="p-2.5 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/60">
+              <label className="block text-[11px] font-bold text-indigo-900 dark:text-indigo-300 mb-1.5 flex items-center gap-1">
+                <Plus className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
+                Type Subject Manually (e.g., Technical Drawing, Robotics, French)
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={customSubjectInput}
+                  onChange={(e) => setCustomSubjectInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddCustomSubject();
+                    }
+                  }}
+                  placeholder="Type subject name here and click Add..."
+                  className="flex-1 px-3 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs focus:ring-2 focus:ring-indigo-500 outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleAddCustomSubject()}
+                  disabled={!customSubjectInput.trim()}
+                  className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-bold flex items-center gap-1 cursor-pointer transition-colors shrink-0 shadow-xs"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add Subject
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 max-h-52 overflow-y-auto">
+              {availableSubjects.map((sub) => {
+                const isSelected = enrolledSubjects.includes(sub);
+                return (
+                  <div
+                    key={sub}
+                    onClick={() => {
+                      if (isSelected) {
+                        setEnrolledSubjects(enrolledSubjects.filter(s => s !== sub));
+                      } else {
+                        setEnrolledSubjects([...enrolledSubjects, sub]);
+                      }
+                    }}
+                    className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer text-xs font-semibold transition-all select-none border ${
+                      isSelected
+                        ? 'bg-indigo-50/90 dark:bg-indigo-950/70 border-indigo-300 dark:border-indigo-700 text-indigo-900 dark:text-indigo-200 shadow-xs'
+                        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600'
+                    }`}
+                  >
+                    <div className={`w-4 h-4 rounded flex items-center justify-center shrink-0 transition-colors ${
+                      isSelected ? 'bg-indigo-600 text-white' : 'border border-slate-300 dark:border-slate-600'
+                    }`}>
+                      {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
+                    </div>
+                    <span className="truncate">{sub}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
 

@@ -4,6 +4,7 @@
  */
 
 import { School, User, SchoolClass, Student, Submission, AttendanceRecord, NotificationItem, ScoreSheet, HomeworkItem, TimetableDay } from './types';
+import { COMPANY_LOGO_DATA_URI } from './components/Logo';
 
 export const DEFAULT_SCHOOL_SUBJECTS: string[] = [
   'Mathematics',
@@ -35,7 +36,7 @@ export const INITIAL_SCHOOLS: School[] = [
     name: 'Apex Horizon Academy',
     motto: 'Excellence, Character & Innovation',
     code: 'APEX-8821',
-    logoUrl: 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=200&q=80',
+    logoUrl: COMPANY_LOGO_DATA_URI,
     address: '14 Academic Crest Way, Victoria Island',
     academicSession: '2025/2026',
     academicTerm: 'First Term',
@@ -47,7 +48,7 @@ export const INITIAL_SCHOOLS: School[] = [
     name: 'St. Jude International College',
     motto: 'Knowledge is Power and Light',
     code: 'STJUDE-4019',
-    logoUrl: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=200&q=80',
+    logoUrl: COMPANY_LOGO_DATA_URI,
     address: '88 Heritage Drive, Ikeja',
     academicSession: '2025/2026',
     academicTerm: 'First Term',

@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 import { useAppStore } from '../storage';
 import { DEFAULT_SCHOOL_SUBJECTS } from '../mockData';
-import { Logo } from './Logo';
+import { Logo, COMPANY_LOGO_DATA_URI } from './Logo';
 
 export const SchoolSettings: React.FC = () => {
   const { school, submissions, attendance, users, classes, students, actions } = useAppStore();
@@ -40,6 +40,7 @@ export const SchoolSettings: React.FC = () => {
   // General Settings state
   const [name, setName] = useState(school?.name || '');
   const [motto, setMotto] = useState(school?.motto || '');
+  const [logoUrl, setLogoUrl] = useState(school?.logoUrl || COMPANY_LOGO_DATA_URI);
   const [academicSession, setAcademicSession] = useState(school?.academicSession || '2025/2026');
   const [academicTerm, setAcademicTerm] = useState<'First Term' | 'Second Term' | 'Third Term'>(school?.academicTerm || 'First Term');
   const [savedGeneral, setSavedGeneral] = useState(false);
@@ -87,6 +88,7 @@ export const SchoolSettings: React.FC = () => {
         ...schools[idx],
         name,
         motto,
+        logoUrl,
         academicSession,
         academicTerm
       };
@@ -110,16 +112,24 @@ export const SchoolSettings: React.FC = () => {
     const trimmed = newSubject.trim();
     if (!trimmed) return;
 
-    if (currentSubjects.some(s => s.toLowerCase() === trimmed.toLowerCase())) {
-      setSubjectError(`Subject "${trimmed}" already exists in your curriculum.`);
-      setTimeout(() => setSubjectError(''), 3000);
-      return;
-    }
+    const subjectsToAdd = trimmed.split(',').map(s => s.trim()).filter(Boolean);
+    let addedCount = 0;
 
-    actions.addSchoolSubject(school.id, trimmed);
+    subjectsToAdd.forEach(sub => {
+      if (!currentSubjects.some(s => s.toLowerCase() === sub.toLowerCase())) {
+        actions.addSchoolSubject(school.id, sub);
+        addedCount++;
+      }
+    });
+
     setNewSubject('');
     setSubjectError('');
-    setSubjectMessage(`Subject "${trimmed}" successfully added to curriculum.`);
+    if (addedCount > 0) {
+      setSubjectMessage(`Successfully added ${addedCount} subject(s) to curriculum.`);
+    } else {
+      setSubjectError(`Entered subject(s) already exist in your curriculum.`);
+      setTimeout(() => setSubjectError(''), 3000);
+    }
     setTimeout(() => setSubjectMessage(''), 3000);
   };
 

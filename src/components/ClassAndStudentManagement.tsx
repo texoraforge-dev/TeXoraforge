@@ -13,10 +13,12 @@ import {
   Phone,
   CheckCircle2,
   X,
-  FileSpreadsheet
+  FileSpreadsheet,
+  BookOpen
 } from 'lucide-react';
 import { useAppStore } from '../storage';
 import { SchoolClass, Student } from '../types';
+import { DEFAULT_SCHOOL_SUBJECTS } from '../mockData';
 
 export const ClassAndStudentManagement: React.FC = () => {
   const { school, classes, students, actions } = useAppStore();
@@ -163,6 +165,7 @@ export const ClassAndStudentManagement: React.FC = () => {
                 <th className="py-3 px-3">Admission No</th>
                 <th className="py-3 px-3">Full Name</th>
                 <th className="py-3 px-3">Gender</th>
+                <th className="py-3 px-3">Subjects Offered</th>
                 <th className="py-3 px-3">Guardian Name</th>
                 <th className="py-3 px-3">Guardian Contact</th>
                 <th className="py-3 px-3 text-right">Status</th>
@@ -171,31 +174,41 @@ export const ClassAndStudentManagement: React.FC = () => {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60 font-medium">
               {filteredStudents.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-8 text-slate-400 italic">
+                  <td colSpan={7} className="text-center py-8 text-slate-400 italic">
                     No students enrolled in {currentClass?.name} matching your search.
                   </td>
                 </tr>
               ) : (
-                filteredStudents.map((std) => (
-                  <tr key={std.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/40">
-                    <td className="py-3 px-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">{std.admissionNo}</td>
-                    <td className="py-3 px-3 font-bold text-slate-900 dark:text-white">{std.fullName}</td>
-                    <td className="py-3 px-3">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${std.gender === 'Female' ? 'bg-pink-100 text-pink-700 dark:bg-pink-950 dark:text-pink-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300'}`}>
-                        {std.gender}
-                      </span>
-                    </td>
-                    <td className="py-3 px-3 text-slate-700 dark:text-slate-300">{std.guardianName}</td>
-                    <td className="py-3 px-3 text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                      <Phone className="h-3 w-3" /> {std.guardianPhone}
-                    </td>
-                    <td className="py-3 px-3 text-right">
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                        Enrolled
-                      </span>
-                    </td>
-                  </tr>
-                ))
+                filteredStudents.map((std) => {
+                  const availableSubjects = (school?.subjects && school.subjects.length > 0) ? school.subjects : DEFAULT_SCHOOL_SUBJECTS;
+                  const subjectCount = std.enrolledSubjects ? std.enrolledSubjects.length : availableSubjects.length;
+                  return (
+                    <tr key={std.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/40">
+                      <td className="py-3 px-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">{std.admissionNo}</td>
+                      <td className="py-3 px-3 font-bold text-slate-900 dark:text-white">{std.fullName}</td>
+                      <td className="py-3 px-3">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${std.gender === 'Female' ? 'bg-pink-100 text-pink-700 dark:bg-pink-950 dark:text-pink-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300'}`}>
+                          {std.gender}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 text-[11px] font-bold">
+                          <BookOpen className="h-3 w-3 text-indigo-500" />
+                          {subjectCount} Subjects
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 text-slate-700 dark:text-slate-300">{std.guardianName}</td>
+                      <td className="py-3 px-3 text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                        <Phone className="h-3 w-3" /> {std.guardianPhone}
+                      </td>
+                      <td className="py-3 px-3 text-right">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                          Enrolled
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

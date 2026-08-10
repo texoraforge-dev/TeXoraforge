@@ -6,6 +6,8 @@
 import React from 'react';
 import appLogo from '../assets/images/texora_app_logo_1786115622051.jpg';
 
+export const COMPANY_LOGO_DATA_URI = appLogo;
+
 interface LogoProps {
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
@@ -29,20 +31,20 @@ export const Logo: React.FC<LogoProps> = ({
 
   return (
     <div className={`flex items-center gap-3 ${className}`}>
-      <div className={`relative shrink-0 rounded-full overflow-hidden shadow-md ring-2 ring-purple-600/30 ${sizeClasses[size]}`}>
+      <div className={`relative shrink-0 rounded-full overflow-hidden shadow-md ring-2 ring-purple-600/40 ${sizeClasses[size]}`}>
         <img
           src={appLogo}
           alt="TeXora App Logo"
           referrerPolicy="no-referrer"
-          className="w-full h-full object-cover scale-105"
+          className="w-full h-full object-cover"
         />
       </div>
 
       {showText && (
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-extrabold text-slate-900 dark:text-white tracking-tight">
-              TeXora <span className="text-indigo-600 dark:text-indigo-400">Forge</span>
+            <span className="font-extrabold text-slate-900 dark:text-white tracking-tight text-base sm:text-lg">
+              TeXora <span className="text-purple-600 dark:text-purple-400">Forge</span>
             </span>
           </div>
           {subtext && (
@@ -55,3 +57,4 @@ export const Logo: React.FC<LogoProps> = ({
     </div>
   );
 };
+

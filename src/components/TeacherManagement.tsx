@@ -108,7 +108,7 @@ School: ${school?.name}
 Teacher Name: ${createdTeacherCredentials.teacher.name}
 Login Email: ${createdTeacherCredentials.teacher.email}
 Initial Access PIN: ${createdTeacherCredentials.pin}
-Assigned Classes: ${createdTeacherCredentials.teacher.assignedClassIds.map(id => classes.find(c => c.id === id)?.name).join(', ')}`;
+Assigned Classes: ${(createdTeacherCredentials.teacher.assignedClassIds || []).map(id => classes.find(c => c.id === id)?.name).join(', ')}`;
     
     navigator.clipboard.writeText(text);
     setCopied(true);
@@ -153,7 +153,7 @@ Assigned Classes: ${createdTeacherCredentials.teacher.assignedClassIds.map(id =>
       {/* Teachers Table / Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredTeachers.map((t) => {
-          const assignedClassNames = t.assignedClassIds
+          const assignedClassNames = (t.assignedClassIds || [])
             .map(id => classes.find(c => c.id === id)?.name)
             .filter(Boolean);
 
@@ -217,10 +217,10 @@ Assigned Classes: ${createdTeacherCredentials.teacher.assignedClassIds.map(id =>
                   <BookOpen className="h-3 w-3" /> Assigned Subjects
                 </p>
                 <div className="flex flex-wrap gap-1">
-                  {t.assignedSubjects.length === 0 ? (
+                  {(!t.assignedSubjects || t.assignedSubjects.length === 0) ? (
                     <span className="text-xs text-slate-400 italic">No subjects assigned</span>
                   ) : (
-                    t.assignedSubjects.map((s, i) => (
+                    (t.assignedSubjects || []).map((s, i) => (
                       <span key={i} className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-[11px] font-medium">
                         {s}
                       </span>

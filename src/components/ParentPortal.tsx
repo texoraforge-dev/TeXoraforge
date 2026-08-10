@@ -343,7 +343,7 @@ export function ParentPortal() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 dark:divide-slate-800 text-xs">
-                      {reportCard.subjectScores.map((s) => (
+                      {(reportCard?.subjectScores || []).map((s) => (
                         <tr key={s.subject} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
                           <td className="py-3 px-4 font-bold text-slate-900 dark:text-white">{s.subject}</td>
                           <td className="py-3 px-3 text-center text-slate-600 dark:text-slate-400">{s.assignment}</td>

@@ -54,12 +54,15 @@ export function ScoreEntryView() {
       s => s.classId === selectedClassId && s.subject.toLowerCase() === selectedSubject.toLowerCase()
     );
 
-    const classStudents = students.filter(s => s.classId === selectedClassId);
+    const classStudents = students.filter(s =>
+      s.classId === selectedClassId &&
+      (!s.enrolledSubjects || s.enrolledSubjects.includes(selectedSubject))
+    );
 
     if (existing) {
       setActiveSheet(existing);
       const scoresMap: Record<string, Partial<SubjectScore>> = {};
-      existing.scores.forEach(sc => {
+      (existing.scores || []).forEach(sc => {
         scoresMap[sc.studentId] = { ...sc };
       });
       // Fill missing students if any new student was admitted recently

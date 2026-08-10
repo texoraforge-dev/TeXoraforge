@@ -20,10 +20,12 @@ import {
   Phone,
   Eye,
   Key,
-  Download
+  Download,
+  BookOpen
 } from 'lucide-react';
 import { useAppStore } from '../storage';
 import { Student } from '../types';
+import { DEFAULT_SCHOOL_SUBJECTS } from '../mockData';
 import { AdmitStudentModal } from './modals/AdmitStudentModal';
 import { StudentIdCardModal } from './modals/StudentIdCardModal';
 import { generateAdmissionLetterPDF, generateReportCardPDF } from '../lib/pdfGenerator';
@@ -35,9 +37,14 @@ interface StudentManagementProps {
 export function StudentManagement({ onSelectStudentForReportCard }: StudentManagementProps) {
   const { students, classes, school, actions } = useAppStore();
 
+  const allSchoolSubjects = (school?.subjects && school.subjects.length > 0)
+    ? school.subjects
+    : DEFAULT_SCHOOL_SUBJECTS;
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedClassId, setSelectedClassId] = useState<string>('ALL');
   const [selectedGender, setSelectedGender] = useState<string>('ALL');
+  const [selectedSubjectFilter, setSelectedSubjectFilter] = useState<string>('ALL');
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   // Modal States
@@ -57,8 +64,10 @@ export function StudentManagement({ onSelectStudentForReportCard }: StudentManag
 
     const matchesClass = selectedClassId === 'ALL' || s.classId === selectedClassId;
     const matchesGender = selectedGender === 'ALL' || s.gender === selectedGender;
+    const matchesSubject = selectedSubjectFilter === 'ALL' ||
+      (!s.enrolledSubjects || s.enrolledSubjects.includes(selectedSubjectFilter));
 
-    return matchesSearch && matchesClass && matchesGender;
+    return matchesSearch && matchesClass && matchesGender && matchesSubject;
   });
 
   const handleCopyAccessCode = (code: string) => {
@@ -209,6 +218,18 @@ export function StudentManagement({ onSelectStudentForReportCard }: StudentManag
             <option value="Male">Male</option>
             <option value="Female">Female</option>
           </select>
+
+          {/* Subject Filter */}
+          <select
+            value={selectedSubjectFilter}
+            onChange={(e) => setSelectedSubjectFilter(e.target.value)}
+            className="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs font-medium focus:ring-2 focus:ring-indigo-500 outline-none"
+          >
+            <option value="ALL">All Subjects Offered ({allSchoolSubjects.length})</option>
+            {allSchoolSubjects.map((sub) => (
+              <option key={sub} value={sub}>{sub}</option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -221,6 +242,7 @@ export function StudentManagement({ onSelectStudentForReportCard }: StudentManag
                 <th className="py-3.5 px-4">Student</th>
                 <th className="py-3.5 px-4">Adm No.</th>
                 <th className="py-3.5 px-4">Class</th>
+                <th className="py-3.5 px-4">Subjects Offered</th>
                 <th className="py-3.5 px-4">Guardian Contact</th>
                 <th className="py-3.5 px-4">Parent Access Code</th>
                 <th className="py-3.5 px-4 text-right">Actions</th>
@@ -229,13 +251,14 @@ export function StudentManagement({ onSelectStudentForReportCard }: StudentManag
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800 text-sm">
               {filteredStudents.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-500 dark:text-slate-400">
+                  <td colSpan={7} className="py-12 text-center text-slate-500 dark:text-slate-400">
                     No students match your search filter.
                   </td>
                 </tr>
               ) : (
                 filteredStudents.map((std) => {
                   const stdClass = classes.find(c => c.id === std.classId);
+                  const enrolledCount = std.enrolledSubjects ? std.enrolledSubjects.length : allSchoolSubjects.length;
                   return (
                     <tr key={std.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
                       {/* Photo & Name */}
@@ -263,6 +286,18 @@ export function StudentManagement({ onSelectStudentForReportCard }: StudentManag
                         <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                           {stdClass ? `${stdClass.name} ${stdClass.arm ? `(${stdClass.arm})` : ''}` : 'Unassigned'}
                         </span>
+                      </td>
+
+                      {/* Subjects Offered */}
+                      <td className="py-3.5 px-4">
+                        <button
+                          onClick={() => handleEditStudent(std)}
+                          title="Click to edit subjects offered"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 text-xs font-bold hover:bg-indigo-100 transition-colors"
+                        >
+                          <BookOpen className="w-3.5 h-3.5 text-indigo-500" />
+                          <span>{enrolledCount} Subjects</span>
+                        </button>
                       </td>
 
                       {/* Guardian */}

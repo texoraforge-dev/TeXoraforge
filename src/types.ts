@@ -60,6 +60,7 @@ export interface Student {
   dateAdmitted?: string;
   photoUrl?: string;
   accessCode: string; // Unique access code for parent/student portal
+  enrolledSubjects?: string[]; // Specific subjects student/pupil is studying
   active: boolean;
 }
 

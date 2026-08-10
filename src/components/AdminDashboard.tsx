@@ -74,10 +74,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <button
-              onClick={() => onNavigate('students')}
+              onClick={() => onNavigate('school_students')}
               className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-2 shadow-md transition-all cursor-pointer"
             >
-              <GraduationCap className="h-4 w-4" /> Admit Student & ID Cards
+              <Users className="h-4 w-4" /> View All Students List
+            </button>
+            <button
+              onClick={() => onNavigate('students')}
+              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold flex items-center gap-2 transition-all cursor-pointer"
+            >
+              <GraduationCap className="h-4 w-4" /> Admit Student & IDs
             </button>
             <button
               onClick={() => onNavigate('scores')}
@@ -125,9 +131,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
 
         {/* Classes & Student Count */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 shadow-xs hover:shadow-md transition-shadow">
+        <div
+          onClick={() => onNavigate('school_students')}
+          className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 shadow-xs hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700 transition-all cursor-pointer group"
+        >
           <div className="flex items-center justify-between">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Classes / Students</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">Classes / Students</p>
             <div className="p-2.5 rounded-xl bg-sky-50 dark:bg-sky-950/60 border border-sky-200 dark:border-sky-800 text-sky-600 dark:text-sky-400">
               <GraduationCap className="h-5 w-5" />
             </div>
@@ -136,7 +145,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <p className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">{classes.length}</p>
             <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold">Classes ({students.length} Students)</span>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Pre-Nursery, Nursery 1–3, Primary 1–5, JSS 1–3, SS 1–3</p>
+          <p className="text-xs text-indigo-600 dark:text-indigo-400 mt-1 font-semibold flex items-center gap-1 group-hover:underline">
+            View All Students List <ArrowRight className="w-3 h-3" />
+          </p>
         </div>
 
         {/* Pending Approvals */}

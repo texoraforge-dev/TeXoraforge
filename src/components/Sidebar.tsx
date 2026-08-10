@@ -44,6 +44,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const adminNavItems: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'school_students', label: 'School Students List', icon: Users },
     { id: 'students', label: 'Student Admissions & IDs', icon: GraduationCap },
     { id: 'teachers', label: 'Teacher Roster', icon: Users },
     { id: 'classes', label: 'Classes & Management', icon: GraduationCap },

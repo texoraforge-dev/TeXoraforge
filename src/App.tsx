@@ -18,6 +18,7 @@ import { TeacherSubmissions } from './components/TeacherSubmissions';
 import { AttendanceView } from './components/AttendanceView';
 import { SchoolSettings } from './components/SchoolSettings';
 import { StudentManagement } from './components/StudentManagement';
+import { SchoolStudentRoster } from './components/SchoolStudentRoster';
 import { ScoreEntryView } from './components/ScoreEntryView';
 import { ParentPortal } from './components/ParentPortal';
 import { LessonNoteModal } from './components/modals/LessonNoteModal';
@@ -98,6 +99,7 @@ export default function App() {
                   />
                 )}
                 {currentView === 'students' && <StudentManagement />}
+                {currentView === 'school_students' && <SchoolStudentRoster />}
                 {currentView === 'teachers' && <TeacherManagement />}
                 {currentView === 'classes' && <ClassAndStudentManagement />}
                 {currentView === 'scores' && <ScoreEntryView />}

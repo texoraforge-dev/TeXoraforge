@@ -16,7 +16,9 @@ import {
   ScoreSheet,
   HomeworkItem,
   StudentReportCard,
-  SubjectReportItem
+  SubjectReportItem,
+  ClassTimetable,
+  ExamTimetable
 } from './types';
 import {
   INITIAL_SCHOOLS,
@@ -29,6 +31,8 @@ import {
   INITIAL_SCORE_SHEETS,
   INITIAL_HOMEWORK,
   INITIAL_TIMETABLES,
+  INITIAL_CLASS_TIMETABLES,
+  INITIAL_EXAM_TIMETABLES,
   DEFAULT_SCHOOL_SUBJECTS
 } from './mockData';
 import { SupabaseService } from './lib/supabaseService';
@@ -44,6 +48,8 @@ const STORAGE_KEYS = {
   NOTIFICATIONS: 'texora_notifications_v1',
   SCORE_SHEETS: 'texora_scoresheets_v1',
   HOMEWORK: 'texora_homework_v1',
+  CLASS_TIMETABLES: 'texora_class_timetables_v2',
+  EXAM_TIMETABLES: 'texora_exam_timetables_v2',
   CURRENT_USER_ID: 'texora_current_user_id_v1',
   CURRENT_SCHOOL_ID: 'texora_current_school_id_v1',
 };
@@ -98,6 +104,12 @@ export class AppStorage {
     }
     if (!localStorage.getItem(STORAGE_KEYS.HOMEWORK)) {
       setStored(STORAGE_KEYS.HOMEWORK, INITIAL_HOMEWORK);
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.CLASS_TIMETABLES)) {
+      setStored(STORAGE_KEYS.CLASS_TIMETABLES, INITIAL_CLASS_TIMETABLES);
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.EXAM_TIMETABLES)) {
+      setStored(STORAGE_KEYS.EXAM_TIMETABLES, INITIAL_EXAM_TIMETABLES);
     }
     if (!localStorage.getItem(STORAGE_KEYS.CURRENT_SCHOOL_ID)) {
       setStored(STORAGE_KEYS.CURRENT_SCHOOL_ID, 'school_apex');
@@ -827,9 +839,106 @@ export class AppStorage {
 
   // Timetables
   static getTimetableForClass(classId: string) {
+    const classTimetables = this.getClassTimetables();
+    const found = classTimetables.find(t => t.classId === classId);
+    if (found && found.days) return found.days;
     const timetables = getStored<Record<string, any>>('texora_timetables_v1', INITIAL_TIMETABLES);
     if (timetables[classId]) return timetables[classId];
     return INITIAL_TIMETABLES['cls_ss3']; // Fallback
+  }
+
+  static getClassTimetables(schoolId?: string, classId?: string): ClassTimetable[] {
+    let timetables = getStored<ClassTimetable[]>(STORAGE_KEYS.CLASS_TIMETABLES, INITIAL_CLASS_TIMETABLES);
+    if (schoolId) timetables = timetables.filter(t => t.schoolId === schoolId);
+    if (classId) timetables = timetables.filter(t => t.classId === classId);
+    return timetables;
+  }
+
+  static getClassTimetableForClass(schoolId: string, classId: string): ClassTimetable | null {
+    const list = this.getClassTimetables(schoolId, classId);
+    return list.length > 0 ? list[0] : null;
+  }
+
+  static saveClassTimetable(timetable: Omit<ClassTimetable, 'id' | 'updatedAt'> & { id?: string }): ClassTimetable {
+    const list = getStored<ClassTimetable[]>(STORAGE_KEYS.CLASS_TIMETABLES, INITIAL_CLASS_TIMETABLES);
+    const now = new Date().toISOString();
+    let saved: ClassTimetable;
+
+    const existingIdx = timetable.id
+      ? list.findIndex(t => t.id === timetable.id)
+      : list.findIndex(t => t.schoolId === timetable.schoolId && t.classId === timetable.classId);
+
+    if (existingIdx !== -1) {
+      saved = {
+        ...list[existingIdx],
+        ...timetable,
+        updatedAt: now
+      };
+      list[existingIdx] = saved;
+    } else {
+      saved = {
+        ...timetable,
+        id: timetable.id || 'ct_' + Date.now(),
+        updatedAt: now
+      };
+      list.push(saved);
+    }
+
+    setStored(STORAGE_KEYS.CLASS_TIMETABLES, list);
+    return saved;
+  }
+
+  static getExamTimetables(schoolId?: string, classId?: string): ExamTimetable[] {
+    let timetables = getStored<ExamTimetable[]>(STORAGE_KEYS.EXAM_TIMETABLES, INITIAL_EXAM_TIMETABLES);
+    if (schoolId) timetables = timetables.filter(t => t.schoolId === schoolId);
+    if (classId) timetables = timetables.filter(t => t.classId === classId);
+    return timetables;
+  }
+
+  static getExamTimetableForClass(schoolId: string, classId: string): ExamTimetable | null {
+    const list = this.getExamTimetables(schoolId, classId);
+    return list.length > 0 ? list[0] : null;
+  }
+
+  static saveExamTimetable(timetable: Omit<ExamTimetable, 'id' | 'updatedAt'> & { id?: string }): ExamTimetable {
+    const list = getStored<ExamTimetable[]>(STORAGE_KEYS.EXAM_TIMETABLES, INITIAL_EXAM_TIMETABLES);
+    const now = new Date().toISOString();
+    let saved: ExamTimetable;
+
+    const existingIdx = timetable.id
+      ? list.findIndex(t => t.id === timetable.id)
+      : list.findIndex(t => t.schoolId === timetable.schoolId && t.classId === timetable.classId);
+
+    if (existingIdx !== -1) {
+      saved = {
+        ...list[existingIdx],
+        ...timetable,
+        updatedAt: now
+      };
+      list[existingIdx] = saved;
+    } else {
+      saved = {
+        ...timetable,
+        id: timetable.id || 'et_' + Date.now(),
+        updatedAt: now
+      };
+      list.push(saved);
+    }
+
+    setStored(STORAGE_KEYS.EXAM_TIMETABLES, list);
+    return saved;
+  }
+
+  static deleteExamEntry(timetableId: string, entryId: string): ExamTimetable | null {
+    const list = getStored<ExamTimetable[]>(STORAGE_KEYS.EXAM_TIMETABLES, INITIAL_EXAM_TIMETABLES);
+    const idx = list.findIndex(t => t.id === timetableId);
+    if (idx !== -1) {
+      list[idx].entries = list[idx].entries.filter(e => e.id !== entryId);
+      list[idx].updatedAt = new Date().toISOString();
+      setStored(STORAGE_KEYS.EXAM_TIMETABLES, list);
+      return list[idx];
+    }
+    return null;
   }
 }
 
@@ -901,6 +1010,8 @@ export function useAppStore() {
     const attendance = AppStorage.getAttendanceRecords(school?.id);
     const scoreSheets = AppStorage.getScoreSheets(school?.id);
     const homework = AppStorage.getHomework(school?.id);
+    const classTimetables = AppStorage.getClassTimetables(school?.id);
+    const examTimetables = AppStorage.getExamTimetables(school?.id);
     const notifications = currentUser ? AppStorage.getNotifications(currentUser.id) : [];
 
     return {
@@ -913,6 +1024,8 @@ export function useAppStore() {
       attendance,
       scoreSheets,
       homework,
+      classTimetables,
+      examTimetables,
       notifications,
       schools: AppStorage.getSchools(),
     };

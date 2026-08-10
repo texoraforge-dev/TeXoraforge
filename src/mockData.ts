@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { School, User, SchoolClass, Student, Submission, AttendanceRecord, NotificationItem, ScoreSheet, HomeworkItem, TimetableDay } from './types';
+import { School, User, SchoolClass, Student, Submission, AttendanceRecord, NotificationItem, ScoreSheet, HomeworkItem, TimetableDay, ClassTimetable, ExamTimetable } from './types';
 import { COMPANY_LOGO_DATA_URI } from './components/Logo';
 
 export const DEFAULT_SCHOOL_SUBJECTS: string[] = [
@@ -526,51 +526,236 @@ export const INITIAL_TIMETABLES: Record<string, TimetableDay[]> = {
     {
       day: 'Monday',
       periods: [
-        { time: '08:00 AM - 08:45 AM', subject: 'Mathematics', teacherName: 'Mr. David Okon' },
-        { time: '08:45 AM - 09:30 AM', subject: 'Physics', teacherName: 'Mr. David Okon' },
-        { time: '09:30 AM - 10:15 AM', subject: 'Chemistry', teacherName: 'Dr. Vance' },
-        { time: '10:45 AM - 11:30 AM', subject: 'English Language', teacherName: 'Mrs. Sarah Jenkins' },
-        { time: '11:30 AM - 12:15 PM', subject: 'Biology', teacherName: 'Mrs. Sarah Jenkins' }
+        { id: 'p1', time: '08:00 AM - 08:45 AM', subject: 'Mathematics', teacherName: 'Mr. David Okon', venue: 'SS 3 Room 1' },
+        { id: 'p2', time: '08:45 AM - 09:30 AM', subject: 'Physics', teacherName: 'Mr. David Okon', venue: 'SS 3 Room 1' },
+        { id: 'p3', time: '09:30 AM - 10:15 AM', subject: 'Chemistry', teacherName: 'Dr. Vance', venue: 'Science Lab' },
+        { id: 'p4', time: '10:15 AM - 10:45 AM', subject: 'Morning Break', isBreak: true },
+        { id: 'p5', time: '10:45 AM - 11:30 AM', subject: 'English Language', teacherName: 'Mrs. Sarah Jenkins', venue: 'SS 3 Room 1' },
+        { id: 'p6', time: '11:30 AM - 12:15 PM', subject: 'Biology', teacherName: 'Mrs. Sarah Jenkins', venue: 'SS 3 Room 1' }
       ]
     },
     {
       day: 'Tuesday',
       periods: [
-        { time: '08:00 AM - 08:45 AM', subject: 'Physics (Lab)', teacherName: 'Mr. David Okon' },
-        { time: '08:45 AM - 09:30 AM', subject: 'Physics (Lab)', teacherName: 'Mr. David Okon' },
-        { time: '09:30 AM - 10:15 AM', subject: 'Further Mathematics', teacherName: 'Mr. David Okon' },
-        { time: '10:45 AM - 11:30 AM', subject: 'Computer Studies', teacherName: 'Mr. Chimedi Nwosu' },
-        { time: '11:30 AM - 12:15 PM', subject: 'Civic Education', teacherName: 'Mrs. Sarah Jenkins' }
+        { id: 'p7', time: '08:00 AM - 08:45 AM', subject: 'Physics (Lab)', teacherName: 'Mr. David Okon', venue: 'Physics Lab' },
+        { id: 'p8', time: '08:45 AM - 09:30 AM', subject: 'Physics (Lab)', teacherName: 'Mr. David Okon', venue: 'Physics Lab' },
+        { id: 'p9', time: '09:30 AM - 10:15 AM', subject: 'Further Mathematics', teacherName: 'Mr. David Okon', venue: 'SS 3 Room 1' },
+        { id: 'p10', time: '10:15 AM - 10:45 AM', subject: 'Morning Break', isBreak: true },
+        { id: 'p11', time: '10:45 AM - 11:30 AM', subject: 'Computer Studies', teacherName: 'Mr. Chimedi Nwosu', venue: 'ICT Suite' },
+        { id: 'p12', time: '11:30 AM - 12:15 PM', subject: 'Civic Education', teacherName: 'Mrs. Sarah Jenkins', venue: 'SS 3 Room 1' }
       ]
     },
     {
       day: 'Wednesday',
       periods: [
-        { time: '08:00 AM - 08:45 AM', subject: 'English Language', teacherName: 'Mrs. Sarah Jenkins' },
-        { time: '08:45 AM - 09:30 AM', subject: 'Mathematics', teacherName: 'Mr. David Okon' },
-        { time: '09:30 AM - 10:15 AM', subject: 'Chemistry (Lab)', teacherName: 'Dr. Vance' },
-        { time: '10:45 AM - 11:30 AM', subject: 'Agricultural Science', teacherName: 'Mr. Chimedi Nwosu' },
-        { time: '11:30 AM - 12:15 PM', subject: 'Economics', teacherName: 'Mrs. Sarah Jenkins' }
+        { id: 'p13', time: '08:00 AM - 08:45 AM', subject: 'English Language', teacherName: 'Mrs. Sarah Jenkins', venue: 'SS 3 Room 1' },
+        { id: 'p14', time: '08:45 AM - 09:30 AM', subject: 'Mathematics', teacherName: 'Mr. David Okon', venue: 'SS 3 Room 1' },
+        { id: 'p15', time: '09:30 AM - 10:15 AM', subject: 'Chemistry (Lab)', teacherName: 'Dr. Vance', venue: 'Chemistry Lab' },
+        { id: 'p16', time: '10:15 AM - 10:45 AM', subject: 'Morning Break', isBreak: true },
+        { id: 'p17', time: '10:45 AM - 11:30 AM', subject: 'Agricultural Science', teacherName: 'Mr. Chimedi Nwosu', venue: 'SS 3 Room 1' },
+        { id: 'p18', time: '11:30 AM - 12:15 PM', subject: 'Economics', teacherName: 'Mrs. Sarah Jenkins', venue: 'SS 3 Room 1' }
       ]
     },
     {
       day: 'Thursday',
       periods: [
-        { time: '08:00 AM - 08:45 AM', subject: 'Physics', teacherName: 'Mr. David Okon' },
-        { time: '08:45 AM - 09:30 AM', subject: 'Mathematics', teacherName: 'Mr. David Okon' },
-        { time: '09:30 AM - 10:15 AM', subject: 'Biology (Lab)', teacherName: 'Mrs. Sarah Jenkins' },
-        { time: '10:45 AM - 11:30 AM', subject: 'Further Mathematics', teacherName: 'Mr. David Okon' },
-        { time: '11:30 AM - 12:15 PM', subject: 'Sports / Physical Ed', teacherName: 'Mr. Chimedi Nwosu' }
+        { id: 'p19', time: '08:00 AM - 08:45 AM', subject: 'Physics', teacherName: 'Mr. David Okon', venue: 'SS 3 Room 1' },
+        { id: 'p20', time: '08:45 AM - 09:30 AM', subject: 'Mathematics', teacherName: 'Mr. David Okon', venue: 'SS 3 Room 1' },
+        { id: 'p21', time: '09:30 AM - 10:15 AM', subject: 'Biology (Lab)', teacherName: 'Mrs. Sarah Jenkins', venue: 'Biology Lab' },
+        { id: 'p22', time: '10:15 AM - 10:45 AM', subject: 'Morning Break', isBreak: true },
+        { id: 'p23', time: '10:45 AM - 11:30 AM', subject: 'Further Mathematics', teacherName: 'Mr. David Okon', venue: 'SS 3 Room 1' },
+        { id: 'p24', time: '11:30 AM - 12:15 PM', subject: 'Sports / Physical Ed', teacherName: 'Mr. Chimedi Nwosu', venue: 'Sports Ground' }
       ]
     },
     {
       day: 'Friday',
       periods: [
-        { time: '08:00 AM - 08:45 AM', subject: 'Civic Education', teacherName: 'Mrs. Sarah Jenkins' },
-        { time: '08:45 AM - 09:30 AM', subject: 'Computer Studies (Practical)', teacherName: 'Mr. Chimedi Nwosu' },
-        { time: '09:30 AM - 10:15 AM', subject: 'Weekly Assessment Test', teacherName: 'All Subject Teachers' },
-        { time: '10:45 AM - 12:00 PM', subject: 'Clubs & Societies', teacherName: 'School Admin' }
+        { id: 'p25', time: '08:00 AM - 08:45 AM', subject: 'Civic Education', teacherName: 'Mrs. Sarah Jenkins', venue: 'SS 3 Room 1' },
+        { id: 'p26', time: '08:45 AM - 09:30 AM', subject: 'Computer Studies (Practical)', teacherName: 'Mr. Chimedi Nwosu', venue: 'ICT Suite' },
+        { id: 'p27', time: '09:30 AM - 10:15 AM', subject: 'Weekly Assessment Test', teacherName: 'All Subject Teachers', venue: 'SS 3 Room 1' },
+        { id: 'p28', time: '10:15 AM - 10:45 AM', subject: 'Short Break', isBreak: true },
+        { id: 'p29', time: '10:45 AM - 12:00 PM', subject: 'Clubs & Societies', teacherName: 'School Admin', venue: 'School Auditorium' }
       ]
     }
   ]
 };
+
+export const INITIAL_CLASS_TIMETABLES: ClassTimetable[] = [
+  {
+    id: 'ct_ss3',
+    schoolId: 'school_apex',
+    classId: 'cls_ss3',
+    className: 'SS 3',
+    academicSession: '2025/2026',
+    academicTerm: 'First Term',
+    days: INITIAL_TIMETABLES.cls_ss3,
+    updatedAt: '2026-08-01T08:00:00.000Z'
+  },
+  {
+    id: 'ct_ss2',
+    schoolId: 'school_apex',
+    classId: 'cls_ss2',
+    className: 'SS 2',
+    academicSession: '2025/2026',
+    academicTerm: 'First Term',
+    days: [
+      {
+        day: 'Monday',
+        periods: [
+          { id: 'p_s2_1', time: '08:00 AM - 08:45 AM', subject: 'Physics', teacherName: 'Mr. David Okon', venue: 'SS 2 Room 1' },
+          { id: 'p_s2_2', time: '08:45 AM - 09:30 AM', subject: 'Mathematics', teacherName: 'Mr. David Okon', venue: 'SS 2 Room 1' },
+          { id: 'p_s2_3', time: '09:30 AM - 10:15 AM', subject: 'English Language', teacherName: 'Mrs. Sarah Jenkins', venue: 'SS 2 Room 1' },
+          { id: 'p_s2_4', time: '10:15 AM - 10:45 AM', subject: 'Break', isBreak: true },
+          { id: 'p_s2_5', time: '10:45 AM - 11:30 AM', subject: 'Chemistry', teacherName: 'Dr. Vance', venue: 'Science Lab' }
+        ]
+      },
+      {
+        day: 'Tuesday',
+        periods: [
+          { id: 'p_s2_6', time: '08:00 AM - 08:45 AM', subject: 'Biology', teacherName: 'Mrs. Sarah Jenkins', venue: 'Biology Lab' },
+          { id: 'p_s2_7', time: '08:45 AM - 09:30 AM', subject: 'Economics', teacherName: 'Mrs. Sarah Jenkins', venue: 'SS 2 Room 1' },
+          { id: 'p_s2_8', time: '09:30 AM - 10:15 AM', subject: 'Further Mathematics', teacherName: 'Mr. David Okon', venue: 'SS 2 Room 1' }
+        ]
+      }
+    ],
+    updatedAt: '2026-08-01T08:00:00.000Z'
+  },
+  {
+    id: 'ct_pri3',
+    schoolId: 'school_apex',
+    classId: 'cls_pri3',
+    className: 'Primary 3',
+    academicSession: '2025/2026',
+    academicTerm: 'First Term',
+    days: [
+      {
+        day: 'Monday',
+        periods: [
+          { id: 'p_p3_1', time: '08:00 AM - 08:30 AM', subject: 'Morning Assembly', isBreak: true },
+          { id: 'p_p3_2', time: '08:30 AM - 09:15 AM', subject: 'Mathematics', teacherName: 'Mr. Chimedi Nwosu', venue: 'Primary 3 Room' },
+          { id: 'p_p3_3', time: '09:15 AM - 10:00 AM', subject: 'English Language', teacherName: 'Mr. Chimedi Nwosu', venue: 'Primary 3 Room' },
+          { id: 'p_p3_4', time: '10:00 AM - 10:30 AM', subject: 'Snack Break', isBreak: true },
+          { id: 'p_p3_5', time: '10:30 AM - 11:15 AM', subject: 'Basic Science & Tech', teacherName: 'Mr. Chimedi Nwosu', venue: 'Primary 3 Room' }
+        ]
+      }
+    ],
+    updatedAt: '2026-08-01T08:00:00.000Z'
+  }
+];
+
+export const INITIAL_EXAM_TIMETABLES: ExamTimetable[] = [
+  {
+    id: 'et_ss3',
+    schoolId: 'school_apex',
+    classId: 'cls_ss3',
+    className: 'SS 3',
+    examTitle: 'First Term Final Examinations 2025/2026',
+    academicSession: '2025/2026',
+    academicTerm: 'First Term',
+    updatedAt: '2026-08-05T10:00:00.000Z',
+    entries: [
+      {
+        id: 'ee_ss3_1',
+        date: '2026-03-23',
+        day: 'Monday',
+        timeSlot: '09:00 AM - 11:30 AM',
+        subject: 'Mathematics (Paper I & II)',
+        hallOrVenue: 'Main Multipurpose Hall',
+        invigilators: 'Mr. David Okon, Mrs. Sarah Jenkins',
+        instructions: 'Non-programmable scientific calculators and geometric sets required.'
+      },
+      {
+        id: 'ee_ss3_2',
+        date: '2026-03-23',
+        day: 'Monday',
+        timeSlot: '01:00 PM - 02:30 PM',
+        subject: 'Civic Education',
+        hallOrVenue: 'Main Multipurpose Hall',
+        invigilators: 'Mr. Chimedi Nwosu',
+        instructions: 'Answer all 50 multiple-choice questions on OMR sheet.'
+      },
+      {
+        id: 'ee_ss3_3',
+        date: '2026-03-24',
+        day: 'Tuesday',
+        timeSlot: '09:00 AM - 11:30 AM',
+        subject: 'English Language (Essay & Objective)',
+        hallOrVenue: 'Main Multipurpose Hall',
+        invigilators: 'Mrs. Sarah Jenkins, Dr. Eleanor Vance',
+        instructions: 'Use blue or black fountain/ballpoint pen only.'
+      },
+      {
+        id: 'ee_ss3_4',
+        date: '2026-03-24',
+        day: 'Tuesday',
+        timeSlot: '01:00 PM - 03:00 PM',
+        subject: 'Physics (Practical Test)',
+        hallOrVenue: 'Physics Laboratory',
+        invigilators: 'Mr. David Okon',
+        instructions: 'Candidates must bring a clear ruler, pencil, and lab coat.'
+      },
+      {
+        id: 'ee_ss3_5',
+        date: '2026-03-25',
+        day: 'Wednesday',
+        timeSlot: '09:00 AM - 11:30 AM',
+        subject: 'Chemistry (Alternative to Practical)',
+        hallOrVenue: 'Chemistry Laboratory',
+        invigilators: 'Dr. Eleanor Vance',
+        instructions: 'Strict quiet required in the science laboratory block.'
+      },
+      {
+        id: 'ee_ss3_6',
+        date: '2026-03-26',
+        day: 'Thursday',
+        timeSlot: '09:00 AM - 11:00 AM',
+        subject: 'Biology (Theory & Practical)',
+        hallOrVenue: 'Main Multipurpose Hall',
+        invigilators: 'Mrs. Sarah Jenkins',
+        instructions: 'Dissection kit and sharp HB pencils needed for diagrams.'
+      },
+      {
+        id: 'ee_ss3_7',
+        date: '2026-03-27',
+        day: 'Friday',
+        timeSlot: '09:00 AM - 11:00 AM',
+        subject: 'Computer Studies (Practical On-Screen Test)',
+        hallOrVenue: 'ICT Suite 1',
+        invigilators: 'Mr. Chimedi Nwosu',
+        instructions: 'Individual workstation assignment will be posted at hall entrance.'
+      }
+    ]
+  },
+  {
+    id: 'et_jss2',
+    schoolId: 'school_apex',
+    classId: 'cls_jss2',
+    className: 'JSS 2',
+    examTitle: 'First Term Final Examinations 2025/2026',
+    academicSession: '2025/2026',
+    academicTerm: 'First Term',
+    updatedAt: '2026-08-05T10:00:00.000Z',
+    entries: [
+      {
+        id: 'ee_jss2_1',
+        date: '2026-03-23',
+        day: 'Monday',
+        timeSlot: '09:00 AM - 10:30 AM',
+        subject: 'Mathematics',
+        hallOrVenue: 'JSS Block Hall A',
+        invigilators: 'Mrs. Sarah Jenkins',
+        instructions: 'Mathematical set is compulsory.'
+      },
+      {
+        id: 'ee_jss2_2',
+        date: '2026-03-24',
+        day: 'Tuesday',
+        timeSlot: '09:00 AM - 10:30 AM',
+        subject: 'English Language',
+        hallOrVenue: 'JSS Block Hall A',
+        invigilators: 'Mr. Chimedi Nwosu',
+        instructions: 'Dictionary allowed for Section C comprehension check.'
+      }
+    ]
+  }
+];

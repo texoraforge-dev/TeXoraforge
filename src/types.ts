@@ -153,14 +153,51 @@ export interface HomeworkItem {
 }
 
 export interface ClassPeriod {
+  id?: string;
   time: string;
   subject: string;
-  teacherName: string;
+  teacherName?: string;
+  venue?: string;
+  isBreak?: boolean;
 }
 
 export interface TimetableDay {
-  day: 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday';
+  day: 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday';
   periods: ClassPeriod[];
+}
+
+export interface ClassTimetable {
+  id: string;
+  schoolId: string;
+  classId: string;
+  className: string;
+  academicSession: string;
+  academicTerm: string;
+  days: TimetableDay[];
+  updatedAt: string;
+}
+
+export interface ExamTimetableEntry {
+  id: string;
+  date: string; // YYYY-MM-DD
+  day: string; // e.g. "Monday"
+  timeSlot: string; // e.g. "09:00 AM - 11:30 AM"
+  subject: string;
+  hallOrVenue: string; // e.g. "Main Multipurpose Hall"
+  invigilators?: string; // e.g. "Mr. David Okon, Mrs. Sarah Jenkins"
+  instructions?: string; // e.g. "Come with scientific calculator"
+}
+
+export interface ExamTimetable {
+  id: string;
+  schoolId: string;
+  classId: string;
+  className: string;
+  examTitle: string; // e.g. "First Term Final Examinations"
+  academicSession: string;
+  academicTerm: string;
+  entries: ExamTimetableEntry[];
+  updatedAt: string;
 }
 
 export type SubmissionType = 'LESSON_NOTE' | 'LESSON_PLAN' | 'WEEKLY_DIARY';

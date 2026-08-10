@@ -48,6 +48,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'students', label: 'Student Admissions & IDs', icon: GraduationCap },
     { id: 'teachers', label: 'Teacher Roster', icon: Users },
     { id: 'classes', label: 'Classes & Management', icon: GraduationCap },
+    { id: 'timetable', label: 'Class & Exam Timetables', icon: CalendarCheck2 },
     { id: 'scores', label: 'Score Approvals & Reports', icon: FileText },
     {
       id: 'submissions',
@@ -61,6 +62,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const teacherNavItems: NavItem[] = [
     { id: 'dashboard', label: 'Teacher Dashboard', icon: LayoutDashboard },
+    { id: 'timetable', label: 'Class & Exam Timetables', icon: CalendarCheck2 },
     { id: 'scores', label: 'Continuous Assessment & Scores', icon: FileText },
     { id: 'teacher_submissions', label: 'My Lesson Submissions', icon: FileText },
     { id: 'teacher_attendance', label: 'Mark Attendance', icon: UserCheck }
@@ -68,6 +70,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const parentNavItems: NavItem[] = [
     { id: 'parent', label: 'Parent Portal Home', icon: ShieldCheck },
+    { id: 'timetable', label: 'Class & Exam Timetables', icon: CalendarCheck2 },
     { id: 'scores', label: 'Terminal Report Cards', icon: FileText }
   ];
 

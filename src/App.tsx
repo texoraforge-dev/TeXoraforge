@@ -21,6 +21,7 @@ import { StudentManagement } from './components/StudentManagement';
 import { SchoolStudentRoster } from './components/SchoolStudentRoster';
 import { ScoreEntryView } from './components/ScoreEntryView';
 import { ParentPortal } from './components/ParentPortal';
+import { TimetableManagement } from './components/TimetableManagement';
 import { LessonNoteModal } from './components/modals/LessonNoteModal';
 import { UploadPdfModal } from './components/modals/UploadPdfModal';
 import { WeeklyDiaryModal } from './components/modals/WeeklyDiaryModal';
@@ -110,6 +111,7 @@ export default function App() {
                   />
                 )}
                 {currentView === 'attendance' && <AttendanceView />}
+                {currentView === 'timetable' && <TimetableManagement onNavigate={(v) => setCurrentView(v)} />}
                 {currentView === 'settings' && <SchoolSettings />}
                 {currentView === 'parent' && <ParentPortal />}
               </>
@@ -150,12 +152,22 @@ export default function App() {
                 {(currentView === 'teacher_attendance' || currentView === 'attendance') && (
                   <AttendanceView />
                 )}
+
+                {currentView === 'timetable' && (
+                  <TimetableManagement onNavigate={(v) => setCurrentView(v)} />
+                )}
               </>
             )}
 
             {/* Parent Views */}
             {currentUser.role === 'PARENT' && (
-              <ParentPortal />
+              <>
+                {currentView === 'timetable' ? (
+                  <TimetableManagement onNavigate={(v) => setCurrentView(v)} />
+                ) : (
+                  <ParentPortal />
+                )}
+              </>
             )}
 
           </main>

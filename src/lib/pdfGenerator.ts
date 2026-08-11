@@ -877,3 +877,4 @@ export function generatePromotionCertificatePDF(
 
   doc.save(`Promotion_Certificate_${student.fullName.replace(/\s+/g, '_')}.pdf`);
 }
+

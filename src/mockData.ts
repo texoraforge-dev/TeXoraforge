@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { School, User, SchoolClass, Student, Submission, AttendanceRecord, NotificationItem, ScoreSheet, HomeworkItem, TimetableDay, ClassTimetable, ExamTimetable } from './types';
+import { School, User, SchoolClass, Student, Submission, AttendanceRecord, NotificationItem, ScoreSheet, HomeworkItem, TimetableDay, ClassTimetable, ExamTimetable, AuditLogEntry, ChatRoom, ChatMessage, PublicChatMessage } from './types';
 import { COMPANY_LOGO_DATA_URI } from './components/Logo';
 
 export const DEFAULT_SCHOOL_SUBJECTS: string[] = [
@@ -41,6 +41,47 @@ export const INITIAL_SCHOOLS: School[] = [
     academicSession: '2025/2026',
     academicTerm: 'First Term',
     subjects: [...DEFAULT_SCHOOL_SUBJECTS],
+    subscription: {
+      planTier: 'PRO',
+      billingCycle: 'ANNUAL',
+      status: 'ACTIVE',
+      maxStudents: 1000,
+      maxTeachers: 100,
+      storageGb: 50,
+      startDate: '2025-09-01T08:00:00.000Z',
+      renewsAt: '2026-09-01T08:00:00.000Z',
+      amountPaid: 1350,
+      currency: 'USD',
+      autoRenew: true,
+      paymentMethod: {
+        type: 'CARD',
+        last4: '4242',
+        cardBrand: 'Visa',
+        expDate: '12/28'
+      },
+      invoiceHistory: [
+        {
+          id: 'inv_1001',
+          invoiceNo: 'INV-2025-0901',
+          date: '2025-09-01T08:00:00.000Z',
+          amount: 1350,
+          currency: 'USD',
+          description: 'TeXora Pro Excellence Plan - Annual Subscription (1,000 Students & 100 Teachers)',
+          status: 'PAID',
+          paymentMethod: 'Visa ending in 4242'
+        },
+        {
+          id: 'inv_0988',
+          invoiceNo: 'INV-2024-0901',
+          date: '2024-09-01T08:00:00.000Z',
+          amount: 450,
+          currency: 'USD',
+          description: 'TeXora Growth Standard Plan - Annual Subscription (250 Students & 25 Teachers)',
+          status: 'PAID',
+          paymentMethod: 'Mastercard ending in 8812'
+        }
+      ]
+    },
     createdAt: '2025-09-01T08:00:00.000Z',
   },
   {
@@ -53,6 +94,37 @@ export const INITIAL_SCHOOLS: School[] = [
     academicSession: '2025/2026',
     academicTerm: 'First Term',
     subjects: [...DEFAULT_SCHOOL_SUBJECTS],
+    subscription: {
+      planTier: 'GROWTH',
+      billingCycle: 'MONTHLY',
+      status: 'ACTIVE',
+      maxStudents: 250,
+      maxTeachers: 25,
+      storageGb: 15,
+      startDate: '2026-01-01T08:00:00.000Z',
+      renewsAt: '2026-09-01T08:00:00.000Z',
+      amountPaid: 49,
+      currency: 'USD',
+      autoRenew: true,
+      paymentMethod: {
+        type: 'CARD',
+        last4: '1111',
+        cardBrand: 'Mastercard',
+        expDate: '08/27'
+      },
+      invoiceHistory: [
+        {
+          id: 'inv_2001',
+          invoiceNo: 'INV-2026-0101',
+          date: '2026-01-01T08:00:00.000Z',
+          amount: 49,
+          currency: 'USD',
+          description: 'TeXora Growth Plan - Monthly Subscription',
+          status: 'PAID',
+          paymentMethod: 'Mastercard ending in 1111'
+        }
+      ]
+    },
     createdAt: '2025-09-02T08:00:00.000Z',
   }
 ];
@@ -90,13 +162,57 @@ export const SUBJECT_OPTIONS_BY_TIER: Record<string, string[]> = {
 };
 
 export const INITIAL_USERS: User[] = [
-  // School Admin for Apex Horizon
+  // Proprietor / Super Admin for Apex Horizon
+  {
+    id: 'usr_proprietor1',
+    schoolId: 'school_apex',
+    name: 'Chief Dr. Arthur Pendelton',
+    email: 'proprietor@apexhorizon.edu',
+    role: 'PROPRIETOR',
+    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80',
+    phone: '+234 801 999 8888',
+    assignedClassIds: [],
+    assignedSubjects: [],
+    active: true,
+    createdAt: '2025-08-15T08:00:00.000Z',
+  },
+  // Vice Principal (Admissions & Student Administration)
+  {
+    id: 'usr_vp1',
+    schoolId: 'school_apex',
+    name: 'Mrs. Margaret Folorunsho',
+    email: 'vp@apexhorizon.edu',
+    role: 'VICE_PRINCIPAL',
+    permissions: [
+      'ADMISSIONS',
+      'STUDENT_MANAGEMENT',
+      'STUDENT_RECORDS',
+      'GUARDIAN_MANAGEMENT',
+      'CLASS_ASSIGNMENT',
+      'STUDENT_PROMOTION',
+      'AUDIT_LOG_VIEW'
+    ],
+    avatarUrl: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=150&q=80',
+    phone: '+234 802 333 4455',
+    assignedClassIds: [],
+    assignedSubjects: [],
+    active: true,
+    createdAt: '2025-08-20T09:00:00.000Z',
+  },
+  // School Admin (Academic Administration & Approvals)
   {
     id: 'usr_admin1',
     schoolId: 'school_apex',
     name: 'Dr. Eleanor Vance',
     email: 'admin@apexhorizon.edu',
     role: 'SCHOOL_ADMIN',
+    permissions: [
+      'LESSON_NOTE_REVIEW',
+      'LESSON_PLAN_REVIEW',
+      'WEEKLY_DIARY_REVIEW',
+      'EXAM_ADMINISTRATION',
+      'ACADEMIC_REVIEW'
+    ],
     avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80',
     phone: '+234 802 111 2233',
     assignedClassIds: [],
@@ -162,6 +278,64 @@ export const INITIAL_USERS: User[] = [
     linkedStudentAccessCodes: ['PAR-2022-001', 'PAR-2023-101'],
     active: true,
     createdAt: '2025-09-05T12:00:00.000Z',
+  }
+];
+
+export const INITIAL_AUDIT_LOGS: AuditLogEntry[] = [
+  {
+    id: 'log_101',
+    schoolId: 'school_apex',
+    userId: 'usr_proprietor1',
+    userName: 'Chief Dr. Arthur Pendelton',
+    userRole: 'PROPRIETOR',
+    action: 'Created Vice Principal Account',
+    module: 'USER_MANAGEMENT',
+    details: 'Created Vice Principal account for Mrs. Margaret Folorunsho with Admissions and Student Admin permissions.',
+    createdAt: '2025-08-20T09:05:00.000Z'
+  },
+  {
+    id: 'log_102',
+    schoolId: 'school_apex',
+    userId: 'usr_vp1',
+    userName: 'Mrs. Margaret Folorunsho',
+    userRole: 'VICE_PRINCIPAL',
+    action: 'Admitted New Student',
+    module: 'ADMISSIONS',
+    details: 'Admitted student Kenneth Sowore (APX/2024/302) into class Primary 3.',
+    createdAt: '2025-09-08T10:15:00.000Z'
+  },
+  {
+    id: 'log_103',
+    schoolId: 'school_apex',
+    userId: 'usr_admin1',
+    userName: 'Dr. Eleanor Vance',
+    userRole: 'SCHOOL_ADMIN',
+    action: 'Approved Lesson Note',
+    module: 'LESSON_NOTES',
+    details: 'Approved Week 2 Physics Lesson Note "Electromagnetic Induction & Faraday Laws" submitted by Mr. David Okon.',
+    createdAt: '2025-09-10T14:30:00.000Z'
+  },
+  {
+    id: 'log_104',
+    schoolId: 'school_apex',
+    userId: 'usr_vp1',
+    userName: 'Mrs. Margaret Folorunsho',
+    userRole: 'VICE_PRINCIPAL',
+    action: 'Assigned Student Class Transfer',
+    module: 'CLASSES',
+    details: 'Transferred student Grace Ibrahim from Primary 5 to SS 2 (Science Arm).',
+    createdAt: '2025-09-12T11:20:00.000Z'
+  },
+  {
+    id: 'log_105',
+    schoolId: 'school_apex',
+    userId: 'usr_proprietor1',
+    userName: 'Chief Dr. Arthur Pendelton',
+    userRole: 'PROPRIETOR',
+    action: 'Updated School Settings',
+    module: 'SETTINGS',
+    details: 'Updated Academic Session to 2025/2026 and confirmed custom subject catalog.',
+    createdAt: '2025-09-15T16:00:00.000Z'
   }
 ];
 
@@ -759,3 +933,199 @@ export const INITIAL_EXAM_TIMETABLES: ExamTimetable[] = [
     ]
   }
 ];
+
+export const INITIAL_CHAT_ROOMS: ChatRoom[] = [
+  {
+    id: 'cr_101',
+    schoolId: 'school_apex',
+    studentId: 'std_ss3_1',
+    studentName: 'Adebayo Tobi',
+    className: 'SS 3',
+    parentUserId: 'usr_p1',
+    parentName: 'Chief Adebayo Tobi Sr.',
+    teacherUserId: 'usr_t1',
+    teacherName: 'Mr. David Okon',
+    subject: 'Physics & Mathematics Academic Progress',
+    lastMessage: 'Thank you Mr. Okon. Tobi will work hard on his calculus problem set tonight.',
+    lastMessageAt: '2026-08-08T15:45:00.000Z',
+    unreadByParent: false,
+    unreadByTeacher: false,
+    createdAt: '2026-08-07T10:00:00.000Z'
+  },
+  {
+    id: 'cr_102',
+    schoolId: 'school_apex',
+    studentId: 'std_ss2_1',
+    studentName: 'Grace Ibrahim',
+    className: 'SS 2',
+    parentUserId: 'usr_p1',
+    parentName: 'Chief Adebayo Tobi Sr.',
+    teacherUserId: 'usr_t1',
+    teacherName: 'Mr. David Okon',
+    subject: 'Class Transfer & Physics Score Inquiry',
+    lastMessage: 'Grace has adapted remarkably well to SS 2 Science. Her score was 89% in the recent test!',
+    lastMessageAt: '2026-08-09T11:20:00.000Z',
+    unreadByParent: true,
+    unreadByTeacher: false,
+    createdAt: '2026-08-08T09:30:00.000Z'
+  },
+  {
+    id: 'cr_103',
+    schoolId: 'school_apex',
+    studentId: 'std_pri3_1',
+    studentName: 'Joy Nnamdi',
+    className: 'Primary 3',
+    parentUserId: 'usr_p1',
+    parentName: 'Chief Adebayo Tobi Sr.',
+    teacherUserId: 'usr_t3',
+    teacherName: 'Mr. Chimedi Nwosu',
+    subject: 'Basic Science Nature Excursion Project',
+    lastMessage: 'Good afternoon Mr. Nwosu, please let us know if Joy needs extra drawing materials for her plant project.',
+    lastMessageAt: '2026-08-10T14:10:00.000Z',
+    unreadByParent: false,
+    unreadByTeacher: true,
+    createdAt: '2026-08-09T14:00:00.000Z'
+  }
+];
+
+export const INITIAL_CHAT_MESSAGES: ChatMessage[] = [
+  // Room cr_101
+  {
+    id: 'msg_001',
+    chatRoomId: 'cr_101',
+    senderId: 'usr_p1',
+    senderName: 'Chief Adebayo Tobi Sr.',
+    senderRole: 'PARENT',
+    senderAvatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80',
+    content: 'Good day Mr. Okon. I wanted to check on Tobi’s readiness for the upcoming West African Physics mock examinations.',
+    createdAt: '2026-08-07T10:05:00.000Z'
+  },
+  {
+    id: 'msg_002',
+    chatRoomId: 'cr_101',
+    senderId: 'usr_t1',
+    senderName: 'Mr. David Okon',
+    senderRole: 'TEACHER',
+    senderAvatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80',
+    content: 'Hello Chief Adebayo! Tobi is performing exceptionally well. He scored 89 in Physics and 93 in Mathematics on his last term sheets. He just needs to review calculus derivation proofs.',
+    createdAt: '2026-08-07T11:15:00.000Z'
+  },
+  {
+    id: 'msg_003',
+    chatRoomId: 'cr_101',
+    senderId: 'usr_proprietor1',
+    senderName: 'Chief Dr. Arthur Pendelton',
+    senderRole: 'PROPRIETOR',
+    senderAvatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80',
+    content: '[Proprietor Executive Note]: Great work Mr. Okon and Chief Adebayo. The school board is proud of Tobi’s academic trajectory.',
+    createdAt: '2026-08-07T14:00:00.000Z'
+  },
+  {
+    id: 'msg_004',
+    chatRoomId: 'cr_101',
+    senderId: 'usr_p1',
+    senderName: 'Chief Adebayo Tobi Sr.',
+    senderRole: 'PARENT',
+    content: 'Thank you Mr. Okon. Tobi will work hard on his calculus problem set tonight.',
+    createdAt: '2026-08-08T15:45:00.000Z'
+  },
+
+  // Room cr_102
+  {
+    id: 'msg_005',
+    chatRoomId: 'cr_102',
+    senderId: 'usr_p1',
+    senderName: 'Chief Adebayo Tobi Sr.',
+    senderRole: 'PARENT',
+    content: 'Hello Mr. Okon, how is Grace adjusting after her recent transfer to the SS 2 Science Arm?',
+    createdAt: '2026-08-08T09:35:00.000Z'
+  },
+  {
+    id: 'msg_006',
+    chatRoomId: 'cr_102',
+    senderId: 'usr_t1',
+    senderName: 'Mr. David Okon',
+    senderRole: 'TEACHER',
+    content: 'Grace has adapted remarkably well to SS 2 Science. Her score was 89% in the recent test!',
+    createdAt: '2026-08-09T11:20:00.000Z'
+  },
+
+  // Room cr_103
+  {
+    id: 'msg_007',
+    chatRoomId: 'cr_103',
+    senderId: 'usr_p1',
+    senderName: 'Chief Adebayo Tobi Sr.',
+    senderRole: 'PARENT',
+    content: 'Good afternoon Mr. Nwosu, please let us know if Joy needs extra drawing materials for her plant project.',
+    createdAt: '2026-08-10T14:10:00.000Z'
+  }
+];
+
+export const INITIAL_PUBLIC_CHAT_MESSAGES: PublicChatMessage[] = [
+  {
+    id: 'pmsg_001',
+    schoolId: 'school_apex',
+    channel: 'general-announcements',
+    senderId: 'usr_proprietor1',
+    senderName: 'Chief Dr. Arthur Pendelton',
+    senderRole: 'PROPRIETOR',
+    senderAvatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80',
+    content: 'Welcome parents, teachers, vice principals, and administrators to the official TeXora Academic Communication Forum! We invite all stakeholders to share general feedback and school announcements here.',
+    createdAt: '2026-08-01T09:00:00.000Z'
+  },
+  {
+    id: 'pmsg_002',
+    schoolId: 'school_apex',
+    channel: 'general-announcements',
+    senderId: 'usr_vp1',
+    senderName: 'Dr. (Mrs.) Funke Adeyemi',
+    senderRole: 'VICE_PRINCIPAL',
+    senderAvatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80',
+    content: 'Reminder to all parents: The First Term Mid-Term Break commences on Thursday next week. Continuous assessment scoreheets are currently open for review.',
+    createdAt: '2026-08-05T10:30:00.000Z'
+  },
+  {
+    id: 'pmsg_003',
+    schoolId: 'school_apex',
+    channel: 'pta-forum',
+    senderId: 'usr_p1',
+    senderName: 'Chief Adebayo Tobi Sr.',
+    senderRole: 'PARENT',
+    senderAvatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80',
+    content: 'Good day executives and teachers. On behalf of the Parent-Teacher Association, we commend the school management on the newly upgraded Science and Robotics laboratory.',
+    createdAt: '2026-08-08T11:15:00.000Z'
+  },
+  {
+    id: 'pmsg_004',
+    schoolId: 'school_apex',
+    channel: 'pta-forum',
+    senderId: 'usr_t1',
+    senderName: 'Mr. David Okon',
+    senderRole: 'TEACHER',
+    senderAvatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80',
+    content: 'Thank you Chief Adebayo! The SS 2 and SS 3 Physics students have already begun using the digital oscilloscopes and optics kits.',
+    createdAt: '2026-08-08T12:00:00.000Z'
+  },
+  {
+    id: 'pmsg_005',
+    schoolId: 'school_apex',
+    channel: 'academic-qa',
+    senderId: 'usr_p1',
+    senderName: 'Chief Adebayo Tobi Sr.',
+    senderRole: 'PARENT',
+    content: 'Please could someone clarify the deadline for submitting SS 3 West African Mock Examination registration slips?',
+    createdAt: '2026-08-09T14:20:00.000Z'
+  },
+  {
+    id: 'pmsg_006',
+    schoolId: 'school_apex',
+    channel: 'academic-qa',
+    senderId: 'usr_admin1',
+    senderName: 'Mrs. Folake Solanke',
+    senderRole: 'SCHOOL_ADMIN',
+    content: 'Hello Chief Adebayo, all WAEC mock examination slips should be submitted to the Administrative Block by Friday at 4:00 PM.',
+    createdAt: '2026-08-09T15:00:00.000Z'
+  }
+];
+

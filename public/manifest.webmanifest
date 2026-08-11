@@ -1,0 +1,16 @@
+{
+  "short_name": "TeXora",
+  "name": "TeXora Forge - School Academic Management Platform",
+  "icons": [
+    {
+      "src": "/src/assets/images/texora_app_logo_1786115622051.jpg",
+      "sizes": "192x192 512x512",
+      "type": "image/jpeg"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0f172a",
+  "theme_color": "#4f46e5",
+  "display": "standalone",
+  "orientation": "portrait"
+}

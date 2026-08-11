@@ -3,7 +3,73 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export type UserRole = 'SCHOOL_ADMIN' | 'TEACHER' | 'PARENT';
+export type UserRole = 'PROPRIETOR' | 'VICE_PRINCIPAL' | 'SCHOOL_ADMIN' | 'TEACHER' | 'PARENT';
+
+export type AdminPermission =
+  | 'ADMISSIONS'
+  | 'STUDENT_MANAGEMENT'
+  | 'STUDENT_RECORDS'
+  | 'GUARDIAN_MANAGEMENT'
+  | 'CLASS_ASSIGNMENT'
+  | 'STUDENT_PROMOTION'
+  | 'LESSON_NOTE_REVIEW'
+  | 'LESSON_PLAN_REVIEW'
+  | 'WEEKLY_DIARY_REVIEW'
+  | 'EXAM_ADMINISTRATION'
+  | 'ACADEMIC_REVIEW'
+  | 'USER_ROLE_MANAGEMENT'
+  | 'SYSTEM_SETTINGS'
+  | 'PROPRIETOR_MANAGEMENT'
+  | 'AUDIT_LOG_VIEW';
+
+export interface AuditLogEntry {
+  id: string;
+  schoolId: string;
+  userId: string;
+  userName: string;
+  userRole: UserRole;
+  action: string; // e.g. "Admitted Student", "Approved Lesson Note"
+  module: 'ADMISSIONS' | 'ACADEMIC' | 'CLASSES' | 'LESSON_NOTES' | 'EXAMINATIONS' | 'USER_MANAGEMENT' | 'SETTINGS';
+  details: string;
+  createdAt: string;
+}
+
+export type SubscriptionPlanTier = 'FREE' | 'GROWTH' | 'PRO' | 'ENTERPRISE';
+export type BillingCycle = 'MONTHLY' | 'ANNUAL';
+export type SubscriptionStatus = 'ACTIVE' | 'TRIAL' | 'PAST_DUE' | 'CANCELLED';
+
+export interface SubscriptionInvoice {
+  id: string;
+  invoiceNo: string;
+  date: string;
+  amount: number;
+  currency: string;
+  description: string;
+  status: 'PAID' | 'PENDING' | 'FAILED';
+  paymentMethod: string;
+  pdfUrl?: string;
+}
+
+export interface SchoolSubscription {
+  planTier: SubscriptionPlanTier;
+  billingCycle: BillingCycle;
+  status: SubscriptionStatus;
+  maxStudents: number;
+  maxTeachers: number;
+  storageGb: number;
+  startDate: string;
+  renewsAt: string;
+  amountPaid: number;
+  currency: string;
+  autoRenew: boolean;
+  paymentMethod?: {
+    type: string;
+    last4: string;
+    cardBrand: string;
+    expDate: string;
+  };
+  invoiceHistory: SubscriptionInvoice[];
+}
 
 export interface School {
   id: string;
@@ -15,6 +81,7 @@ export interface School {
   academicSession: string; // e.g. "2025/2026"
   academicTerm: 'First Term' | 'Second Term' | 'Third Term';
   subjects?: string[]; // Custom list of academic subjects managed by School Admin
+  subscription?: SchoolSubscription;
   createdAt: string;
 }
 
@@ -24,6 +91,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  permissions?: AdminPermission[]; // Custom granular permissions for PROPRIETOR, VICE_PRINCIPAL, SCHOOL_ADMIN
   avatarUrl?: string;
   phone?: string;
   // For Teacher accounts:
@@ -330,3 +398,46 @@ export interface NotificationItem {
   linkId?: string; // ID of related submission
   createdAt: string;
 }
+
+export interface ChatMessage {
+  id: string;
+  chatRoomId: string;
+  senderId: string;
+  senderName: string;
+  senderRole: UserRole;
+  senderAvatarUrl?: string;
+  content: string;
+  attachmentUrl?: string;
+  createdAt: string;
+}
+
+export interface PublicChatMessage {
+  id: string;
+  schoolId: string;
+  channel: 'general-announcements' | 'pta-forum' | 'academic-qa' | 'school-events';
+  senderId: string;
+  senderName: string;
+  senderRole: UserRole;
+  senderAvatarUrl?: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface ChatRoom {
+  id: string;
+  schoolId: string;
+  studentId: string;
+  studentName: string;
+  className: string;
+  parentUserId: string;
+  parentName: string;
+  teacherUserId: string;
+  teacherName: string;
+  subject: string; // e.g. "Physics Progress - Adebayo Tobi", "Attendance Query"
+  lastMessage: string;
+  lastMessageAt: string;
+  unreadByParent: boolean;
+  unreadByTeacher: boolean;
+  createdAt: string;
+}
+

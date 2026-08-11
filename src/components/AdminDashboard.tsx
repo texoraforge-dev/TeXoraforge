@@ -18,7 +18,8 @@ import {
   BookOpen,
   TrendingUp,
   Sparkles,
-  Download
+  Download,
+  CreditCard
 } from 'lucide-react';
 import { useAppStore } from '../storage';
 import { Submission } from '../types';
@@ -35,7 +36,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onNavigate,
   onReviewSubmission
 }) => {
-  const { school, users, classes, students, submissions, attendance } = useAppStore();
+  const { school, users, classes, students, submissions, attendance, currentUser } = useAppStore();
+
+  const isProprietor = currentUser?.role === 'PROPRIETOR';
+  const isVP = currentUser?.role === 'VICE_PRINCIPAL';
+  const isAdmin = currentUser?.role === 'SCHOOL_ADMIN';
 
   const teachers = users.filter(u => u.role === 'TEACHER');
   const pendingSubmissions = submissions.filter(s => s.status === 'PENDING');
@@ -58,18 +63,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   return (
     <div className="space-y-6">
       
-      {/* Welcome Banner */}
-      <div className="p-6 sm:p-8 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-slate-800 text-white relative overflow-hidden shadow-xl">
-        <div className="relative z-10 max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-xs font-semibold mb-3">
-            <Sparkles className="h-3.5 w-3.5 text-indigo-400" />
-            <span>School Principal & Executive Command</span>
+      {/* Welcome Banner Tailored by Role */}
+      <div className={`p-6 sm:p-8 rounded-2xl border text-white relative overflow-hidden shadow-xl transition-all ${
+        isProprietor
+          ? 'bg-gradient-to-r from-slate-900 via-amber-950 to-slate-900 border-amber-800/80'
+          : isVP
+          ? 'bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 border-blue-800/80'
+          : 'bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border-slate-800'
+      }`}>
+        <div className="relative z-10 max-w-3xl">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-amber-300 text-xs font-semibold mb-3">
+            <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+            <span>
+              {isProprietor ? 'Executive Board & Proprietor Oversight' : isVP ? 'Vice Principal & Admissions Office' : 'School Principal & Executive Command'}
+            </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
             {school?.name || 'Academic System'}
           </h1>
           <p className="text-sm text-slate-300 mt-1">
-            Motto: <span className="italic text-indigo-200">"{school?.motto}"</span> • Academic Term: <span className="font-semibold text-white">{school?.academicSession} ({school?.academicTerm})</span>
+            Logged in as <span className="font-bold text-white">{currentUser?.name || 'Administrator'}</span> ({currentUser?.role.replace('_', ' ')}) • Motto: <span className="italic text-indigo-200">"{school?.motto}"</span>
           </p>
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -91,17 +104,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             >
               <FileCheck2 className="h-4 w-4" /> Score Approvals & Reports
             </button>
+            {isProprietor && (
+              <button
+                onClick={() => onNavigate('user_permissions')}
+                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold flex items-center gap-2 shadow-md transition-all cursor-pointer"
+              >
+                <Sparkles className="h-4 w-4" /> Manage User Roles
+              </button>
+            )}
             <button
-              onClick={() => onNavigate('teachers')}
+              onClick={() => onNavigate('audit_logs')}
               className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold flex items-center gap-2 transition-all cursor-pointer"
             >
-              <Plus className="h-4 w-4" /> Provision Teacher
-            </button>
-            <button
-              onClick={() => onNavigate('students')}
-              className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-2 shadow-md transition-all cursor-pointer"
-            >
-              <TrendingUp className="h-4 w-4" /> Class Transition & Promotion
+              <Clock className="h-4 w-4" /> Audit Activity Log
             </button>
             <button
               onClick={handleDownloadCSVReport}

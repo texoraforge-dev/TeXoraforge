@@ -15,9 +15,16 @@ import {
   UserCheck,
   ShieldCheck,
   ChevronRight,
-  BookOpenCheck
+  BookOpenCheck,
+  Key,
+  Clock,
+  Sparkles,
+  MessageSquare,
+  MessagesSquare
 } from 'lucide-react';
 import { UserRole } from '../types';
+import { useAppStore } from '../storage';
+import { getRoleBadgeInfo, canAccessView } from '../lib/permissions';
 
 interface SidebarProps {
   currentView: string;
@@ -39,8 +46,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
   role,
   pendingReviewCount = 0
 }) => {
-  const isAdmin = role === 'SCHOOL_ADMIN';
-  const isParent = role === 'PARENT';
+  const { currentUser } = useAppStore();
+  const effectiveUser = currentUser || { id: '', schoolId: '', name: '', email: '', role };
+  const roleBadge = getRoleBadgeInfo(effectiveUser.role);
+
+  const isProprietor = effectiveUser.role === 'PROPRIETOR';
+  const isVP = effectiveUser.role === 'VICE_PRINCIPAL';
+  const isAdmin = effectiveUser.role === 'SCHOOL_ADMIN' || isProprietor || isVP;
+  const isParent = effectiveUser.role === 'PARENT';
 
   const adminNavItems: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -57,6 +70,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
       badge: pendingReviewCount > 0 ? pendingReviewCount : null
     },
     { id: 'attendance', label: 'Attendance Reports', icon: CalendarCheck2 },
+    { id: 'public_chat', label: 'Parent-Teacher Room', icon: MessagesSquare },
+    { id: 'direct_chat', label: '1 on 1 Parent-Teacher Room', icon: MessageSquare },
+    { id: 'user_permissions', label: 'User Roles & Permissions', icon: Key },
+    { id: 'audit_logs', label: 'Activity & Audit Log', icon: Clock },
     { id: 'settings', label: 'School Settings', icon: Settings }
   ];
 
@@ -65,33 +82,36 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'timetable', label: 'Class & Exam Timetables', icon: CalendarCheck2 },
     { id: 'scores', label: 'Continuous Assessment & Scores', icon: FileText },
     { id: 'teacher_submissions', label: 'My Lesson Submissions', icon: FileText },
-    { id: 'teacher_attendance', label: 'Mark Attendance', icon: UserCheck }
+    { id: 'teacher_attendance', label: 'Mark Attendance', icon: UserCheck },
+    { id: 'public_chat', label: 'Parent-Teacher Room', icon: MessagesSquare },
+    { id: 'direct_chat', label: '1 on 1 Parent-Teacher Room', icon: MessageSquare }
   ];
 
   const parentNavItems: NavItem[] = [
     { id: 'parent', label: 'Parent Portal Home', icon: ShieldCheck },
+    { id: 'public_chat', label: 'Parent-Teacher Room', icon: MessagesSquare },
+    { id: 'direct_chat', label: '1 on 1 Parent-Teacher Room', icon: MessageSquare },
     { id: 'timetable', label: 'Class & Exam Timetables', icon: CalendarCheck2 },
     { id: 'scores', label: 'Terminal Report Cards', icon: FileText }
   ];
 
-  const navItems = isAdmin ? adminNavItems : isParent ? parentNavItems : teacherNavItems;
+  const rawNavItems = isAdmin ? adminNavItems : isParent ? parentNavItems : teacherNavItems;
+
+  // Filter items based on access rights
+  const navItems = rawNavItems.filter(item => canAccessView(effectiveUser, item.id));
 
   return (
-    <aside className="w-64 bg-slate-900 text-slate-300 hidden md:flex flex-col border-r border-slate-800 min-h-[calc(100vh-4rem)]">
+    <aside className="w-64 bg-slate-900 text-slate-300 hidden md:flex flex-col border-r border-slate-800 min-h-[calc(100vh-4rem)] shrink-0">
       
       {/* Role Badge Indicator */}
       <div className="p-4 border-b border-slate-800/80">
-        <div className={`p-3 rounded-xl border flex items-center gap-3 ${
-          isAdmin 
-            ? 'bg-purple-950/40 border-purple-800/60 text-purple-200' 
-            : 'bg-emerald-950/40 border-emerald-800/60 text-emerald-200'
-        }`}>
-          <div className={`p-2 rounded-lg ${isAdmin ? 'bg-purple-900/60' : 'bg-emerald-900/60'}`}>
-            {isAdmin ? <ShieldCheck className="h-5 w-5 text-purple-400" /> : <BookOpenCheck className="h-5 w-5 text-emerald-400" />}
+        <div className={`p-3 rounded-xl border flex items-center gap-3 ${roleBadge.bgClass} ${roleBadge.borderClass}`}>
+          <div className="p-2 rounded-lg bg-slate-900/60 shrink-0">
+            <ShieldCheck className={`h-5 w-5 ${roleBadge.textClass}`} />
           </div>
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Current Role</p>
-            <p className="text-sm font-bold text-white">{isAdmin ? 'School Admin' : 'Subject Teacher'}</p>
+          <div className="overflow-hidden">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Active Role</p>
+            <p className={`text-xs font-extrabold truncate ${roleBadge.textClass}`}>{roleBadge.label}</p>
           </div>
         </div>
       </div>
@@ -110,7 +130,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               key={item.id}
               onClick={() => onNavigate(item.id)}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-xs transition-all ${
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-xs transition-all cursor-pointer ${
                 isActive
                   ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 font-semibold'
                   : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60'

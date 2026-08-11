@@ -22,6 +22,10 @@ import { SchoolStudentRoster } from './components/SchoolStudentRoster';
 import { ScoreEntryView } from './components/ScoreEntryView';
 import { ParentPortal } from './components/ParentPortal';
 import { TimetableManagement } from './components/TimetableManagement';
+import { PermissionManagement } from './components/PermissionManagement';
+import { AuditLogView } from './components/AuditLogView';
+import { TeacherParentChat } from './components/TeacherParentChat';
+import { PublicParentTeacherChat } from './components/PublicParentTeacherChat';
 import { LessonNoteModal } from './components/modals/LessonNoteModal';
 import { UploadPdfModal } from './components/modals/UploadPdfModal';
 import { WeeklyDiaryModal } from './components/modals/WeeklyDiaryModal';
@@ -90,8 +94,8 @@ export default function App() {
           {/* Main Content Area */}
           <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full overflow-x-hidden">
             
-            {/* Admin Views */}
-            {currentUser.role === 'SCHOOL_ADMIN' && (
+            {/* Admin / Executive / VP Views */}
+            {(currentUser.role === 'PROPRIETOR' || currentUser.role === 'VICE_PRINCIPAL' || currentUser.role === 'SCHOOL_ADMIN') && (
               <>
                 {currentView === 'dashboard' && (
                   <AdminDashboard
@@ -111,7 +115,13 @@ export default function App() {
                   />
                 )}
                 {currentView === 'attendance' && <AttendanceView />}
+                {currentView === 'public_chat' && (
+                  <PublicParentTeacherChat onStartDirectChat={() => setCurrentView('direct_chat')} />
+                )}
+                {(currentView === 'direct_chat' || currentView === 'chat') && <TeacherParentChat />}
                 {currentView === 'timetable' && <TimetableManagement onNavigate={(v) => setCurrentView(v)} />}
+                {currentView === 'user_permissions' && <PermissionManagement onNavigate={(v) => setCurrentView(v)} />}
+                {currentView === 'audit_logs' && <AuditLogView />}
                 {currentView === 'settings' && <SchoolSettings />}
                 {currentView === 'parent' && <ParentPortal />}
               </>
@@ -156,13 +166,22 @@ export default function App() {
                 {currentView === 'timetable' && (
                   <TimetableManagement onNavigate={(v) => setCurrentView(v)} />
                 )}
+
+                {currentView === 'public_chat' && (
+                  <PublicParentTeacherChat onStartDirectChat={() => setCurrentView('direct_chat')} />
+                )}
+                {(currentView === 'direct_chat' || currentView === 'chat') && <TeacherParentChat />}
               </>
             )}
 
             {/* Parent Views */}
             {currentUser.role === 'PARENT' && (
               <>
-                {currentView === 'timetable' ? (
+                {currentView === 'public_chat' ? (
+                  <PublicParentTeacherChat onStartDirectChat={() => setCurrentView('direct_chat')} />
+                ) : (currentView === 'direct_chat' || currentView === 'chat') ? (
+                  <TeacherParentChat />
+                ) : currentView === 'timetable' ? (
                   <TimetableManagement onNavigate={(v) => setCurrentView(v)} />
                 ) : (
                   <ParentPortal />

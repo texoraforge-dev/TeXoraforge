@@ -18,7 +18,12 @@ import {
   StudentReportCard,
   SubjectReportItem,
   ClassTimetable,
-  ExamTimetable
+  ExamTimetable,
+  AuditLogEntry,
+  AdminPermission,
+  ChatRoom,
+  ChatMessage,
+  PublicChatMessage
 } from './types';
 import {
   INITIAL_SCHOOLS,
@@ -33,6 +38,10 @@ import {
   INITIAL_TIMETABLES,
   INITIAL_CLASS_TIMETABLES,
   INITIAL_EXAM_TIMETABLES,
+  INITIAL_AUDIT_LOGS,
+  INITIAL_CHAT_ROOMS,
+  INITIAL_CHAT_MESSAGES,
+  INITIAL_PUBLIC_CHAT_MESSAGES,
   DEFAULT_SCHOOL_SUBJECTS
 } from './mockData';
 import { SupabaseService } from './lib/supabaseService';
@@ -50,6 +59,10 @@ const STORAGE_KEYS = {
   HOMEWORK: 'texora_homework_v1',
   CLASS_TIMETABLES: 'texora_class_timetables_v2',
   EXAM_TIMETABLES: 'texora_exam_timetables_v2',
+  AUDIT_LOGS: 'texora_audit_logs_v1',
+  CHAT_ROOMS: 'texora_chat_rooms_v1',
+  CHAT_MESSAGES: 'texora_chat_messages_v1',
+  PUBLIC_CHAT_MESSAGES: 'texora_public_chat_messages_v1',
   CURRENT_USER_ID: 'texora_current_user_id_v1',
   CURRENT_SCHOOL_ID: 'texora_current_school_id_v1',
 };
@@ -111,11 +124,20 @@ export class AppStorage {
     if (!localStorage.getItem(STORAGE_KEYS.EXAM_TIMETABLES)) {
       setStored(STORAGE_KEYS.EXAM_TIMETABLES, INITIAL_EXAM_TIMETABLES);
     }
+    if (!localStorage.getItem(STORAGE_KEYS.AUDIT_LOGS)) {
+      setStored(STORAGE_KEYS.AUDIT_LOGS, INITIAL_AUDIT_LOGS);
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.CHAT_ROOMS)) {
+      setStored(STORAGE_KEYS.CHAT_ROOMS, INITIAL_CHAT_ROOMS);
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.CHAT_MESSAGES)) {
+      setStored(STORAGE_KEYS.CHAT_MESSAGES, INITIAL_CHAT_MESSAGES);
+    }
     if (!localStorage.getItem(STORAGE_KEYS.CURRENT_SCHOOL_ID)) {
       setStored(STORAGE_KEYS.CURRENT_SCHOOL_ID, 'school_apex');
     }
     if (!localStorage.getItem(STORAGE_KEYS.CURRENT_USER_ID)) {
-      setStored(STORAGE_KEYS.CURRENT_USER_ID, 'usr_admin1'); // Default to Admin
+      setStored(STORAGE_KEYS.CURRENT_USER_ID, 'usr_proprietor1'); // Default to Proprietor
     }
 
     if (isSupabaseConfigured()) {
@@ -200,10 +222,28 @@ export class AppStorage {
   }
 
   static getCurrentUser(): User | null {
-    const currentUserId = getStored<string | null>(STORAGE_KEYS.CURRENT_USER_ID, 'usr_admin1');
+    const currentUserId = getStored<string | null>(STORAGE_KEYS.CURRENT_USER_ID, 'usr_proprietor1');
     if (!currentUserId) return null;
     const users = getStored<User[]>(STORAGE_KEYS.USERS, INITIAL_USERS);
     return users.find(u => u.id === currentUserId) || null;
+  }
+
+  static getAuditLogs(schoolId?: string): AuditLogEntry[] {
+    const logs = getStored<AuditLogEntry[]>(STORAGE_KEYS.AUDIT_LOGS, INITIAL_AUDIT_LOGS);
+    if (!schoolId) return logs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return logs.filter(l => l.schoolId === schoolId).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  static addAuditLog(entry: Omit<AuditLogEntry, 'id' | 'createdAt'>): AuditLogEntry {
+    const logs = getStored<AuditLogEntry[]>(STORAGE_KEYS.AUDIT_LOGS, INITIAL_AUDIT_LOGS);
+    const newEntry: AuditLogEntry = {
+      ...entry,
+      id: 'log_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+      createdAt: new Date().toISOString()
+    };
+    logs.unshift(newEntry); // Latest first
+    setStored(STORAGE_KEYS.AUDIT_LOGS, logs);
+    return newEntry;
   }
 
   static setCurrentUserId(userId: string | null) {
@@ -314,7 +354,106 @@ export class AppStorage {
     }
   }
 
-  static createTeacher(teacher: Omit<User, 'id' | 'createdAt' | 'role'>) {
+  static createUser(user: Omit<User, 'id' | 'createdAt'>, actor?: User) {
+    const users = getStored<User[]>(STORAGE_KEYS.USERS, INITIAL_USERS);
+    const newUserId = 'usr_' + Date.now();
+    const newUser: User = {
+      ...user,
+      id: newUserId,
+      active: true,
+      createdAt: new Date().toISOString()
+    };
+    users.push(newUser);
+    setStored(STORAGE_KEYS.USERS, users);
+
+    // Audit log
+    const actorUser = actor || this.getCurrentUser();
+    if (actorUser) {
+      this.addAuditLog({
+        schoolId: newUser.schoolId,
+        userId: actorUser.id,
+        userName: actorUser.name,
+        userRole: actorUser.role,
+        action: `Created ${newUser.role.replace('_', ' ')} Account`,
+        module: 'USER_MANAGEMENT',
+        details: `Created account for ${newUser.name} (${newUser.email}) with role ${newUser.role}.`
+      });
+    }
+
+    if (isSupabaseConfigured()) {
+      SupabaseService.upsertUser(newUser).catch(console.error);
+    }
+
+    return newUser;
+  }
+
+  static updateUserPermissions(userId: string, permissions: AdminPermission[], actor?: User): User | null {
+    const users = getStored<User[]>(STORAGE_KEYS.USERS, INITIAL_USERS);
+    const idx = users.findIndex(u => u.id === userId);
+    if (idx === -1) return null;
+
+    const targetUser = users[idx];
+    users[idx] = {
+      ...targetUser,
+      permissions
+    };
+    setStored(STORAGE_KEYS.USERS, users);
+
+    // Audit log
+    const actorUser = actor || this.getCurrentUser();
+    if (actorUser) {
+      this.addAuditLog({
+        schoolId: targetUser.schoolId,
+        userId: actorUser.id,
+        userName: actorUser.name,
+        userRole: actorUser.role,
+        action: 'Updated User Permissions',
+        module: 'USER_MANAGEMENT',
+        details: `Updated permissions for ${targetUser.name} (${targetUser.role}): ${permissions.length} permission(s) assigned.`
+      });
+    }
+
+    if (isSupabaseConfigured()) {
+      SupabaseService.upsertUser(users[idx]).catch(console.error);
+    }
+
+    return users[idx];
+  }
+
+  static toggleUserActive(userId: string, actor?: User): User | null {
+    const users = getStored<User[]>(STORAGE_KEYS.USERS, INITIAL_USERS);
+    const idx = users.findIndex(u => u.id === userId);
+    if (idx === -1) return null;
+
+    const newActiveState = !users[idx].active;
+    users[idx] = {
+      ...users[idx],
+      active: newActiveState
+    };
+    setStored(STORAGE_KEYS.USERS, users);
+
+    // Audit log
+    const actorUser = actor || this.getCurrentUser();
+    if (actorUser) {
+      this.addAuditLog({
+        schoolId: users[idx].schoolId,
+        userId: actorUser.id,
+        userName: actorUser.name,
+        userRole: actorUser.role,
+        action: newActiveState ? 'Activated User Account' : 'Deactivated User Account',
+        module: 'USER_MANAGEMENT',
+        details: `${newActiveState ? 'Activated' : 'Deactivated'} account for ${users[idx].name} (${users[idx].role}).`
+      });
+    }
+
+    if (isSupabaseConfigured()) {
+      SupabaseService.upsertUser(users[idx]).catch(console.error);
+    }
+
+    return users[idx];
+  }
+
+  static createTeacher(teacher: Omit<User, 'id' | 'createdAt' | 'role'>, actor?: User) {
     const users = this.getUsers();
     const newTeacher: User = {
       ...teacher,
@@ -325,6 +464,20 @@ export class AppStorage {
     };
     users.push(newTeacher);
     setStored(STORAGE_KEYS.USERS, users);
+
+    // Audit log
+    const actorUser = actor || this.getCurrentUser();
+    if (actorUser) {
+      this.addAuditLog({
+        schoolId: teacher.schoolId,
+        userId: actorUser.id,
+        userName: actorUser.name,
+        userRole: actorUser.role,
+        action: 'Provisioned Teacher Account',
+        module: 'USER_MANAGEMENT',
+        details: `Provisioned teacher account for ${newTeacher.name} (${newTeacher.email}).`
+      });
+    }
 
     // Notify teacher
     this.sendNotification({
@@ -383,6 +536,20 @@ export class AppStorage {
     const newStd: Student = { ...student, id: 'std_' + Date.now() };
     students.push(newStd);
     setStored(STORAGE_KEYS.STUDENTS, students);
+
+    // Audit log
+    const actorUser = this.getCurrentUser();
+    if (actorUser) {
+      this.addAuditLog({
+        schoolId: student.schoolId,
+        userId: actorUser.id,
+        userName: actorUser.name,
+        userRole: actorUser.role,
+        action: 'Admitted New Student',
+        module: 'ADMISSIONS',
+        details: `Admitted student ${newStd.fullName} (Admission No: ${newStd.admissionNo}).`
+      });
+    }
 
     if (isSupabaseConfigured()) {
       SupabaseService.upsertStudent(newStd).catch(console.error);
@@ -450,6 +617,17 @@ export class AppStorage {
     sub.updatedAt = new Date().toISOString();
 
     setStored(STORAGE_KEYS.SUBMISSIONS, submissions);
+
+    // Audit log
+    this.addAuditLog({
+      schoolId: sub.schoolId,
+      userId: adminUser.id,
+      userName: adminUser.name,
+      userRole: adminUser.role,
+      action: status === 'APPROVED' ? 'Approved Lesson Submission' : status === 'REJECTED' ? 'Rejected Lesson Submission' : 'Requested Revision on Submission',
+      module: 'LESSON_NOTES',
+      details: `${status === 'APPROVED' ? 'Approved' : status === 'REJECTED' ? 'Rejected' : 'Requested revision on'} ${sub.type.replace('_', ' ')} "${sub.title}" by ${sub.teacherName}.`
+    });
 
     if (isSupabaseConfigured()) {
       SupabaseService.upsertSubmission(sub).catch(console.error);
@@ -1024,6 +1202,135 @@ export class AppStorage {
     }
     return null;
   }
+
+  // Chat & Messaging Methods
+  static getChatRooms(schoolId?: string): ChatRoom[] {
+    const rooms = getStored<ChatRoom[]>(STORAGE_KEYS.CHAT_ROOMS, INITIAL_CHAT_ROOMS);
+    if (!schoolId) return rooms;
+    return rooms.filter(r => r.schoolId === schoolId);
+  }
+
+  static getChatMessages(chatRoomId?: string): ChatMessage[] {
+    const msgs = getStored<ChatMessage[]>(STORAGE_KEYS.CHAT_MESSAGES, INITIAL_CHAT_MESSAGES);
+    if (!chatRoomId) return msgs;
+    return msgs.filter(m => m.chatRoomId === chatRoomId);
+  }
+
+  static saveChatRoom(room: Partial<ChatRoom> & { schoolId: string; studentId: string; parentUserId: string; teacherUserId: string; subject: string }): ChatRoom {
+    const rooms = getStored<ChatRoom[]>(STORAGE_KEYS.CHAT_ROOMS, INITIAL_CHAT_ROOMS);
+    const existingIndex = rooms.findIndex(r => r.id === room.id || (r.studentId === room.studentId && r.teacherUserId === room.teacherUserId && r.parentUserId === room.parentUserId));
+    
+    let savedRoom: ChatRoom;
+    if (existingIndex >= 0) {
+      savedRoom = {
+        ...rooms[existingIndex],
+        ...room,
+      };
+      rooms[existingIndex] = savedRoom;
+    } else {
+      savedRoom = {
+        id: room.id || 'cr_' + Date.now(),
+        schoolId: room.schoolId,
+        studentId: room.studentId,
+        studentName: room.studentName || 'Student',
+        className: room.className || 'Class',
+        parentUserId: room.parentUserId,
+        parentName: room.parentName || 'Parent',
+        teacherUserId: room.teacherUserId,
+        teacherName: room.teacherName || 'Teacher',
+        subject: room.subject,
+        lastMessage: room.lastMessage || 'Chat room opened.',
+        lastMessageAt: room.lastMessageAt || new Date().toISOString(),
+        unreadByParent: room.unreadByParent ?? false,
+        unreadByTeacher: room.unreadByTeacher ?? false,
+        createdAt: room.createdAt || new Date().toISOString()
+      };
+      rooms.unshift(savedRoom);
+    }
+    setStored(STORAGE_KEYS.CHAT_ROOMS, rooms);
+    return savedRoom;
+  }
+
+  static sendChatMessage(chatRoomId: string, sender: User, content: string, attachmentUrl?: string): ChatMessage {
+    const msgs = getStored<ChatMessage[]>(STORAGE_KEYS.CHAT_MESSAGES, INITIAL_CHAT_MESSAGES);
+    const newMsg: ChatMessage = {
+      id: 'msg_' + Date.now(),
+      chatRoomId,
+      senderId: sender.id,
+      senderName: sender.name,
+      senderRole: sender.role,
+      senderAvatarUrl: sender.avatarUrl,
+      content,
+      attachmentUrl,
+      createdAt: new Date().toISOString()
+    };
+    msgs.push(newMsg);
+    setStored(STORAGE_KEYS.CHAT_MESSAGES, msgs);
+
+    // Update room lastMessage
+    const rooms = getStored<ChatRoom[]>(STORAGE_KEYS.CHAT_ROOMS, INITIAL_CHAT_ROOMS);
+    const roomIdx = rooms.findIndex(r => r.id === chatRoomId);
+    if (roomIdx !== -1) {
+      rooms[roomIdx].lastMessage = sender.role === 'PROPRIETOR' ? `[Proprietor Note]: ${content}` : content;
+      rooms[roomIdx].lastMessageAt = newMsg.createdAt;
+      if (sender.role === 'TEACHER') {
+        rooms[roomIdx].unreadByParent = true;
+      } else if (sender.role === 'PARENT') {
+        rooms[roomIdx].unreadByTeacher = true;
+      }
+      setStored(STORAGE_KEYS.CHAT_ROOMS, rooms);
+    }
+
+    return newMsg;
+  }
+
+  static markChatRoomRead(chatRoomId: string, role: string): void {
+    const rooms = getStored<ChatRoom[]>(STORAGE_KEYS.CHAT_ROOMS, INITIAL_CHAT_ROOMS);
+    const idx = rooms.findIndex(r => r.id === chatRoomId);
+    if (idx !== -1) {
+      let changed = false;
+      if (role === 'PARENT' && rooms[idx].unreadByParent) {
+        rooms[idx].unreadByParent = false;
+        changed = true;
+      }
+      if (role === 'TEACHER' && rooms[idx].unreadByTeacher) {
+        rooms[idx].unreadByTeacher = false;
+        changed = true;
+      }
+      if (changed) {
+        setStored(STORAGE_KEYS.CHAT_ROOMS, rooms);
+      }
+    }
+  }
+
+  static getPublicChatMessages(schoolId?: string): PublicChatMessage[] {
+    const msgs = getStored<PublicChatMessage[]>(STORAGE_KEYS.PUBLIC_CHAT_MESSAGES, INITIAL_PUBLIC_CHAT_MESSAGES);
+    if (!schoolId) return msgs;
+    return msgs.filter(m => m.schoolId === schoolId);
+  }
+
+  static sendPublicChatMessage(
+    schoolId: string,
+    channel: 'general-announcements' | 'pta-forum' | 'academic-qa' | 'school-events',
+    sender: User,
+    content: string
+  ): PublicChatMessage {
+    const msgs = getStored<PublicChatMessage[]>(STORAGE_KEYS.PUBLIC_CHAT_MESSAGES, INITIAL_PUBLIC_CHAT_MESSAGES);
+    const newMsg: PublicChatMessage = {
+      id: 'pmsg_' + Date.now(),
+      schoolId,
+      channel,
+      senderId: sender.id,
+      senderName: sender.name,
+      senderRole: sender.role,
+      senderAvatarUrl: sender.avatarUrl,
+      content,
+      createdAt: new Date().toISOString()
+    };
+    msgs.push(newMsg);
+    setStored(STORAGE_KEYS.PUBLIC_CHAT_MESSAGES, msgs);
+    return newMsg;
+  }
 }
 
 // React custom hook for auto-syncing state on changes with Supabase live fetch
@@ -1096,7 +1403,11 @@ export function useAppStore() {
     const homework = AppStorage.getHomework(school?.id);
     const classTimetables = AppStorage.getClassTimetables(school?.id);
     const examTimetables = AppStorage.getExamTimetables(school?.id);
+    const auditLogs = AppStorage.getAuditLogs(school?.id);
     const notifications = currentUser ? AppStorage.getNotifications(currentUser.id) : [];
+    const chatRooms = AppStorage.getChatRooms(school?.id);
+    const chatMessages = AppStorage.getChatMessages();
+    const publicChatMessages = AppStorage.getPublicChatMessages(school?.id);
 
     return {
       school,
@@ -1110,7 +1421,11 @@ export function useAppStore() {
       homework,
       classTimetables,
       examTimetables,
+      auditLogs,
       notifications,
+      chatRooms,
+      chatMessages,
+      publicChatMessages,
       schools: AppStorage.getSchools(),
     };
   }, [version]);

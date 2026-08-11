@@ -26,7 +26,8 @@ import {
   Search,
   Tag,
   X,
-  Sparkles
+  Sparkles,
+  CreditCard
 } from 'lucide-react';
 import { useAppStore } from '../storage';
 import { DEFAULT_SCHOOL_SUBJECTS } from '../mockData';

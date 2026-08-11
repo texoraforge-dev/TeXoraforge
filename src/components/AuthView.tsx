@@ -15,7 +15,10 @@ import {
   Building2,
   AlertCircle,
   Database,
-  CheckCircle2
+  CheckCircle2,
+  Upload,
+  Image as ImageIcon,
+  X
 } from 'lucide-react';
 import { useAppStore } from '../storage';
 import { UserRole } from '../types';
@@ -45,6 +48,22 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
   const [schoolMotto, setSchoolMotto] = useState('');
   const [adminName, setAdminName] = useState('');
   const [adminEmail, setAdminEmail] = useState('');
+  const [schoolLogoUrl, setSchoolLogoUrl] = useState('');
+
+  const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setErrorMessage('Logo image file size must be less than 5MB.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSchoolLogoUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,7 +122,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
         });
       }
 
-      actions.createSchoolAndAdmin(schoolName, schoolMotto, adminName, adminEmail);
+      actions.createSchoolAndAdmin(schoolName, schoolMotto, adminName, adminEmail, schoolLogoUrl);
       setIsSubmitting(false);
       onSuccess();
     } catch (err: any) {
@@ -366,6 +385,44 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
                   onChange={e => setSchoolMotto(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
                 />
+              </div>
+
+              {/* School Logo Upload Field */}
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5 flex items-center justify-between">
+                  <span>Upload School Logo</span>
+                  <span className="text-[10px] text-slate-400 font-normal">Optional (PNG, JPG, SVG - Max 5MB)</span>
+                </label>
+                {schoolLogoUrl ? (
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-900 border border-slate-700">
+                    <img src={schoolLogoUrl} alt="Uploaded logo preview" className="h-12 w-12 object-contain rounded-lg bg-white/10 p-1" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-emerald-400 flex items-center gap-1">
+                        <CheckCircle2 className="h-3.5 w-3.5" /> Logo Uploaded
+                      </p>
+                      <p className="text-[10px] text-slate-400 truncate">Will appear on exam papers & official documents</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSchoolLogoUrl('')}
+                      className="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg transition-colors cursor-pointer"
+                      title="Remove Logo"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex items-center justify-center gap-2 p-3.5 rounded-xl bg-slate-900 border border-dashed border-slate-700 hover:border-indigo-500/80 hover:bg-slate-800/80 text-slate-400 hover:text-indigo-300 transition-all cursor-pointer group">
+                    <Upload className="h-4 w-4 text-indigo-400 group-hover:scale-110 transition-transform" />
+                    <span className="text-xs font-medium">Click to upload School Logo image</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoFileChange}
+                      className="hidden"
+                    />
+                  </label>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

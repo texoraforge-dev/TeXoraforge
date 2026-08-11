@@ -296,7 +296,7 @@ export class AppStorage {
   }
 
   // Actions
-  static createSchoolAndAdmin(schoolName: string, motto: string, adminName: string, adminEmail: string) {
+  static createSchoolAndAdmin(schoolName: string, motto: string, adminName: string, adminEmail: string, logoUrl?: string) {
     const schoolId = 'school_' + Date.now();
     const adminId = 'usr_admin_' + Date.now();
 
@@ -305,6 +305,7 @@ export class AppStorage {
       name: schoolName,
       motto: motto || 'Excellence in Education',
       code: 'SCH-' + Math.floor(1000 + Math.random() * 9000),
+      logoUrl: logoUrl || undefined,
       address: 'Main Campus',
       academicSession: '2025/2026',
       academicTerm: 'First Term',

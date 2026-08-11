@@ -839,14 +839,31 @@ export const ExamQuestionsManagement: React.FC = () => {
             <div className="space-y-6 text-slate-900 dark:text-slate-100 font-serif">
               
               {/* Institutional Header */}
-              <div className="text-center space-y-1.5 pb-4 border-b-2 border-slate-900 dark:border-slate-100">
-                <h1 className="text-xl font-black uppercase tracking-wider font-sans">
+              <div className="text-center space-y-1.5 pb-4 border-b-2 border-slate-900 dark:border-slate-100 flex flex-col items-center">
+                {school?.logoUrl ? (
+                  <img src={school.logoUrl} alt={school.name || 'School Logo'} className="h-16 w-auto max-w-[220px] object-contain mb-1" />
+                ) : (
+                  <div className="h-12 w-12 rounded-full bg-indigo-100 dark:bg-indigo-950/80 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center mb-1">
+                    <GraduationCap className="h-7 w-7 text-indigo-600 dark:text-indigo-400" />
+                  </div>
+                )}
+                <h1 className="text-2xl font-black uppercase tracking-wider font-sans text-slate-900 dark:text-white">
                   {school?.name || 'TeXora Academy'}
                 </h1>
-                <p className="text-xs font-sans font-bold uppercase tracking-widest text-slate-600 dark:text-slate-300">
+                {school?.motto && (
+                  <p className="text-xs italic font-sans text-slate-600 dark:text-slate-300">
+                    "{school.motto}"
+                  </p>
+                )}
+                {school?.address && (
+                  <p className="text-[11px] font-sans text-slate-500 dark:text-slate-400">
+                    {school.address}
+                  </p>
+                )}
+                <p className="text-sm font-sans font-bold uppercase tracking-widest text-slate-800 dark:text-slate-200 pt-1">
                   {activeExamSet.title}
                 </p>
-                <div className="flex items-center justify-center gap-4 text-xs font-sans font-medium text-slate-700 dark:text-slate-300 pt-1">
+                <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 text-xs font-sans font-medium text-slate-700 dark:text-slate-300 pt-1">
                   <span>Class: <strong>{activeExamSet.className}</strong></span>
                   <span>•</span>
                   <span>Subject: <strong>{activeExamSet.subject}</strong></span>

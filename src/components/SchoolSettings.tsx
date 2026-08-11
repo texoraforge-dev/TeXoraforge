@@ -27,7 +27,8 @@ import {
   Tag,
   X,
   Sparkles,
-  CreditCard
+  CreditCard,
+  Upload
 } from 'lucide-react';
 import { useAppStore } from '../storage';
 import { DEFAULT_SCHOOL_SUBJECTS } from '../mockData';
@@ -45,6 +46,21 @@ export const SchoolSettings: React.FC = () => {
   const [academicSession, setAcademicSession] = useState(school?.academicSession || '2025/2026');
   const [academicTerm, setAcademicTerm] = useState<'First Term' | 'Second Term' | 'Third Term'>(school?.academicTerm || 'First Term');
   const [savedGeneral, setSavedGeneral] = useState(false);
+
+  const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Logo file size must be less than 5MB');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   // Subject Management state
   const currentSubjects = school?.id ? actions.getSchoolSubjects(school.id) : DEFAULT_SCHOOL_SUBJECTS;
@@ -321,6 +337,33 @@ export const SchoolSettings: React.FC = () => {
                 onChange={e => setMotto(e.target.value)}
                 className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
               />
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1.5">School Official Logo</label>
+              <div className="flex flex-col sm:flex-row items-center gap-4 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+                <div className="h-14 w-14 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center p-1 overflow-hidden shrink-0">
+                  {logoUrl ? (
+                    <img src={logoUrl} alt="School Logo" className="h-full w-full object-contain" />
+                  ) : (
+                    <Logo size="md" />
+                  )}
+                </div>
+                <div className="flex-1 space-y-1 text-center sm:text-left">
+                  <p className="text-xs font-bold text-slate-900 dark:text-white">Upload New School Crest / Logo</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Replaces current logo on exam questions, report cards & identity cards (Max 5MB)</p>
+                </div>
+                <label className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shrink-0">
+                  <Upload className="h-4 w-4" />
+                  <span>Choose File</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoFileChange}
+                    className="hidden"
+                  />
+                </label>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

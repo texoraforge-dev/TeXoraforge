@@ -102,7 +102,7 @@ export function canAccessView(user: User | null | undefined, view: string): bool
     case 'submissions':
       return hasPermission(user, 'LESSON_NOTE_REVIEW') || hasPermission(user, 'LESSON_PLAN_REVIEW');
     case 'exam_questions':
-      return user.role === 'TEACHER' || user.role === 'PROPRIETOR' || user.role === 'SCHOOL_ADMIN' || user.role === 'VICE_PRINCIPAL' || hasPermission(user, 'EXAM_ADMINISTRATION');
+      return user.role === 'TEACHER' || user.role === 'SCHOOL_ADMIN' || user.role === 'VICE_PRINCIPAL' || hasPermission(user, 'EXAM_ADMINISTRATION');
     case 'attendance':
       return true;
     case 'settings':

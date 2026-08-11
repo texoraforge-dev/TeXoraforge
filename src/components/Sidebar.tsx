@@ -69,6 +69,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: FileCheck2,
       badge: pendingReviewCount > 0 ? pendingReviewCount : null
     },
+    { id: 'exam_questions', label: 'Exam Questions', icon: Sparkles },
     { id: 'attendance', label: 'Attendance Reports', icon: CalendarCheck2 },
     { id: 'public_chat', label: 'Parent-Teacher Room', icon: MessagesSquare },
     { id: 'direct_chat', label: '1 on 1 Parent-Teacher Room', icon: MessageSquare },
@@ -82,6 +83,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'timetable', label: 'Class & Exam Timetables', icon: CalendarCheck2 },
     { id: 'scores', label: 'Continuous Assessment & Scores', icon: FileText },
     { id: 'teacher_submissions', label: 'My Lesson Submissions', icon: FileText },
+    { id: 'exam_questions', label: 'Exam Questions', icon: Sparkles },
     { id: 'teacher_attendance', label: 'Mark Attendance', icon: UserCheck },
     { id: 'public_chat', label: 'Parent-Teacher Room', icon: MessagesSquare },
     { id: 'direct_chat', label: '1 on 1 Parent-Teacher Room', icon: MessageSquare }

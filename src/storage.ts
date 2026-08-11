@@ -23,7 +23,9 @@ import {
   AdminPermission,
   ChatRoom,
   ChatMessage,
-  PublicChatMessage
+  PublicChatMessage,
+  GeneratedExamSet,
+  ExamQuestion
 } from './types';
 import {
   INITIAL_SCHOOLS,
@@ -42,6 +44,7 @@ import {
   INITIAL_CHAT_ROOMS,
   INITIAL_CHAT_MESSAGES,
   INITIAL_PUBLIC_CHAT_MESSAGES,
+  INITIAL_EXAM_SETS,
   DEFAULT_SCHOOL_SUBJECTS
 } from './mockData';
 import { SupabaseService } from './lib/supabaseService';
@@ -63,6 +66,7 @@ const STORAGE_KEYS = {
   CHAT_ROOMS: 'texora_chat_rooms_v1',
   CHAT_MESSAGES: 'texora_chat_messages_v1',
   PUBLIC_CHAT_MESSAGES: 'texora_public_chat_messages_v1',
+  EXAM_SETS: 'texora_exam_sets_v1',
   CURRENT_USER_ID: 'texora_current_user_id_v1',
   CURRENT_SCHOOL_ID: 'texora_current_school_id_v1',
 };
@@ -1331,6 +1335,158 @@ export class AppStorage {
     setStored(STORAGE_KEYS.PUBLIC_CHAT_MESSAGES, msgs);
     return newMsg;
   }
+
+  // --- EXAM QUESTIONS AUTO-GENERATION & MANAGEMENT ---
+  static getExamSets(schoolId?: string, teacherId?: string): GeneratedExamSet[] {
+    let sets = getStored<GeneratedExamSet[]>(STORAGE_KEYS.EXAM_SETS, INITIAL_EXAM_SETS);
+    if (schoolId) {
+      sets = sets.filter(s => s.schoolId === schoolId);
+    }
+    if (teacherId) {
+      sets = sets.filter(s => s.teacherId === teacherId);
+    }
+    return sets.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  static saveExamSet(examSet: GeneratedExamSet): void {
+    const sets = getStored<GeneratedExamSet[]>(STORAGE_KEYS.EXAM_SETS, INITIAL_EXAM_SETS);
+    const index = sets.findIndex(s => s.id === examSet.id);
+    if (index >= 0) {
+      sets[index] = { ...examSet, updatedAt: new Date().toISOString() };
+    } else {
+      sets.unshift(examSet);
+    }
+    setStored(STORAGE_KEYS.EXAM_SETS, sets);
+  }
+
+  static deleteExamSet(id: string): void {
+    const sets = getStored<GeneratedExamSet[]>(STORAGE_KEYS.EXAM_SETS, INITIAL_EXAM_SETS);
+    const filtered = sets.filter(s => s.id !== id);
+    setStored(STORAGE_KEYS.EXAM_SETS, filtered);
+  }
+
+  static generateExamFromLessonNote(
+    submission: Submission,
+    school: School,
+    customExamTitle?: string
+  ): GeneratedExamSet {
+    const content = submission.lessonNoteContent;
+    const topic = content?.topic || submission.title;
+    const subTopic = content?.subTopic || 'General Assessment';
+    const objectives = content?.behavioralObjectives || ['Demonstrate subject comprehension'];
+    const steps = content?.coreContentSteps || [];
+    const summary = content?.summary || `Evaluation of ${topic}`;
+    const evalQuestions = content?.evaluationQuestions || [];
+    const assignment = content?.assignment || '';
+
+    const questions: ExamQuestion[] = [];
+    let qCounter = 1;
+
+    // 1. Generate Multiple Choice Questions (MCQs) from Behavioral Objectives & Steps
+    objectives.forEach((obj, idx) => {
+      const qText = `Which of the following best aligns with the learning objective: "${obj}"?`;
+      questions.push({
+        id: `q_${Date.now()}_${qCounter++}`,
+        type: 'MULTIPLE_CHOICE',
+        questionText: qText,
+        options: [
+          `A. Accurately explaining the key principles of ${topic} and its practical applications.`,
+          `B. Disregarding the foundational theories of ${subTopic}.`,
+          `C. Memorizing unrelated formulas without conceptual understanding.`,
+          `D. Assuming all variables remain constant in every situation.`
+        ],
+        correctAnswer: `A. Accurately explaining the key principles of ${topic} and its practical applications.`,
+        explanation: `This question tests student mastery of behavioral objective #${idx + 1}: ${obj}.`,
+        marks: 5
+      });
+    });
+
+    // MCQs from Core Steps
+    steps.forEach((step, idx) => {
+      questions.push({
+        id: `q_${Date.now()}_${qCounter++}`,
+        type: 'MULTIPLE_CHOICE',
+        questionText: `In Step ${step.stepNumber} (${step.title}), what primary concept was demonstrated regarding ${subTopic}?`,
+        options: [
+          `A. ${step.teacherActivity.slice(0, 70)}...`,
+          `B. ${step.studentActivity.slice(0, 70)}...`,
+          `C. Discontinuing the analysis of ${subTopic}.`,
+          `D. None of the above.`
+        ],
+        correctAnswer: `A. ${step.teacherActivity.slice(0, 70)}...`,
+        explanation: `Refers directly to Step ${step.stepNumber} instructional breakdown in the approved lesson note.`,
+        marks: 5
+      });
+    });
+
+    // 2. Generate True / False Questions from Summary
+    questions.push({
+      id: `q_${Date.now()}_${qCounter++}`,
+      type: 'TRUE_FALSE',
+      questionText: `True or False: According to the lesson summary on ${topic}, ${summary}`,
+      correctAnswer: 'True',
+      explanation: `Verified directly from the teacher's lesson summary statement.`,
+      marks: 5
+    });
+
+    // 3. Generate Short Answer Questions from Evaluation Questions in Lesson Note
+    if (evalQuestions.length > 0) {
+      evalQuestions.forEach((eq, idx) => {
+        questions.push({
+          id: `q_${Date.now()}_${qCounter++}`,
+          type: 'SHORT_ANSWER',
+          questionText: eq,
+          correctAnswer: `Comprehensive answer based on ${topic} - ${subTopic}.`,
+          explanation: `Derived from evaluation question #${idx + 1} of the submitted lesson note.`,
+          marks: 10
+        });
+      });
+    } else {
+      questions.push({
+        id: `q_${Date.now()}_${qCounter++}`,
+        type: 'SHORT_ANSWER',
+        questionText: `Briefly define ${subTopic} and list two real-world applications discussed in class.`,
+        correctAnswer: `Student should provide clear definition and two valid practical examples.`,
+        explanation: `Assesses recall and application of key sub-topic terms.`,
+        marks: 10
+      });
+    }
+
+    // 4. Generate Structured Essay / Theory Question
+    questions.push({
+      id: `q_${Date.now()}_${qCounter++}`,
+      type: 'ESSAY',
+      questionText: `Theory Section: With clear diagrams, formulas, or step-by-step reasoning, provide a detailed explanation of ${topic} (${subTopic}). ${assignment ? 'Include insights from: ' + assignment : ''}`,
+      correctAnswer: `Full essay credit awarded for logical progression, accurate diagrams/formulas, and comprehensive explanation.`,
+      explanation: `Extended response question testing deep conceptual synthesis.`,
+      marks: 20
+    });
+
+    const totalMarks = questions.reduce((sum, q) => sum + q.marks, 0);
+
+    const generatedExamSet: GeneratedExamSet = {
+      id: 'exam_' + Date.now(),
+      schoolId: submission.schoolId || school.id,
+      teacherId: submission.teacherId,
+      teacherName: submission.teacherName,
+      classId: submission.classId,
+      className: submission.className,
+      subject: submission.subject,
+      lessonNoteId: submission.id,
+      lessonNoteTitle: submission.title,
+      title: customExamTitle || `${submission.className} ${submission.subject} - Examination Questions (${topic})`,
+      academicTerm: school.academicTerm,
+      academicSession: school.academicSession,
+      instructions: 'Answer ALL questions in Section A and Section B. Write clearly and show all steps.',
+      questions,
+      totalMarks,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    AppStorage.saveExamSet(generatedExamSet);
+    return generatedExamSet;
+  }
 }
 
 // React custom hook for auto-syncing state on changes with Supabase live fetch
@@ -1408,6 +1564,7 @@ export function useAppStore() {
     const chatRooms = AppStorage.getChatRooms(school?.id);
     const chatMessages = AppStorage.getChatMessages();
     const publicChatMessages = AppStorage.getPublicChatMessages(school?.id);
+    const examSets = AppStorage.getExamSets(school?.id);
 
     return {
       school,
@@ -1426,6 +1583,7 @@ export function useAppStore() {
       chatRooms,
       chatMessages,
       publicChatMessages,
+      examSets,
       schools: AppStorage.getSchools(),
     };
   }, [version]);

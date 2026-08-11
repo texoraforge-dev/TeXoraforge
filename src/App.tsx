@@ -27,6 +27,7 @@ import { PermissionManagement } from './components/PermissionManagement';
 import { AuditLogView } from './components/AuditLogView';
 import { TeacherParentChat } from './components/TeacherParentChat';
 import { PublicParentTeacherChat } from './components/PublicParentTeacherChat';
+import { ExamQuestionsManagement } from './components/ExamQuestionsManagement';
 import { LessonNoteModal } from './components/modals/LessonNoteModal';
 import { UploadPdfModal } from './components/modals/UploadPdfModal';
 import { WeeklyDiaryModal } from './components/modals/WeeklyDiaryModal';
@@ -148,6 +149,7 @@ export default function App() {
                     onClearSelectedSubmission={() => setSelectedSubmissionToReview(null)}
                   />
                 )}
+                {currentView === 'exam_questions' && <ExamQuestionsManagement />}
                 {currentView === 'attendance' && <AttendanceView />}
                 {currentView === 'public_chat' && (
                   <PublicParentTeacherChat onStartDirectChat={() => setCurrentView('direct_chat')} />
@@ -182,6 +184,7 @@ export default function App() {
                     onOpenUploadPdf={() => setIsUploadPdfModalOpen(true)}
                     onOpenCreateLessonPlan={() => { setSubmissionToEdit(null); setIsLessonNoteModalOpen(true); }}
                     onOpenCreateWeeklyDiary={() => { setSubmissionToEdit(null); setIsWeeklyDiaryModalOpen(true); }}
+                    onNavigate={(v) => setCurrentView(v)}
                     onEditSubmission={(sub) => {
                       setSubmissionToEdit(sub);
                       if (sub.type === 'WEEKLY_DIARY') {
@@ -196,6 +199,8 @@ export default function App() {
                 {(currentView === 'teacher_attendance' || currentView === 'attendance') && (
                   <AttendanceView />
                 )}
+
+                {currentView === 'exam_questions' && <ExamQuestionsManagement />}
 
                 {currentView === 'timetable' && (
                   <TimetableManagement onNavigate={(v) => setCurrentView(v)} />

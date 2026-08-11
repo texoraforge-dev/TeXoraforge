@@ -364,6 +364,38 @@ export interface Submission {
   updatedAt: string;
 }
 
+export type QuestionType = 'MULTIPLE_CHOICE' | 'SHORT_ANSWER' | 'TRUE_FALSE' | 'ESSAY';
+
+export interface ExamQuestion {
+  id: string;
+  type: QuestionType;
+  questionText: string;
+  options?: string[]; // e.g. ["A. Faraday's Law", "B. Ohm's Law", "C. Lenz's Law", "D. Joule's Law"]
+  correctAnswer: string;
+  explanation?: string;
+  marks: number;
+}
+
+export interface GeneratedExamSet {
+  id: string;
+  schoolId: string;
+  teacherId: string;
+  teacherName: string;
+  classId: string;
+  className: string;
+  subject: string;
+  lessonNoteId?: string;
+  lessonNoteTitle: string;
+  title: string; // e.g. "SS 3 Physics First Term Examination Questions"
+  academicTerm: string;
+  academicSession: string;
+  questions: ExamQuestion[];
+  totalMarks: number;
+  instructions?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED';
 
 export interface StudentAttendanceItem {

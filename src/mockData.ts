@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { School, User, SchoolClass, Student, Submission, AttendanceRecord, NotificationItem, ScoreSheet, HomeworkItem, TimetableDay, ClassTimetable, ExamTimetable, AuditLogEntry, ChatRoom, ChatMessage, PublicChatMessage } from './types';
+import { School, User, SchoolClass, Student, Submission, AttendanceRecord, NotificationItem, ScoreSheet, HomeworkItem, TimetableDay, ClassTimetable, ExamTimetable, AuditLogEntry, ChatRoom, ChatMessage, PublicChatMessage, GeneratedExamSet } from './types';
 import { COMPANY_LOGO_DATA_URI } from './components/Logo';
 
 export const DEFAULT_SCHOOL_SUBJECTS: string[] = [
@@ -1128,4 +1128,130 @@ export const INITIAL_PUBLIC_CHAT_MESSAGES: PublicChatMessage[] = [
     createdAt: '2026-08-09T15:00:00.000Z'
   }
 ];
+
+export const INITIAL_EXAM_SETS: GeneratedExamSet[] = [
+  {
+    id: 'exam_set_001',
+    schoolId: 'school_apex',
+    teacherId: 'usr_t1',
+    teacherName: 'Mr. David Okon',
+    classId: 'cls_ss3',
+    className: 'SS 3',
+    subject: 'Physics',
+    lessonNoteId: 'sub_001',
+    lessonNoteTitle: 'Electromagnetic Induction & Faraday’s Laws',
+    title: 'SS 3 Physics - Terminal Examination Questions (Electromagnetic Induction)',
+    academicTerm: 'First Term',
+    academicSession: '2025/2026',
+    instructions: 'Answer ALL questions in Section A (Multiple Choice) and any TWO questions in Section B (Theory). Show all working clearly.',
+    totalMarks: 50,
+    createdAt: '2026-08-06T10:00:00.000Z',
+    updatedAt: '2026-08-06T10:00:00.000Z',
+    questions: [
+      {
+        id: 'q_001',
+        type: 'MULTIPLE_CHOICE',
+        questionText: 'According to Faraday’s Law of Electromagnetic Induction, the magnitude of induced e.m.f in a conductor is directly proportional to:',
+        options: [
+          'A. The electrical resistance of the coil',
+          'B. The rate of change of magnetic flux linkage',
+          'C. The temperature of the magnet',
+          'D. The electrostatic charge accumulated'
+        ],
+        correctAnswer: 'B. The rate of change of magnetic flux linkage',
+        explanation: 'Faraday’s Law states that induced e.m.f is directly proportional to the rate at which magnetic flux linkage changes.',
+        marks: 5
+      },
+      {
+        id: 'q_002',
+        type: 'MULTIPLE_CHOICE',
+        questionText: 'Which law accounts for the negative sign in Neumann’s equation E = -N (dΦ/dt)?',
+        options: [
+          'A. Joule’s Law',
+          'B. Ohm’s Law',
+          'C. Lenz’s Law',
+          'D. Coulomb’s Law'
+        ],
+        correctAnswer: 'C. Lenz’s Law',
+        explanation: 'Lenz’s law states that an induced current always flows in a direction that opposes the change producing it, maintaining conservation of energy.',
+        marks: 5
+      },
+      {
+        id: 'q_003',
+        type: 'TRUE_FALSE',
+        questionText: 'An induced electromotive force (e.m.f) is generated even when a magnet remains completely stationary inside a copper coil.',
+        correctAnswer: 'False',
+        explanation: 'Induction requires relative motion between the conductor and magnetic field line cuts (dΦ/dt > 0).',
+        marks: 5
+      },
+      {
+        id: 'q_004',
+        type: 'SHORT_ANSWER',
+        questionText: 'State two practical methods used in modern electrical generators to increase the magnitude of induced current.',
+        correctAnswer: '1. Increasing the number of turns in the armature coil. 2. Rotating the coil faster in a stronger magnetic field.',
+        explanation: 'Both increasing coil turns N and speed of rotation increase dΦ/dt.',
+        marks: 10
+      },
+      {
+        id: 'q_005',
+        type: 'ESSAY',
+        questionText: 'A coil of 200 turns is linked by a magnetic flux of 0.05 Weber. If the flux is uniformly reduced to 0.01 Weber in 0.02 seconds, calculate the average induced electromotive force (e.m.f).',
+        correctAnswer: 'E = -N * (ΔΦ / Δt) = 200 * ((0.05 - 0.01) / 0.02) = 200 * (0.04 / 0.02) = 200 * 2 = 400 Volts.',
+        explanation: 'Using Neumann equation E = N * ΔΦ/Δt.',
+        marks: 25
+      }
+    ]
+  },
+  {
+    id: 'exam_set_002',
+    schoolId: 'school_apex',
+    teacherId: 'usr_t1',
+    teacherName: 'Mr. David Okon',
+    classId: 'cls_ss2',
+    className: 'SS 2',
+    subject: 'Mathematics',
+    lessonNoteId: 'sub_002',
+    lessonNoteTitle: 'Quadratic Equations & Completing the Square',
+    title: 'SS 2 Mathematics - Mid-Term Assessment Paper (Algebraic Equations)',
+    academicTerm: 'First Term',
+    academicSession: '2025/2026',
+    instructions: 'All steps must be clearly shown. Use of non-programmable scientific calculator is allowed.',
+    totalMarks: 40,
+    createdAt: '2026-08-07T11:30:00.000Z',
+    updatedAt: '2026-08-07T11:30:00.000Z',
+    questions: [
+      {
+        id: 'q_101',
+        type: 'MULTIPLE_CHOICE',
+        questionText: 'What term must be added to x² + 10x to complete the square and make it a perfect square quadratic expression?',
+        options: [
+          'A. 10',
+          'B. 20',
+          'C. 25',
+          'D. 100'
+        ],
+        correctAnswer: 'C. 25',
+        explanation: 'The term to add is (b/2)² = (10/2)² = 5² = 25.',
+        marks: 5
+      },
+      {
+        id: 'q_102',
+        type: 'SHORT_ANSWER',
+        questionText: 'Solve 2x² + 5x - 3 = 0 using the completing the square method.',
+        correctAnswer: 'x = 0.5 or x = -3',
+        explanation: 'Divide by 2: x² + 2.5x = 1.5. Add (1.25)²: (x + 1.25)² = 3.0625. Square root gives x + 1.25 = ±1.75.',
+        marks: 15
+      },
+      {
+        id: 'q_103',
+        type: 'ESSAY',
+        questionText: 'Derive the general quadratic formula x = (-b ± √(b² - 4ac)) / (2a) by completing the square on ax² + bx + c = 0.',
+        correctAnswer: 'Divide by a -> x² + (b/a)x = -c/a. Add (b/2a)² -> (x + b/2a)² = (b² - 4ac)/(4a²). Take square root -> x = (-b ± √(b² - 4ac)) / 2a.',
+        explanation: 'Standard proof of the quadratic formula from general quadratic equation.',
+        marks: 20
+      }
+    ]
+  }
+];
+
 

@@ -17,7 +17,8 @@ import {
   Search,
   BookOpen,
   CalendarCheck2,
-  Edit3
+  Edit3,
+  Sparkles
 } from 'lucide-react';
 import { useAppStore } from '../storage';
 import { Submission } from '../types';
@@ -30,6 +31,7 @@ interface TeacherSubmissionsProps {
   onOpenCreateLessonPlan: () => void;
   onOpenCreateWeeklyDiary: () => void;
   onEditSubmission?: (sub: Submission) => void;
+  onNavigate?: (view: string) => void;
 }
 
 export const TeacherSubmissions: React.FC<TeacherSubmissionsProps> = ({
@@ -37,9 +39,10 @@ export const TeacherSubmissions: React.FC<TeacherSubmissionsProps> = ({
   onOpenUploadPdf,
   onOpenCreateLessonPlan,
   onOpenCreateWeeklyDiary,
-  onEditSubmission
+  onEditSubmission,
+  onNavigate
 }) => {
-  const { school, currentUser, submissions } = useAppStore();
+  const { school, currentUser, submissions, actions } = useAppStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
 
@@ -166,6 +169,19 @@ export const TeacherSubmissions: React.FC<TeacherSubmissionsProps> = ({
                 </div>
 
                 <div className="flex items-center gap-2">
+                  {(sub.type === 'LESSON_NOTE' || sub.lessonNoteContent) && school && (
+                    <button
+                      onClick={() => {
+                        actions.generateExamFromLessonNote(sub, school);
+                        if (onNavigate) onNavigate('exam_questions');
+                      }}
+                      className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold flex items-center gap-1 shadow-xs cursor-pointer"
+                      title="Generate Exam Questions from this Lesson Note"
+                    >
+                      <Sparkles className="h-3.5 w-3.5" /> Exam Qs
+                    </button>
+                  )}
+
                   <button
                     onClick={() => generateSubmissionPDF(sub, school)}
                     className="p-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors text-xs font-semibold flex items-center gap-1"

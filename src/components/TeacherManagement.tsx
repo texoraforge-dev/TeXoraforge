@@ -138,6 +138,14 @@ Assigned Classes: ${(createdTeacherCredentials.teacher.assignedClassIds || []).m
         </button>
       </div>
 
+      {/* Role Provisioning Notice */}
+      <div className="p-3.5 rounded-xl bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-900/50 flex items-center gap-3 text-xs text-purple-900 dark:text-purple-200">
+        <CheckCircle2 className="h-4 w-4 text-purple-600 dark:text-purple-400 shrink-0" />
+        <span>
+          <strong>School Admin Delegation:</strong> School Admins open and manage accounts for all teachers, generating their initial security PINs and subject allocations.
+        </span>
+      </div>
+
       {/* Search Bar */}
       <div className="relative max-w-md">
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />

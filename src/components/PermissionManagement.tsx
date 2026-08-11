@@ -172,10 +172,20 @@ export const PermissionManagement: React.FC<PermissionManagementProps> = ({ onNa
             onClick={() => setShowCreateUserModal(true)}
             className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-2 shadow-lg transition-all shrink-0 cursor-pointer"
           >
-            <UserPlus className="h-4 w-4" /> Provision Admin Account
+            <UserPlus className="h-4 w-4" /> Provision Vice Principal / Admin Account
           </button>
         )}
       </div>
+
+      {!isProprietor && (
+        <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 flex items-start gap-3">
+          <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+          <div className="text-xs text-amber-900 dark:text-amber-200 space-y-1">
+            <p className="font-bold">Account Provisioning Rules</p>
+            <p>Only the <strong>School Proprietor</strong> is authorized to provision new Vice Principal and School Admin accounts. As School Admin, you can provision and assign Teacher accounts in the <strong>Teacher Roster</strong> module.</p>
+          </div>
+        </div>
+      )}
 
       {/* Role Hierarchy Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

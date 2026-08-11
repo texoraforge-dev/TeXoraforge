@@ -48,6 +48,7 @@ import {
   DEFAULT_SCHOOL_SUBJECTS
 } from './mockData';
 import { SupabaseService } from './lib/supabaseService';
+import { DEFAULT_ROLE_PERMISSIONS } from './lib/permissions';
 import { isSupabaseConfigured, supabase } from './lib/supabase';
 
 const STORAGE_KEYS = {
@@ -312,16 +313,17 @@ export class AppStorage {
       createdAt: new Date().toISOString()
     };
 
-    const newAdmin: User = {
+    const newProprietor: User = {
       id: adminId,
       schoolId: schoolId,
       name: adminName,
       email: adminEmail,
-      role: 'SCHOOL_ADMIN',
+      role: 'PROPRIETOR',
       phone: '+234 800 000 0000',
       assignedClassIds: [],
       assignedSubjects: [],
       active: true,
+      permissions: DEFAULT_ROLE_PERMISSIONS.PROPRIETOR,
       createdAt: new Date().toISOString()
     };
 
@@ -330,7 +332,7 @@ export class AppStorage {
     setStored(STORAGE_KEYS.SCHOOLS, schools);
 
     const users = this.getUsers();
-    users.push(newAdmin);
+    users.push(newProprietor);
     setStored(STORAGE_KEYS.USERS, users);
 
     this.setCurrentSchoolId(schoolId);
@@ -352,7 +354,7 @@ export class AppStorage {
 
     if (isSupabaseConfigured()) {
       SupabaseService.upsertSchool(newSchool).catch(console.error);
-      SupabaseService.upsertUser(newAdmin).catch(console.error);
+      SupabaseService.upsertUser(newProprietor).catch(console.error);
       for (const cls of defaultClasses) {
         SupabaseService.upsertClass(cls).catch(console.error);
       }

@@ -118,7 +118,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
       if (isSupabaseConfigured()) {
         await SupabaseService.signUp(adminEmail.trim(), 'password123', {
           name: adminName,
-          role: 'SCHOOL_ADMIN'
+          role: 'PROPRIETOR'
         });
       }
 
@@ -242,38 +242,54 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
               {/* Role Selection Tabs */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
-                  Select Role
+                  Select Sign-In Role
                 </label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { setLoginRole('SCHOOL_ADMIN'); setLoginEmail('proprietor@apexhorizon.edu'); }}
+                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      loginEmail === 'proprietor@apexhorizon.edu'
+                        ? 'bg-amber-950/60 border-amber-500 text-white shadow-md shadow-amber-950/40'
+                        : 'bg-slate-900/60 border-slate-700 text-slate-400 hover:border-slate-600'
+                    }`}
+                  >
+                    <ShieldCheck className="h-4 w-4 text-amber-400 shrink-0 mb-1" />
+                    <div>
+                      <p className="text-xs font-bold">Proprietor</p>
+                      <p className="text-[10px] text-slate-400 truncate">School Owner</p>
+                    </div>
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => { setLoginRole('SCHOOL_ADMIN'); setLoginEmail('admin@apexhorizon.edu'); }}
-                    className={`p-3 rounded-xl border text-left flex items-center gap-3 transition-all ${
-                      loginRole === 'SCHOOL_ADMIN'
+                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      loginEmail === 'admin@apexhorizon.edu'
                         ? 'bg-purple-950/60 border-purple-500 text-white shadow-md shadow-purple-950/40'
                         : 'bg-slate-900/60 border-slate-700 text-slate-400 hover:border-slate-600'
                     }`}
                   >
-                    <ShieldCheck className="h-5 w-5 text-purple-400 shrink-0" />
+                    <Building2 className="h-4 w-4 text-purple-400 shrink-0 mb-1" />
                     <div>
-                      <p className="text-xs font-bold">School Admin</p>
-                      <p className="text-[10px] text-slate-400">Full management control</p>
+                      <p className="text-xs font-bold">VP / Admin</p>
+                      <p className="text-[10px] text-slate-400 truncate">Academic Admin</p>
                     </div>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => { setLoginRole('TEACHER'); setLoginEmail('d.okon@apexhorizon.edu'); }}
-                    className={`p-3 rounded-xl border text-left flex items-center gap-3 transition-all ${
+                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
                       loginRole === 'TEACHER'
                         ? 'bg-emerald-950/60 border-emerald-500 text-white shadow-md shadow-emerald-950/40'
                         : 'bg-slate-900/60 border-slate-700 text-slate-400 hover:border-slate-600'
                     }`}
                   >
-                    <UserCheck className="h-5 w-5 text-emerald-400 shrink-0" />
+                    <UserCheck className="h-4 w-4 text-emerald-400 shrink-0 mb-1" />
                     <div>
                       <p className="text-xs font-bold">Teacher</p>
-                      <p className="text-[10px] text-slate-400">Class & lesson workflow</p>
+                      <p className="text-[10px] text-slate-400 truncate">Class & Lessons</p>
                     </div>
                   </button>
                 </div>
@@ -291,7 +307,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
               {/* Email Input */}
               <div>
                 <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                  {loginRole === 'SCHOOL_ADMIN' ? 'Admin Email Address' : 'Teacher Assigned Email / Employee ID'}
+                  {loginRole === 'TEACHER' ? 'Teacher Assigned Email / Employee ID' : 'Account Email Address'}
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
@@ -300,7 +316,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
                     required
                     value={loginEmail}
                     onChange={e => setLoginEmail(e.target.value)}
-                    placeholder="e.g. admin@apexhorizon.edu"
+                    placeholder="e.g. proprietor@apexhorizon.edu"
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                   />
                 </div>
@@ -364,6 +380,15 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
             </form>
           ) : (
             <form onSubmit={handleRegisterSchool} className="space-y-4">
+              <div className="p-3.5 rounded-xl bg-amber-950/40 border border-amber-800/60 text-amber-200 text-xs space-y-1">
+                <span className="font-bold block text-xs uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
+                  <ShieldCheck className="h-4 w-4 text-amber-400 shrink-0" /> Proprietor Sign-Up Portal Only
+                </span>
+                <p className="text-[11px] leading-relaxed text-amber-200/90">
+                  Only School Proprietors are permitted to register new schools. As Proprietor, you will have full executive control and can provision accounts for Vice Principals & School Admins, while School Admins provision Teacher accounts.
+                </p>
+              </div>
+
               <div>
                 <label className="block text-xs font-bold text-slate-300 mb-1.5">School Name</label>
                 <input
@@ -427,22 +452,22 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1.5">School Admin Full Name</label>
+                  <label className="block text-xs font-bold text-slate-300 mb-1.5">Proprietor / Owner Full Name</label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Dr. Samuel Vance"
+                    placeholder="e.g. Chief Dr. Samuel Vance"
                     value={adminName}
                     onChange={e => setAdminName(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1.5">Admin Official Email</label>
+                  <label className="block text-xs font-bold text-slate-300 mb-1.5">Proprietor Official Email</label>
                   <input
                     type="email"
                     required
-                    placeholder="e.g. principal@school.edu"
+                    placeholder="e.g. proprietor@school.edu"
                     value={adminEmail}
                     onChange={e => setAdminEmail(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
@@ -453,9 +478,9 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
+                className="w-full py-3 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-600/20 transition-all cursor-pointer"
               >
-                {isSubmitting ? 'Creating School...' : 'Create School Account & Provision Admin'} <ArrowRight className="h-4 w-4" />
+                {isSubmitting ? 'Creating School Account...' : 'Register School & Provision Proprietor Account'} <ArrowRight className="h-4 w-4" />
               </button>
             </form>
           )}
@@ -465,32 +490,41 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
             <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
               <Sparkles className="h-3.5 w-3.5 text-amber-400" /> Instant Demo Presets (1-Click)
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <button
+                type="button"
+                onClick={() => handleQuickDemo('usr_proprietor1')}
+                className="p-2 rounded-xl bg-amber-950/40 border border-amber-800/60 hover:bg-amber-900/50 text-left transition-colors cursor-pointer"
+              >
+                <p className="text-xs font-bold text-amber-200 truncate">Dr. Arthur Pendelton</p>
+                <p className="text-[10px] text-amber-400 font-semibold">Proprietor (Owner)</p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleQuickDemo('usr_vp1')}
+                className="p-2 rounded-xl bg-blue-950/40 border border-blue-800/60 hover:bg-blue-900/50 text-left transition-colors cursor-pointer"
+              >
+                <p className="text-xs font-bold text-blue-200 truncate">Mrs. Folorunsho</p>
+                <p className="text-[10px] text-blue-400 font-semibold">Vice Principal</p>
+              </button>
+
               <button
                 type="button"
                 onClick={() => handleQuickDemo('usr_admin1')}
-                className="p-2.5 rounded-xl bg-purple-950/40 border border-purple-800/60 hover:bg-purple-900/50 text-left transition-colors cursor-pointer"
+                className="p-2 rounded-xl bg-purple-950/40 border border-purple-800/60 hover:bg-purple-900/50 text-left transition-colors cursor-pointer"
               >
-                <p className="text-xs font-bold text-purple-200">Dr. Eleanor Vance</p>
-                <p className="text-[10px] text-purple-400">School Admin</p>
+                <p className="text-xs font-bold text-purple-200 truncate">Dr. Eleanor Vance</p>
+                <p className="text-[10px] text-purple-400 font-semibold">School Admin</p>
               </button>
 
               <button
                 type="button"
                 onClick={() => handleQuickDemo('usr_t1')}
-                className="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-800/60 hover:bg-emerald-900/50 text-left transition-colors cursor-pointer"
+                className="p-2 rounded-xl bg-emerald-950/40 border border-emerald-800/60 hover:bg-emerald-900/50 text-left transition-colors cursor-pointer"
               >
-                <p className="text-xs font-bold text-emerald-200">Mr. David Okon</p>
-                <p className="text-[10px] text-emerald-400">Physics & Math (SS 2/3)</p>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickDemo('usr_t3')}
-                className="p-2.5 rounded-xl bg-sky-950/40 border border-sky-800/60 hover:bg-sky-900/50 text-left transition-colors cursor-pointer"
-              >
-                <p className="text-xs font-bold text-sky-200">Mr. Chimedi Nwosu</p>
-                <p className="text-[10px] text-sky-400">Primary 3 Teacher</p>
+                <p className="text-xs font-bold text-emerald-200 truncate">Mr. David Okon</p>
+                <p className="text-[10px] text-emerald-400 font-semibold">Physics Teacher</p>
               </button>
             </div>
           </div>

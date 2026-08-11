@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { WifiOff, ShieldCheck } from 'lucide-react';
 import { useAppStore } from './storage';
 import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
@@ -37,6 +38,20 @@ export default function App() {
   const [darkMode, setDarkMode] = useState<boolean>(true);
   const [currentView, setCurrentView] = useState<string>('dashboard');
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isOnline, setIsOnline] = useState<boolean>(typeof navigator !== 'undefined' ? navigator.onLine : true);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   // Modal controls
   const [isLessonNoteModalOpen, setIsLessonNoteModalOpen] = useState(false);
@@ -92,7 +107,26 @@ export default function App() {
             />
 
           {/* Main Content Area */}
-          <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full overflow-x-hidden">
+          <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full overflow-x-hidden space-y-4">
+            
+            {/* Offline Mode Banner when disconnected */}
+            {!isOnline && (
+              <div className="p-3 bg-amber-50 dark:bg-amber-950/80 border border-amber-200 dark:border-amber-800 rounded-2xl shadow-sm flex items-center justify-between gap-3 text-amber-900 dark:text-amber-200 text-xs">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-1.5 bg-amber-200 dark:bg-amber-900/60 rounded-xl">
+                    <WifiOff className="h-4 w-4 text-amber-700 dark:text-amber-300" />
+                  </div>
+                  <div>
+                    <span className="font-extrabold text-amber-950 dark:text-amber-100">You are currently offline:</span>{' '}
+                    <span>TeXora Forge is running in 100% Offline Mode. All lesson plans, score entries, attendance, timetables, and chat messages are saved locally in browser storage.</span>
+                  </div>
+                </div>
+                <div className="hidden sm:flex items-center gap-1 font-bold text-[11px] bg-amber-200/60 dark:bg-amber-900/40 px-2.5 py-1 rounded-lg shrink-0">
+                  <ShieldCheck className="h-3.5 w-3.5 text-amber-700 dark:text-amber-300" />
+                  Local Cache Active
+                </div>
+              </div>
+            )}
             
             {/* Admin / Executive / VP Views */}
             {(currentUser.role === 'PROPRIETOR' || currentUser.role === 'VICE_PRINCIPAL' || currentUser.role === 'SCHOOL_ADMIN') && (

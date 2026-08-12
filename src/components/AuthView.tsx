@@ -18,7 +18,9 @@ import {
   CheckCircle2,
   Upload,
   Image as ImageIcon,
-  X
+  X,
+  GraduationCap,
+  KeyRound
 } from 'lucide-react';
 import { useAppStore } from '../storage';
 import { UserRole } from '../types';
@@ -32,13 +34,18 @@ interface AuthViewProps {
 
 export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
   const { users, actions, isSupabaseActive } = useAppStore();
-  const [tab, setTab] = useState<'LOGIN' | 'PARENT_CODE' | 'REGISTER_SCHOOL'>('LOGIN');
+  const [tab, setTab] = useState<'STUDENT_CODE' | 'LOGIN' | 'PARENT_CODE' | 'REGISTER_SCHOOL'>('STUDENT_CODE');
   
   // Login form state
   const [loginEmail, setLoginEmail] = useState('admin@apexhorizon.edu');
   const [loginPassword, setLoginPassword] = useState('password123');
   const [loginRole, setLoginRole] = useState<UserRole>('SCHOOL_ADMIN');
   const [parentAccessCodeInput, setParentAccessCodeInput] = useState('PAR-2026-1049');
+  
+  // Student portal login state
+  const [studentCodeInput, setStudentCodeInput] = useState('TXR-P5-00482');
+  const [studentPinInput, setStudentPinInput] = useState('1234');
+
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -75,7 +82,6 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
       if (isSupabaseConfigured()) {
         const { data, error } = await SupabaseService.signIn(loginEmail.trim(), loginPassword);
         if (error) {
-          // If user doesn't exist in Supabase auth yet, fall back to checking profile list or attempt auto sign up
           console.warn('Supabase auth sign in note:', error.message);
         }
       }
@@ -100,6 +106,24 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
     } catch (err: any) {
       setErrorMessage(err?.message || 'An error occurred during authentication.');
       setIsSubmitting(false);
+    }
+  };
+
+  const handleStudentLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage('');
+    setSuccessMessage('');
+
+    if (!studentCodeInput.trim()) {
+      setErrorMessage('Please enter your unique Student Code (e.g. TXR-P5-00482).');
+      return;
+    }
+
+    const studentUser = actions.loginAsStudentWithCode(studentCodeInput.trim(), studentPinInput.trim());
+    if (studentUser) {
+      onSuccess();
+    } else {
+      setErrorMessage('Invalid Student Code or Access PIN. Please check your credentials or ask your Class Teacher.');
     }
   };
 
@@ -186,7 +210,18 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
         </div>
 
         {/* Tab Switcher */}
-        <div className="grid grid-cols-3 bg-slate-900/80 p-1 border-b border-slate-700/80 text-xs font-bold">
+        <div className="grid grid-cols-2 sm:grid-cols-4 bg-slate-900/80 p-1 border-b border-slate-700/80 text-[11px] font-bold">
+          <button
+            type="button"
+            onClick={() => { setTab('STUDENT_CODE'); setErrorMessage(''); setSuccessMessage(''); }}
+            className={`py-2.5 text-center transition-all rounded-lg flex items-center justify-center gap-1.5 ${
+              tab === 'STUDENT_CODE'
+                ? 'bg-indigo-950/90 text-indigo-300 shadow-xs border border-indigo-700/80'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <GraduationCap className="h-3.5 w-3.5 text-indigo-400" /> Student Portal
+          </button>
           <button
             type="button"
             onClick={() => { setTab('LOGIN'); setErrorMessage(''); setSuccessMessage(''); }}
@@ -207,7 +242,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <ShieldCheck className="h-3.5 w-3.5" /> Parent Portal
+            <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" /> Parent Portal
           </button>
           <button
             type="button"
@@ -237,14 +272,96 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
             </div>
           )}
 
-          {tab === 'LOGIN' ? (
+          {tab === 'STUDENT_CODE' ? (
+            <form onSubmit={handleStudentLogin} className="space-y-4">
+              <div className="p-4 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-indigo-200 text-xs space-y-1">
+                <span className="font-bold block text-sm flex items-center gap-1.5 text-indigo-300">
+                  <GraduationCap className="h-4 w-4 text-indigo-400" /> Student Account Login
+                </span>
+                <p>Enter your unique Student Code (e.g. <span className="font-mono text-indigo-300 font-bold">TXR-P5-00482</span>) and Access PIN provided by your Class Teacher to take CBT exams, view your class timetable, and participate in class discussion chat.</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                  Student Access Code
+                </label>
+                <div className="relative">
+                  <GraduationCap className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-indigo-400" />
+                  <input
+                    type="text"
+                    required
+                    value={studentCodeInput}
+                    onChange={e => setStudentCodeInput(e.target.value)}
+                    placeholder="e.g. TXR-P5-00482"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-indigo-500/50 text-indigo-300 font-mono font-bold text-sm uppercase placeholder-slate-600 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                  Access PIN / Security Password
+                </label>
+                <div className="relative">
+                  <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-indigo-400" />
+                  <input
+                    type="password"
+                    required
+                    value={studentPinInput}
+                    onChange={e => setStudentPinInput(e.target.value)}
+                    placeholder="e.g. 1234"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white font-mono text-sm placeholder-slate-600 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
+              >
+                <span>Sign In to Student Portal</span> <ArrowRight className="h-4 w-4" />
+              </button>
+
+              <div className="pt-2">
+                <p className="text-[11px] font-bold text-slate-400 mb-1.5 flex items-center gap-1">
+                  <Sparkles className="h-3 w-3 text-indigo-400" /> Quick Student Login Presets:
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => { setStudentCodeInput('TXR-P5-00482'); setStudentPinInput('1234'); }}
+                    className="p-2 rounded-lg bg-slate-900/80 border border-indigo-900/60 hover:border-indigo-500 text-left transition-all cursor-pointer"
+                  >
+                    <p className="text-xs font-bold text-indigo-300">Adebayo Tobi</p>
+                    <p className="text-[10px] text-slate-400">Primary 5 • Code: TXR-P5-00482</p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setStudentCodeInput('TXR-P5-00483'); setStudentPinInput('5678'); }}
+                    className="p-2 rounded-lg bg-slate-900/80 border border-indigo-900/60 hover:border-indigo-500 text-left transition-all cursor-pointer"
+                  >
+                    <p className="text-xs font-bold text-indigo-300">Chidiebere Okafor</p>
+                    <p className="text-[10px] text-slate-400">Primary 5 • Code: TXR-P5-00483</p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setStudentCodeInput('TXR-J2-00109'); setStudentPinInput('4321'); }}
+                    className="p-2 rounded-lg bg-slate-900/80 border border-indigo-900/60 hover:border-indigo-500 text-left transition-all cursor-pointer"
+                  >
+                    <p className="text-xs font-bold text-indigo-300">Amina Bello</p>
+                    <p className="text-[10px] text-slate-400">JSS 2 • Code: TXR-J2-00109</p>
+                  </button>
+                </div>
+              </div>
+            </form>
+          ) : tab === 'LOGIN' ? (
             <form onSubmit={handleLogin} className="space-y-4">
               {/* Role Selection Tabs */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
                   Select Sign-In Role
                 </label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <button
                     type="button"
                     onClick={() => { setLoginRole('SCHOOL_ADMIN'); setLoginEmail('proprietor@apexhorizon.edu'); }}
@@ -290,6 +407,18 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
                     <div>
                       <p className="text-xs font-bold">Teacher</p>
                       <p className="text-[10px] text-slate-400 truncate">Class & Lessons</p>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setTab('STUDENT_CODE'); }}
+                    className="p-2.5 rounded-xl border text-left transition-all cursor-pointer bg-slate-900/60 border-slate-700 text-slate-400 hover:border-indigo-500 hover:text-indigo-300"
+                  >
+                    <GraduationCap className="h-4 w-4 text-indigo-400 shrink-0 mb-1" />
+                    <div>
+                      <p className="text-xs font-bold">Student</p>
+                      <p className="text-[10px] text-slate-400 truncate">Code & PIN Portal</p>
                     </div>
                   </button>
                 </div>
@@ -490,7 +619,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
             <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
               <Sparkles className="h-3.5 w-3.5 text-amber-400" /> Instant Demo Presets (1-Click)
             </p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
               <button
                 type="button"
                 onClick={() => handleQuickDemo('usr_proprietor1')}
@@ -525,6 +654,18 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
               >
                 <p className="text-xs font-bold text-emerald-200 truncate">Mr. David Okon</p>
                 <p className="text-[10px] text-emerald-400 font-semibold">Physics Teacher</p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const std = actions.loginAsStudentWithCode('TXR-P5-00482', '1234');
+                  if (std) onSuccess();
+                }}
+                className="p-2 rounded-xl bg-indigo-950/40 border border-indigo-800/60 hover:bg-indigo-900/50 text-left transition-colors cursor-pointer col-span-2 sm:col-span-1"
+              >
+                <p className="text-xs font-bold text-indigo-200 truncate">Adebayo Tobi</p>
+                <p className="text-[10px] text-indigo-400 font-semibold">Student (Primary 5)</p>
               </button>
             </div>
           </div>

@@ -20,7 +20,15 @@ import {
   Clock,
   Sparkles,
   MessageSquare,
-  MessagesSquare
+  MessagesSquare,
+  BookOpen,
+  Laptop,
+  AlertTriangle,
+  FolderLock,
+  X,
+  MapPin,
+  DollarSign,
+  Calculator
 } from 'lucide-react';
 import { UserRole } from '../types';
 import { useAppStore } from '../storage';
@@ -31,6 +39,8 @@ interface SidebarProps {
   onNavigate: (view: string) => void;
   role: UserRole;
   pendingReviewCount?: number;
+  isMobileOpen?: boolean;
+  onCloseMobile?: () => void;
 }
 
 interface NavItem {
@@ -44,7 +54,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   currentView,
   onNavigate,
   role,
-  pendingReviewCount = 0
+  pendingReviewCount = 0,
+  isMobileOpen = false,
+  onCloseMobile
 }) => {
   const { currentUser } = useAppStore();
   const effectiveUser = currentUser || { id: '', schoolId: '', name: '', email: '', role };
@@ -54,9 +66,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const isVP = effectiveUser.role === 'VICE_PRINCIPAL';
   const isAdmin = effectiveUser.role === 'SCHOOL_ADMIN' || isProprietor || isVP;
   const isParent = effectiveUser.role === 'PARENT';
+  const isStudent = effectiveUser.role === 'STUDENT';
 
   const adminNavItems: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'staff_attendance', label: 'Staff Attendance & Geofence', icon: MapPin },
+    { id: 'payroll', label: 'Proprietor Payroll & Salaries', icon: DollarSign },
+    { id: 'student_accounts', label: 'Student Accounts & Chat', icon: Key },
     { id: 'school_students', label: 'School Students List', icon: Users },
     { id: 'students', label: 'Student Admissions & IDs', icon: GraduationCap },
     { id: 'teachers', label: 'Teacher Roster', icon: Users },
@@ -69,8 +85,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: FileCheck2,
       badge: pendingReviewCount > 0 ? pendingReviewCount : null
     },
+    { id: 'curriculum', label: 'Curriculum & Scheme', icon: BookOpen },
+    { id: 'cbt_engine', label: 'AI CBT Examination Hub', icon: Laptop },
+    { id: 'early_warning', label: 'Student Risk & Remedials', icon: AlertTriangle },
+    { id: 'document_vault', label: 'Vault, Fees & Operations', icon: FolderLock },
     { id: 'exam_questions', label: 'Exam Questions', icon: Sparkles },
-    { id: 'attendance', label: 'Attendance Reports', icon: CalendarCheck2 },
+    { id: 'attendance', label: 'Student Attendance Reports', icon: CalendarCheck2 },
     { id: 'public_chat', label: 'Parent-Teacher Room', icon: MessagesSquare },
     { id: 'direct_chat', label: '1 on 1 Parent-Teacher Room', icon: MessageSquare },
     { id: 'user_permissions', label: 'User Roles & Permissions', icon: Key },
@@ -80,34 +100,57 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const teacherNavItems: NavItem[] = [
     { id: 'dashboard', label: 'Teacher Dashboard', icon: LayoutDashboard },
+    { id: 'staff_attendance', label: 'Staff Sign-In & Sign-Out', icon: MapPin },
+    { id: 'student_accounts', label: 'Student Accounts & Class Chat', icon: Key },
+    { id: 'curriculum', label: 'Curriculum & Scheme', icon: BookOpen },
+    { id: 'cbt_engine', label: 'AI CBT Examination Hub', icon: Laptop },
+    { id: 'early_warning', label: 'Student Risk Radar', icon: AlertTriangle },
+    { id: 'document_vault', label: 'School Vault & Documents', icon: FolderLock },
     { id: 'timetable', label: 'Class & Exam Timetables', icon: CalendarCheck2 },
     { id: 'scores', label: 'Continuous Assessment & Scores', icon: FileText },
     { id: 'teacher_submissions', label: 'My Lesson Submissions', icon: FileText },
     { id: 'exam_questions', label: 'Exam Questions', icon: Sparkles },
-    { id: 'teacher_attendance', label: 'Mark Attendance', icon: UserCheck },
+    { id: 'teacher_attendance', label: 'Mark Student Attendance', icon: UserCheck },
     { id: 'public_chat', label: 'Parent-Teacher Room', icon: MessagesSquare },
     { id: 'direct_chat', label: '1 on 1 Parent-Teacher Room', icon: MessageSquare }
   ];
 
-  const parentNavItems: NavItem[] = [
-    { id: 'parent', label: 'Parent Portal Home', icon: ShieldCheck },
-    { id: 'public_chat', label: 'Parent-Teacher Room', icon: MessagesSquare },
-    { id: 'direct_chat', label: '1 on 1 Parent-Teacher Room', icon: MessageSquare },
-    { id: 'timetable', label: 'Class & Exam Timetables', icon: CalendarCheck2 },
-    { id: 'scores', label: 'Terminal Report Cards', icon: FileText }
+  const studentNavItems: NavItem[] = [
+    { id: 'student_class_chat', label: 'Class Discussion Chat', icon: MessageSquare },
+    { id: 'cbt_engine', label: 'CBT Examination Hub', icon: Laptop },
+    { id: 'timetable', label: 'Class Timetable', icon: CalendarCheck2 },
+    { id: 'early_warning', label: 'Remedials & Study Plans', icon: BookOpen }
   ];
 
-  const rawNavItems = isAdmin ? adminNavItems : isParent ? parentNavItems : teacherNavItems;
+  const parentNavItems: NavItem[] = [
+    { id: 'parent', label: 'Parent Portal Home', icon: ShieldCheck },
+    { id: 'parent_ai_assistant', label: 'AI Parent & Tutor Assistant', icon: Sparkles },
+    { id: 'cbt_engine', label: 'AI CBT Practice Hub', icon: Laptop },
+    { id: 'early_warning', label: 'Child Risk & Remedials', icon: AlertTriangle },
+    { id: 'document_vault', label: 'School Vault & Fee Records', icon: FolderLock },
+    { id: 'timetable', label: 'Class & Exam Timetables', icon: CalendarCheck2 },
+    { id: 'scores', label: 'Terminal Report Cards', icon: FileText },
+    { id: 'public_chat', label: 'Parent-Teacher Room', icon: MessagesSquare },
+    { id: 'direct_chat', label: '1 on 1 Parent-Teacher Room', icon: MessageSquare }
+  ];
+
+  const rawNavItems = isAdmin ? adminNavItems : isStudent ? studentNavItems : isParent ? parentNavItems : teacherNavItems;
 
   // Filter items based on access rights
   const navItems = rawNavItems.filter(item => canAccessView(effectiveUser, item.id));
 
-  return (
-    <aside className="w-64 bg-slate-900 text-slate-300 hidden md:flex flex-col border-r border-slate-800 min-h-[calc(100vh-4rem)] shrink-0">
-      
+  const handleNavClick = (viewId: string) => {
+    onNavigate(viewId);
+    if (onCloseMobile) {
+      onCloseMobile();
+    }
+  };
+
+  const navContent = (
+    <>
       {/* Role Badge Indicator */}
-      <div className="p-4 border-b border-slate-800/80">
-        <div className={`p-3 rounded-xl border flex items-center gap-3 ${roleBadge.bgClass} ${roleBadge.borderClass}`}>
+      <div className="p-4 border-b border-slate-800/80 flex items-center justify-between gap-2">
+        <div className={`p-3 rounded-xl border flex items-center gap-3 flex-1 ${roleBadge.bgClass} ${roleBadge.borderClass}`}>
           <div className="p-2 rounded-lg bg-slate-900/60 shrink-0">
             <ShieldCheck className={`h-5 w-5 ${roleBadge.textClass}`} />
           </div>
@@ -116,10 +159,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <p className={`text-xs font-extrabold truncate ${roleBadge.textClass}`}>{roleBadge.label}</p>
           </div>
         </div>
+
+        {onCloseMobile && (
+          <button
+            onClick={onCloseMobile}
+            className="md:hidden p-2 rounded-xl text-slate-400 hover:text-white bg-slate-800 cursor-pointer"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        )}
       </div>
 
       {/* Navigation Links */}
-      <nav className="flex-1 p-3 space-y-1">
+      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
         <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
           Navigation Menu
         </div>
@@ -131,7 +183,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           return (
             <button
               key={item.id}
-              onClick={() => onNavigate(item.id)}
+              onClick={() => handleNavClick(item.id)}
               className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-xs transition-all cursor-pointer ${
                 isActive
                   ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 font-semibold'
@@ -160,6 +212,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <p className="font-semibold text-slate-400">TeXora Forge v2.5</p>
         <p>Encrypted Academic Workflows</p>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Desktop Sidebar */}
+      <aside className="w-64 bg-slate-900 text-slate-300 hidden md:flex flex-col border-r border-slate-800 min-h-[calc(100vh-4rem)] shrink-0">
+        {navContent}
+      </aside>
+
+      {/* Mobile Drawer Slide-out */}
+      {isMobileOpen && (
+        <div className="fixed inset-0 z-50 md:hidden flex">
+          <div
+            className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs transition-opacity"
+            onClick={onCloseMobile}
+          />
+          <aside className="relative z-50 w-72 max-w-[80vw] bg-slate-900 text-slate-300 flex flex-col h-full border-r border-slate-800 shadow-2xl">
+            {navContent}
+          </aside>
+        </div>
+      )}
+    </>
   );
 };

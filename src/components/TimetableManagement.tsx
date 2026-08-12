@@ -50,9 +50,15 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
   const isAdmin = currentUser?.role === 'SCHOOL_ADMIN';
   const isTeacher = currentUser?.role === 'TEACHER';
   const isParent = currentUser?.role === 'PARENT';
+  const isStudent = currentUser?.role === 'STUDENT';
 
-  // Available classes selection
-  const defaultClassId = initialClassId || classes[0]?.id || 'cls_ss3';
+  // Available classes selection for user role
+  const visibleClasses = isStudent
+    ? classes.filter(c => currentUser?.assignedClassIds?.includes(c.id))
+    : classes;
+  const effectiveClasses = visibleClasses.length > 0 ? visibleClasses : (classes.length > 0 ? [classes[0]] : []);
+
+  const defaultClassId = (isStudent && currentUser?.assignedClassIds?.[0]) || initialClassId || effectiveClasses[0]?.id || 'cls_ss3';
   const [selectedClassId, setSelectedClassId] = useState<string>(defaultClassId);
 
   // Main Mode Tab: 'CLASS' or 'EXAM'
@@ -577,13 +583,16 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
 
           {/* Class Picker */}
           <div className="relative min-w-[180px]">
-            <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Select Class:</label>
+            <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
+              {isStudent ? 'Enrolled Class:' : 'Select Class:'}
+            </label>
             <select
               value={selectedClassId}
               onChange={(e) => setSelectedClassId(e.target.value)}
-              className="w-full bg-slate-800 text-white text-xs font-bold px-3 py-2 rounded-xl border border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+              disabled={isStudent && effectiveClasses.length <= 1}
+              className="w-full bg-slate-800 text-white text-xs font-bold px-3 py-2 rounded-xl border border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer disabled:opacity-80"
             >
-              {classes.map(c => (
+              {effectiveClasses.map(c => (
                 <option key={c.id} value={c.id}>
                   {c.name} ({c.category})
                 </option>

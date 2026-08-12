@@ -28,13 +28,37 @@ import { AuditLogView } from './components/AuditLogView';
 import { TeacherParentChat } from './components/TeacherParentChat';
 import { PublicParentTeacherChat } from './components/PublicParentTeacherChat';
 import { ExamQuestionsManagement } from './components/ExamQuestionsManagement';
+import { CurriculumEngine } from './components/CurriculumEngine';
+import { CBTEngine } from './components/CBTEngine';
+import { StudentEarlyWarningSystem } from './components/StudentEarlyWarningSystem';
+import { DocumentVaultView } from './components/DocumentVaultView';
+import { VoiceAssistantWidget } from './components/VoiceAssistantWidget';
+import { StaffAttendance } from './components/StaffAttendance';
+import { PayrollManagement } from './components/PayrollManagement';
+import { StudentAccountsAndChat } from './components/StudentAccountsAndChat';
 import { LessonNoteModal } from './components/modals/LessonNoteModal';
 import { UploadPdfModal } from './components/modals/UploadPdfModal';
 import { WeeklyDiaryModal } from './components/modals/WeeklyDiaryModal';
 import { Submission } from './types';
 
 export default function App() {
-  const { currentUser, submissions } = useAppStore();
+  const { 
+    currentUser, 
+    submissions,
+    users, 
+    students, 
+    classes, 
+    attendanceSettings, 
+    staffAttendance, 
+    salaryProfiles, 
+    deductionRules, 
+    payrollRecords, 
+    studentCredentials, 
+    classChatMessages, 
+    chatModerationLogs, 
+    cbtExams, 
+    refreshState 
+  } = useAppStore();
 
   const [darkMode, setDarkMode] = useState<boolean>(true);
   const [currentView, setCurrentView] = useState<string>('dashboard');
@@ -55,6 +79,7 @@ export default function App() {
   }, []);
 
   // Modal controls
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLessonNoteModalOpen, setIsLessonNoteModalOpen] = useState(false);
   const [isWeeklyDiaryModalOpen, setIsWeeklyDiaryModalOpen] = useState(false);
   const [isUploadPdfModalOpen, setIsUploadPdfModalOpen] = useState(false);
@@ -95,6 +120,7 @@ export default function App() {
             onOpenNotifications={() => setIsNotificationsOpen(true)}
             onNavigate={(v) => setCurrentView(v)}
             onSelectSubmission={handleSelectSubmissionFromSearch}
+            onToggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           />
 
           <div className="flex min-h-[calc(100vh-4rem)]">
@@ -105,6 +131,8 @@ export default function App() {
               onNavigate={(v) => setCurrentView(v)}
               role={currentUser.role}
               pendingReviewCount={pendingCount}
+              isMobileOpen={isMobileMenuOpen}
+              onCloseMobile={() => setIsMobileMenuOpen(false)}
             />
 
           {/* Main Content Area */}
@@ -138,6 +166,39 @@ export default function App() {
                     onReviewSubmission={handleSelectSubmissionFromSearch}
                   />
                 )}
+                {currentView === 'staff_attendance' && (
+                  <StaffAttendance
+                    currentUser={currentUser}
+                    attendanceSettings={attendanceSettings}
+                    staffAttendance={staffAttendance}
+                    users={users}
+                    onRefresh={refreshState}
+                  />
+                )}
+                {currentView === 'payroll' && (
+                  <PayrollManagement
+                    currentUser={currentUser}
+                    users={users}
+                    salaryProfiles={salaryProfiles}
+                    deductionRules={deductionRules}
+                    payrollRecords={payrollRecords}
+                    staffAttendance={staffAttendance}
+                    onRefresh={refreshState}
+                  />
+                )}
+                {(currentView === 'student_accounts' || currentView === 'chat_oversight') && (
+                  <StudentAccountsAndChat
+                    currentUser={currentUser}
+                    students={students}
+                    classes={classes}
+                    studentCredentials={studentCredentials}
+                    classChatMessages={classChatMessages}
+                    chatModerationLogs={chatModerationLogs}
+                    cbtExams={cbtExams}
+                    onRefresh={refreshState}
+                    onNavigateToCBT={(id) => setCurrentView('cbt_engine')}
+                  />
+                )}
                 {currentView === 'students' && <StudentManagement />}
                 {currentView === 'school_students' && <SchoolStudentRoster />}
                 {currentView === 'teachers' && <TeacherManagement />}
@@ -150,6 +211,10 @@ export default function App() {
                   />
                 )}
                 {currentView === 'exam_questions' && <ExamQuestionsManagement />}
+                {currentView === 'curriculum' && <CurriculumEngine />}
+                {currentView === 'cbt_engine' && <CBTEngine />}
+                {currentView === 'early_warning' && <StudentEarlyWarningSystem />}
+                {currentView === 'document_vault' && <DocumentVaultView />}
                 {currentView === 'attendance' && <AttendanceView />}
                 {currentView === 'public_chat' && (
                   <PublicParentTeacherChat onStartDirectChat={() => setCurrentView('direct_chat')} />
@@ -173,6 +238,30 @@ export default function App() {
                     onOpenUploadPdf={() => setIsUploadPdfModalOpen(true)}
                     onOpenCreateLessonPlan={() => { setSubmissionToEdit(null); setIsLessonNoteModalOpen(true); }}
                     onOpenCreateWeeklyDiary={() => { setSubmissionToEdit(null); setIsWeeklyDiaryModalOpen(true); }}
+                  />
+                )}
+
+                {currentView === 'staff_attendance' && (
+                  <StaffAttendance
+                    currentUser={currentUser}
+                    attendanceSettings={attendanceSettings}
+                    staffAttendance={staffAttendance}
+                    users={users}
+                    onRefresh={refreshState}
+                  />
+                )}
+
+                {currentView === 'student_accounts' && (
+                  <StudentAccountsAndChat
+                    currentUser={currentUser}
+                    students={students}
+                    classes={classes}
+                    studentCredentials={studentCredentials}
+                    classChatMessages={classChatMessages}
+                    chatModerationLogs={chatModerationLogs}
+                    cbtExams={cbtExams}
+                    onRefresh={refreshState}
+                    onNavigateToCBT={(id) => setCurrentView('cbt_engine')}
                   />
                 )}
 
@@ -201,6 +290,10 @@ export default function App() {
                 )}
 
                 {currentView === 'exam_questions' && <ExamQuestionsManagement />}
+                {currentView === 'curriculum' && <CurriculumEngine />}
+                {currentView === 'cbt_engine' && <CBTEngine />}
+                {currentView === 'early_warning' && <StudentEarlyWarningSystem />}
+                {currentView === 'document_vault' && <DocumentVaultView />}
 
                 {currentView === 'timetable' && (
                   <TimetableManagement onNavigate={(v) => setCurrentView(v)} />
@@ -222,8 +315,43 @@ export default function App() {
                   <TeacherParentChat />
                 ) : currentView === 'timetable' ? (
                   <TimetableManagement onNavigate={(v) => setCurrentView(v)} />
+                ) : currentView === 'cbt_engine' ? (
+                  <CBTEngine />
+                ) : currentView === 'early_warning' ? (
+                  <StudentEarlyWarningSystem />
+                ) : currentView === 'document_vault' ? (
+                  <DocumentVaultView />
+                ) : currentView === 'curriculum' ? (
+                  <CurriculumEngine />
+                ) : currentView === 'parent_ai_assistant' ? (
+                  <ParentPortal initialTab="AI_ASSISTANT" onNavigate={(v) => setCurrentView(v)} />
                 ) : (
-                  <ParentPortal />
+                  <ParentPortal onNavigate={(v) => setCurrentView(v)} />
+                )}
+              </>
+            )}
+
+            {/* Student Views */}
+            {currentUser.role === 'STUDENT' && (
+              <>
+                {currentView === 'cbt_engine' ? (
+                  <CBTEngine />
+                ) : currentView === 'timetable' ? (
+                  <TimetableManagement onNavigate={(v) => setCurrentView(v)} />
+                ) : currentView === 'early_warning' ? (
+                  <StudentEarlyWarningSystem />
+                ) : (
+                  <StudentAccountsAndChat
+                    currentUser={currentUser}
+                    students={students}
+                    classes={classes}
+                    studentCredentials={studentCredentials}
+                    classChatMessages={classChatMessages}
+                    chatModerationLogs={chatModerationLogs}
+                    cbtExams={cbtExams}
+                    onRefresh={refreshState}
+                    onNavigateToCBT={(id) => setCurrentView('cbt_engine')}
+                  />
                 )}
               </>
             )}
@@ -263,6 +391,9 @@ export default function App() {
         isOpen={isUploadPdfModalOpen}
         onClose={() => setIsUploadPdfModalOpen(false)}
       />
+
+      {/* Floating TeXora Voice & Speech Assistant */}
+      <VoiceAssistantWidget />
 
     </div>
   );

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { School, User, SchoolClass, Student, Submission, AttendanceRecord, NotificationItem, ScoreSheet, HomeworkItem, TimetableDay, ClassTimetable, ExamTimetable, AuditLogEntry, ChatRoom, ChatMessage, PublicChatMessage, GeneratedExamSet } from './types';
+import { School, User, SchoolClass, Student, Submission, AttendanceRecord, NotificationItem, ScoreSheet, HomeworkItem, TimetableDay, ClassTimetable, ExamTimetable, AuditLogEntry, ChatRoom, ChatMessage, PublicChatMessage, GeneratedExamSet, CurriculumSubject, CBTExam, CBTAttempt, StudentRiskProfile, RemedialPackage, SchoolDocument, FinancialRecord, PaymentTransaction, SchoolEvent, TransportRoute, AttendanceSettings, StaffAttendanceRecord, SalaryProfile, DeductionRule, PayrollRecord, StudentAccountCredentials, ClassChatMessage, ChatModerationLog } from './types';
 import { COMPANY_LOGO_DATA_URI } from './components/Logo';
 
 export const DEFAULT_SCHOOL_SUBJECTS: string[] = [
@@ -81,6 +81,14 @@ export const INITIAL_SCHOOLS: School[] = [
           paymentMethod: 'Mastercard ending in 8812'
         }
       ]
+    },
+    bankAccountDetails: {
+      bankName: 'Zenith Bank PLC',
+      accountNumber: '1018992045',
+      accountName: 'Apex Horizon Academy Operations Account',
+      sortCodeOrBranch: 'Victoria Island Main Branch, Lagos',
+      paymentInstructions: 'Please include the student Admission No or Full Name in the bank transfer description/narration. After transfer, submit your transfer reference or teller copy below for immediate Proprietor confirmation.',
+      currencySymbol: '₦'
     },
     createdAt: '2025-09-01T08:00:00.000Z',
   },
@@ -278,6 +286,20 @@ export const INITIAL_USERS: User[] = [
     linkedStudentAccessCodes: ['PAR-2022-001', 'PAR-2023-101'],
     active: true,
     createdAt: '2025-09-05T12:00:00.000Z',
+  },
+  // Student 1: Adebayo Tobi (Student Login Account)
+  {
+    id: 'usr_student1',
+    schoolId: 'school_apex',
+    name: 'Adebayo Tobi',
+    email: 'tobi.adebayo@student.apexhorizon.edu',
+    role: 'STUDENT',
+    avatarUrl: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=150&q=80',
+    phone: '+234 812 345 6789',
+    assignedClassIds: ['cls_pri5'],
+    assignedSubjects: ['Mathematics', 'English Language', 'Basic Science & Tech'],
+    active: true,
+    createdAt: '2025-09-06T08:00:00.000Z',
   }
 ];
 
@@ -1251,6 +1273,525 @@ export const INITIAL_EXAM_SETS: GeneratedExamSet[] = [
         marks: 20
       }
     ]
+  }
+];
+
+export const INITIAL_CURRICULA: CurriculumSubject[] = [
+  {
+    id: 'cur_p5_math',
+    schoolId: 'school_apex',
+    classId: 'cls_p5',
+    className: 'Primary 5',
+    subject: 'Mathematics',
+    academicSession: '2025/2026',
+    academicTerm: 'First Term',
+    progressPercent: 60,
+    topics: [
+      { id: 'ct_1', weekNumber: 1, topic: 'Number System & Place Value', subtopics: ['Millions', 'Expanded Form'], learningObjectives: ['Read and write 7-digit numbers'], activities: ['Number chart exercises'], assessmentMethod: 'Class Quiz', status: 'COMPLETED', actualTaughtDate: '2025-09-15' },
+      { id: 'ct_2', weekNumber: 2, topic: 'Fractions & Mixed Numbers', subtopics: ['Addition & Subtraction of Fractions'], learningObjectives: ['Solve improper fractions'], activities: ['Fraction board games'], assessmentMethod: 'Homework', status: 'COMPLETED', actualTaughtDate: '2025-09-22' },
+      { id: 'ct_3', weekNumber: 3, topic: 'Decimals & Percentages', subtopics: ['Conversion of Decimals to %'], learningObjectives: ['Convert decimals to percentages'], activities: ['Real life shop prices exercise'], assessmentMethod: 'Mid Term Test', status: 'COMPLETED', actualTaughtDate: '2025-09-29' },
+      { id: 'ct_4', weekNumber: 4, topic: 'Plane Geometry & Angles', subtopics: ['Angles on a straight line', 'Triangles'], learningObjectives: ['Measure angles with protractor'], activities: ['Angle drawing worksheet'], assessmentMethod: 'Assignment', status: 'BEHIND', actualTaughtDate: undefined },
+      { id: 'ct_5', weekNumber: 5, topic: 'Data Handling & Bar Charts', subtopics: ['Mode, Median, Mean'], learningObjectives: ['Plot frequency tables'], activities: ['Class survey chart drawing'], assessmentMethod: 'Group Project', status: 'NOT_STARTED' }
+    ]
+  },
+  {
+    id: 'cur_ss3_phys',
+    schoolId: 'school_apex',
+    classId: 'cls_ss3',
+    className: 'SS 3',
+    subject: 'Physics',
+    academicSession: '2025/2026',
+    academicTerm: 'First Term',
+    progressPercent: 80,
+    topics: [
+      { id: 'ct_p1', weekNumber: 1, topic: 'Electromagnetic Induction', subtopics: ['Faraday Law', 'Lenz Law'], learningObjectives: ['Explain magnetic flux linkage'], activities: ['Coil and magnet lab setup'], assessmentMethod: 'Lab Quiz', status: 'COMPLETED', actualTaughtDate: '2025-09-14' },
+      { id: 'ct_p2', weekNumber: 2, topic: 'Alternating Current Circuits', subtopics: ['Peak value', 'R.M.S value', 'Resonance'], learningObjectives: ['Calculate inductive reactance'], activities: ['Oscilloscope demo'], assessmentMethod: 'Test', status: 'COMPLETED', actualTaughtDate: '2025-09-21' },
+      { id: 'ct_p3', weekNumber: 3, topic: 'Atomic & Nuclear Physics', subtopics: ['Radioactivity', 'Half life'], learningObjectives: ['Solve radioactive decay equations'], activities: ['Decay simulation'], assessmentMethod: 'CBT Exam', status: 'COMPLETED', actualTaughtDate: '2025-09-28' },
+      { id: 'ct_p4', weekNumber: 4, topic: 'Photoelectric Effect & Quantum Physics', subtopics: ['Work function', 'Planck Constant'], learningObjectives: ['Understand Einstein Photoelectric Equation'], activities: ['Problem solving workshop'], assessmentMethod: 'Assignment', status: 'IN_PROGRESS' }
+    ]
+  }
+];
+
+export const INITIAL_CBT_EXAMS: CBTExam[] = [
+  {
+    id: 'cbt_001',
+    schoolId: 'school_apex',
+    classId: 'cls_ss3',
+    className: 'SS 3',
+    subject: 'Physics',
+    title: 'SS 3 Physics Continuous Assessment CBT 1',
+    instructions: 'Select the best answer for each multiple choice question. Timer starts automatically when you click Start Exam.',
+    durationMinutes: 30,
+    passMarkPercent: 50,
+    status: 'PUBLISHED',
+    questions: [
+      { id: 'cq_1', type: 'MULTIPLE_CHOICE', questionText: 'Faraday’s law of electromagnetic induction states that induced e.m.f is directly proportional to:', options: ['A. Resistance', 'B. Rate of change of flux linkage', 'C. Temperature', 'D. Current'], correctAnswer: 'B. Rate of change of flux linkage', marks: 10 },
+      { id: 'cq_2', type: 'MULTIPLE_CHOICE', questionText: 'The unit of magnetic flux is:', options: ['A. Tesla', 'B. Weber', 'C. Henry', 'D. Farad'], correctAnswer: 'B. Weber', marks: 10 },
+      { id: 'cq_3', type: 'TRUE_FALSE', questionText: 'Lenz’s law obeys the law of conservation of momentum.', correctAnswer: 'False', explanation: 'It obeys the law of conservation of ENERGY.', marks: 10 }
+    ],
+    createdAt: '2026-08-01T09:00:00.000Z'
+  }
+];
+
+export const INITIAL_CBT_ATTEMPTS: CBTAttempt[] = [
+  {
+    id: 'cbta_001',
+    schoolId: 'school_apex',
+    examId: 'cbt_001',
+    examTitle: 'SS 3 Physics Continuous Assessment CBT 1',
+    studentId: 'std_001',
+    studentName: 'Adebayo Tobi',
+    className: 'SS 3',
+    answers: { cq_1: 'B. Rate of change of flux linkage', cq_2: 'B. Weber', cq_3: 'False' },
+    score: 30,
+    totalMarks: 30,
+    percentage: 100,
+    passed: true,
+    timeSpentSeconds: 420,
+    startedAt: '2026-08-02T10:00:00.000Z',
+    completedAt: '2026-08-02T10:07:00.000Z'
+  }
+];
+
+export const INITIAL_STUDENT_RISK_PROFILES: StudentRiskProfile[] = [
+  {
+    id: 'risk_001',
+    schoolId: 'school_apex',
+    studentId: 'std_002',
+    studentName: 'Chidiebere Okafor',
+    className: 'Primary 5',
+    riskLevel: 'HIGH',
+    reasons: ['Mathematics score dropped from 74% to 48%', 'Attendance rate at 76% (below 80% threshold)', '2 consecutive missing homework submissions'],
+    recommendedInterventions: ['Schedule parent-teacher conference', 'Assign 1-on-1 Mathematics remedial package in Fractions & Decimals', 'Monitor daily morning attendance log'],
+    updatedAt: '2026-08-10T12:00:00.000Z'
+  },
+  {
+    id: 'risk_002',
+    schoolId: 'school_apex',
+    studentId: 'std_003',
+    studentName: 'Amina Bello',
+    className: 'JSS 2',
+    riskLevel: 'MEDIUM',
+    reasons: ['Basic Science score dropped by 12%', '1 unexcused absence this week'],
+    recommendedInterventions: ['Assign self-paced revision notes on Cell Biology', 'Send reminder notification to parent'],
+    updatedAt: '2026-08-11T10:00:00.000Z'
+  }
+];
+
+export const INITIAL_REMEDIAL_PACKAGES: RemedialPackage[] = [
+  {
+    id: 'rem_001',
+    schoolId: 'school_apex',
+    studentId: 'std_002',
+    studentName: 'Chidiebere Okafor',
+    className: 'Primary 5',
+    subject: 'Mathematics',
+    topic: 'Fractions & Decimals Mastery',
+    explanation: 'A fraction represents part of a whole number. When adding fractions with different denominators, always find the Least Common Multiple (LCM) of the denominators first.',
+    workedExamples: [
+      { title: 'Example 1: Adding 1/2 and 1/4', problem: 'Calculate 1/2 + 1/4', solution: 'LCM of 2 and 4 is 4. Convert 1/2 to 2/4. 2/4 + 1/4 = 3/4.' },
+      { title: 'Example 2: Converting 3/4 to Decimal', problem: 'Convert 3/4 to decimal form', solution: 'Divide numerator 3 by denominator 4: 3 ÷ 4 = 0.75.' }
+    ],
+    practiceQuestions: [
+      { id: 'rq_1', type: 'MULTIPLE_CHOICE', questionText: 'What is 2/5 + 1/5?', options: ['A. 3/10', 'B. 3/5', 'C. 2/25', 'D. 1/5'], correctAnswer: 'B. 3/5', marks: 5 }
+    ],
+    completed: false,
+    createdAt: '2026-08-10T14:00:00.000Z'
+  }
+];
+
+export const INITIAL_DOCUMENTS: SchoolDocument[] = [
+  {
+    id: 'doc_001',
+    schoolId: 'school_apex',
+    title: '2025/2026 Academic Calendar & Policy Guidelines',
+    category: 'POLICY',
+    fileName: 'Apex_Academic_Calendar_2025_2026.pdf',
+    fileSize: '1.8 MB',
+    uploadedByName: 'Prof. Emmanuel Vance',
+    uploadedByRole: 'PROPRIETOR',
+    accessRoles: ['PROPRIETOR', 'VICE_PRINCIPAL', 'SCHOOL_ADMIN', 'TEACHER', 'PARENT'],
+    createdAt: '2025-09-01T10:00:00.000Z'
+  },
+  {
+    id: 'doc_002',
+    schoolId: 'school_apex',
+    title: 'SS3 WAEC Physics Scheme of Work',
+    category: 'ACADEMIC',
+    fileName: 'SS3_Physics_Scheme_Of_Work.pdf',
+    fileSize: '840 KB',
+    uploadedByName: 'Mr. David Okon',
+    uploadedByRole: 'TEACHER',
+    accessRoles: ['PROPRIETOR', 'VICE_PRINCIPAL', 'SCHOOL_ADMIN', 'TEACHER'],
+    createdAt: '2025-09-10T09:30:00.000Z'
+  }
+];
+
+export const INITIAL_FINANCIALS: FinancialRecord[] = [
+  { id: 'fin_001', schoolId: 'school_apex', studentId: 'std_001', studentName: 'Adebayo Tobi', className: 'SS 3', feeTitle: 'First Term Tuition & Lab Fee', totalAmount: 180000, paidAmount: 180000, dueDate: '2025-09-30', status: 'PAID', lastPaymentDate: '2025-09-10' },
+  { id: 'fin_002', schoolId: 'school_apex', studentId: 'std_002', studentName: 'Chidiebere Okafor', className: 'Primary 5', feeTitle: 'First Term Tuition Fee', totalAmount: 120000, paidAmount: 60000, dueDate: '2025-09-30', status: 'PARTIAL', lastPaymentDate: '2025-09-15' },
+  { id: 'fin_003', schoolId: 'school_apex', studentId: 'std_003', studentName: 'Amina Bello', className: 'JSS 2', feeTitle: 'First Term Tuition Fee', totalAmount: 140000, paidAmount: 0, dueDate: '2025-09-30', status: 'UNPAID' }
+];
+
+export const INITIAL_EVENTS: SchoolEvent[] = [
+  { id: 'evt_001', schoolId: 'school_apex', title: 'First Term Mid-Term Examinations', description: 'Comprehensive mid-term evaluations across all classes.', eventDate: '2026-08-20', category: 'EXAM', targetAudience: 'ALL', createdBy: 'School Admin', createdAt: '2026-08-01T08:00:00.000Z' },
+  { id: 'evt_002', schoolId: 'school_apex', title: 'General PTA Meeting & Academic Progress Review', description: 'Interactive session with parents regarding student progress and new AI tools.', eventDate: '2026-08-25', category: 'PTA', targetAudience: 'PARENTS', createdBy: 'Proprietor', createdAt: '2026-08-05T09:00:00.000Z' }
+];
+
+export const INITIAL_TRANSPORT_ROUTES: TransportRoute[] = [
+  { id: 'tr_001', schoolId: 'school_apex', routeName: 'Victoria Island - Lekki Phase 1 Express', vehicleNo: 'LAG-849-XY', driverName: 'Mr. Samuel Igwe', driverPhone: '+234 803 111 2233', pickupLocations: ['Chevron Tollgate', 'Agungi Bus Stop', 'Lekki Phase 1 Gate'], assignedStudentIds: ['std_001', 'std_002'], capacity: 25 }
+];
+
+export const INITIAL_ATTENDANCE_SETTINGS: AttendanceSettings = {
+  schoolId: 'school_apex',
+  schoolLatitude: 9.0765, // Abuja Central / Default Geofence Location
+  schoolLongitude: 7.3986,
+  allowedRadiusMeters: 150,
+  startTime: '07:30',
+  closingTime: '16:00',
+  lateThresholdMinutes: 15,
+  earlyDepartureThresholdMinutes: 30,
+  requireGeofenceForSignOut: true,
+  updatedAt: '2026-08-01T08:00:00.000Z'
+};
+
+export const INITIAL_STAFF_ATTENDANCE: StaffAttendanceRecord[] = [
+  {
+    id: 'stf_att_001',
+    schoolId: 'school_apex',
+    staffId: 'usr_t1',
+    staffName: 'Mr. David Okon',
+    staffEmail: 'd.okon@apexhorizon.edu',
+    role: 'TEACHER',
+    department: 'Academic',
+    date: '2026-08-11',
+    signInTime: '2026-08-11T07:22:00.000Z',
+    signInLat: 9.0766,
+    signInLng: 7.3987,
+    signInDistanceMeters: 24,
+    signInStatus: 'ON_TIME',
+    signOutTime: '2026-08-11T16:05:00.000Z',
+    signOutLat: 9.0764,
+    signOutLng: 7.3985,
+    signOutDistanceMeters: 20,
+    signOutStatus: 'NORMAL',
+    totalHoursWorked: 8.7,
+    deviceInfo: 'Chrome Mobile / Android GPS',
+    flaggedSuspicious: false,
+    createdAt: '2026-08-11T07:22:00.000Z',
+    updatedAt: '2026-08-11T16:05:00.000Z'
+  },
+  {
+    id: 'stf_att_002',
+    schoolId: 'school_apex',
+    staffId: 'usr_t2',
+    staffName: 'Mrs. Sarah Jenkins',
+    staffEmail: 's.jenkins@apexhorizon.edu',
+    role: 'TEACHER',
+    department: 'Academic',
+    date: '2026-08-11',
+    signInTime: '2026-08-11T08:14:00.000Z', // 44 mins after 07:30 start
+    signInLat: 9.0763,
+    signInLng: 7.3989,
+    signInDistanceMeters: 45,
+    signInStatus: 'LATE',
+    signOutTime: '2026-08-11T16:10:00.000Z',
+    signOutLat: 9.0765,
+    signOutLng: 7.3986,
+    signOutDistanceMeters: 12,
+    signOutStatus: 'NORMAL',
+    totalHoursWorked: 7.9,
+    deviceInfo: 'Safari iOS / iPhone GPS',
+    flaggedSuspicious: false,
+    createdAt: '2026-08-11T08:14:00.000Z',
+    updatedAt: '2026-08-11T16:10:00.000Z'
+  }
+];
+
+export const INITIAL_SALARY_PROFILES: SalaryProfile[] = [
+  {
+    id: 'sal_001',
+    schoolId: 'school_apex',
+    staffId: 'usr_t1',
+    staffName: 'Mr. David Okon',
+    role: 'TEACHER',
+    department: 'Academic',
+    employmentType: 'FULL_TIME',
+    baseSalary: 180000,
+    salaryFrequency: 'MONTHLY',
+    effectiveDate: '2025-09-01',
+    allowances: [
+      { title: 'Housing Allowance', amount: 20000 },
+      { title: 'Transport Allowance', amount: 15000 }
+    ],
+    bankDetails: {
+      bankName: 'First Bank of Nigeria',
+      accountNumber: '3094820192',
+      accountName: 'DAVID OKON'
+    },
+    updatedAt: '2026-08-01T08:00:00.000Z'
+  },
+  {
+    id: 'sal_002',
+    schoolId: 'school_apex',
+    staffId: 'usr_t2',
+    staffName: 'Mrs. Sarah Jenkins',
+    role: 'TEACHER',
+    department: 'Academic',
+    employmentType: 'FULL_TIME',
+    baseSalary: 175000,
+    salaryFrequency: 'MONTHLY',
+    effectiveDate: '2025-09-01',
+    allowances: [
+      { title: 'Housing Allowance', amount: 20000 },
+      { title: 'Transport Allowance', amount: 15000 }
+    ],
+    bankDetails: {
+      bankName: 'GTBank',
+      accountNumber: '0129384756',
+      accountName: 'SARAH JENKINS'
+    },
+    updatedAt: '2026-08-01T08:00:00.000Z'
+  },
+  {
+    id: 'sal_003',
+    schoolId: 'school_apex',
+    staffId: 'usr_admin1',
+    staffName: 'Dr. Eleanor Vance',
+    role: 'SCHOOL_ADMIN',
+    department: 'Administration',
+    employmentType: 'FULL_TIME',
+    baseSalary: 250000,
+    salaryFrequency: 'MONTHLY',
+    effectiveDate: '2025-09-01',
+    allowances: [
+      { title: 'Executive Allowance', amount: 35000 },
+      { title: 'Transport Allowance', amount: 20000 }
+    ],
+    bankDetails: {
+      bankName: 'Zenith Bank',
+      accountNumber: '2081928374',
+      accountName: 'ELEANOR VANCE'
+    },
+    updatedAt: '2026-08-01T08:00:00.000Z'
+  }
+];
+
+export const INITIAL_DEDUCTION_RULES: DeductionRule[] = [
+  {
+    id: 'ded_rule_001',
+    schoolId: 'school_apex',
+    name: 'Late arrival',
+    triggerType: 'LATE_ARRIVAL',
+    active: true,
+    deductionType: 'FIXED',
+    value: 500,
+    maxDeductionPerPeriod: 5000,
+    requiresManualApproval: true,
+    description: '₦500 flat deduction per unexcused late arrival'
+  },
+  {
+    id: 'ded_rule_002',
+    schoolId: 'school_apex',
+    name: 'Unauthorized absence',
+    triggerType: 'ABSENCE',
+    active: true,
+    deductionType: 'FIXED',
+    value: 5000,
+    maxDeductionPerPeriod: 25000,
+    requiresManualApproval: true,
+    description: '₦5,000 deduction per day of unexcused absence'
+  },
+  {
+    id: 'ded_rule_003',
+    schoolId: 'school_apex',
+    name: 'Missing sign-out',
+    triggerType: 'MISSING_SIGN_OUT',
+    active: true,
+    deductionType: 'FIXED',
+    value: 500,
+    maxDeductionPerPeriod: 3000,
+    requiresManualApproval: true,
+    description: '₦500 penalty when a staff member fails to sign out'
+  },
+  {
+    id: 'ded_rule_004',
+    schoolId: 'school_apex',
+    name: 'Early departure',
+    triggerType: 'EARLY_DEPARTURE',
+    active: true,
+    deductionType: 'FIXED',
+    value: 1000,
+    maxDeductionPerPeriod: 6000,
+    requiresManualApproval: true,
+    description: '₦1,000 penalty for unauthorized early departure'
+  }
+];
+
+export const INITIAL_PAYROLL_RECORDS: PayrollRecord[] = [
+  {
+    id: 'pay_rec_2026_08',
+    schoolId: 'school_apex',
+    periodName: 'August 2026',
+    startDate: '2026-08-01',
+    endDate: '2026-08-31',
+    status: 'DRAFT',
+    staffPayrollItems: [
+      {
+        staffId: 'usr_t1',
+        staffName: 'Mr. David Okon',
+        role: 'TEACHER',
+        department: 'Academic',
+        baseSalary: 180000,
+        allowancesBreakdown: [
+          { title: 'Housing Allowance', amount: 20000 },
+          { title: 'Transport Allowance', amount: 15000 }
+        ],
+        totalAllowances: 35000,
+        deductionsBreakdown: [],
+        totalDeductions: 0,
+        netSalary: 215000,
+        paymentStatus: 'UNPAID',
+        payslipId: 'ps_t1_202608'
+      },
+      {
+        staffId: 'usr_t2',
+        staffName: 'Mrs. Sarah Jenkins',
+        role: 'TEACHER',
+        department: 'Academic',
+        baseSalary: 175000,
+        allowancesBreakdown: [
+          { title: 'Housing Allowance', amount: 20000 },
+          { title: 'Transport Allowance', amount: 15000 }
+        ],
+        totalAllowances: 35000,
+        deductionsBreakdown: [
+          { title: 'Late arrival penalty (Aug 11)', amount: 500, reason: 'Arrived 44 mins late', approved: true }
+        ],
+        totalDeductions: 500,
+        netSalary: 209500,
+        paymentStatus: 'UNPAID',
+        payslipId: 'ps_t2_202608'
+      },
+      {
+        staffId: 'usr_admin1',
+        staffName: 'Dr. Eleanor Vance',
+        role: 'SCHOOL_ADMIN',
+        department: 'Administration',
+        baseSalary: 250000,
+        allowancesBreakdown: [
+          { title: 'Executive Allowance', amount: 35000 },
+          { title: 'Transport Allowance', amount: 20000 }
+        ],
+        totalAllowances: 55000,
+        deductionsBreakdown: [],
+        totalDeductions: 0,
+        netSalary: 305000,
+        paymentStatus: 'UNPAID',
+        payslipId: 'ps_admin1_202608'
+      }
+    ],
+    totalPayroll: 605000,
+    totalAllowances: 125000,
+    totalDeductions: 500,
+    netPayroll: 729500,
+    locked: false,
+    createdAt: '2026-08-01T08:00:00.000Z',
+    updatedAt: '2026-08-11T17:00:00.000Z'
+  }
+];
+
+export const INITIAL_STUDENT_CREDENTIALS: StudentAccountCredentials[] = [
+  {
+    studentId: 'std_001',
+    studentName: 'Adebayo Tobi',
+    classId: 'cls_pri5',
+    className: 'Primary 5',
+    studentCode: 'TXR-P5-00482',
+    accessPin: '1234',
+    activationStatus: 'ACTIVE',
+    activatedAt: '2025-09-06T09:00:00.000Z',
+    createdByTeacherName: 'Mrs. Sarah Jenkins',
+    chatMuted: false
+  },
+  {
+    studentId: 'std_002',
+    studentName: 'Chidiebere Okafor',
+    classId: 'cls_pri5',
+    className: 'Primary 5',
+    studentCode: 'TXR-P5-00483',
+    accessPin: '5678',
+    activationStatus: 'ACTIVE',
+    activatedAt: '2025-09-06T09:30:00.000Z',
+    createdByTeacherName: 'Mrs. Sarah Jenkins',
+    chatMuted: false
+  },
+  {
+    studentId: 'std_003',
+    studentName: 'Amina Bello',
+    classId: 'cls_jss2',
+    className: 'JSS 2',
+    studentCode: 'TXR-J2-00109',
+    accessPin: '4321',
+    activationStatus: 'PENDING_ACTIVATION',
+    createdByTeacherName: 'Mr. David Okon',
+    chatMuted: false
+  }
+];
+
+export const INITIAL_CLASS_CHAT_MESSAGES: ClassChatMessage[] = [
+  {
+    id: 'msg_001',
+    schoolId: 'school_apex',
+    classId: 'cls_pri5',
+    className: 'Primary 5',
+    senderId: 'usr_t2',
+    senderName: 'Mrs. Sarah Jenkins',
+    senderRole: 'TEACHER',
+    content: 'Good morning Primary 5! Welcome to our monitored Class Chat. Remember our Mathematics CBT exam starts tomorrow at 9:00 AM.',
+    isAnnouncement: true,
+    flaggedByAi: false,
+    createdAt: '2026-08-11T08:00:00.000Z'
+  },
+  {
+    id: 'msg_002',
+    schoolId: 'school_apex',
+    classId: 'cls_pri5',
+    className: 'Primary 5',
+    senderId: 'usr_student1',
+    senderName: 'Adebayo Tobi',
+    senderRole: 'STUDENT',
+    content: 'Thank you Mrs. Jenkins! Will the CBT cover Simultaneous Equations and Fractions?',
+    flaggedByAi: false,
+    createdAt: '2026-08-11T08:15:00.000Z'
+  },
+  {
+    id: 'msg_003',
+    schoolId: 'school_apex',
+    classId: 'cls_pri5',
+    className: 'Primary 5',
+    senderId: 'usr_t2',
+    senderName: 'Mrs. Sarah Jenkins',
+    senderRole: 'TEACHER',
+    content: 'Yes Tobi, make sure to review the practice questions in the CBT Practice Hub.',
+    flaggedByAi: false,
+    createdAt: '2026-08-11T08:20:00.000Z'
+  }
+];
+
+export const INITIAL_CHAT_MODERATION_LOGS: ChatModerationLog[] = [
+  {
+    id: 'mod_log_001',
+    schoolId: 'school_apex',
+    classId: 'cls_pri5',
+    className: 'Primary 5',
+    moderatorId: 'usr_t2',
+    moderatorName: 'Mrs. Sarah Jenkins',
+    moderatorRole: 'TEACHER',
+    action: 'PIN_ANNOUNCEMENT',
+    messageId: 'msg_001',
+    reason: 'Pinned official Mathematics CBT announcement',
+    createdAt: '2026-08-11T08:01:00.000Z'
   }
 ];
 

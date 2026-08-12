@@ -19,7 +19,16 @@ import {
   ChevronRight,
   ShieldCheck,
   User,
-  Plus
+  Plus,
+  Sparkles,
+  Brain,
+  MessageSquare,
+  HelpCircle,
+  Loader2,
+  Send,
+  Laptop,
+  AlertTriangle,
+  FolderLock
 } from 'lucide-react';
 import { useAppStore } from '../storage';
 import { Student, StudentReportCard } from '../types';
@@ -35,8 +44,13 @@ import {
   Cell
 } from 'recharts';
 
-export function ParentPortal() {
-  const { currentUser, students, classes, homework, school, actions } = useAppStore();
+interface ParentPortalProps {
+  initialTab?: string;
+  onNavigate?: (view: string) => void;
+}
+
+export function ParentPortal({ initialTab, onNavigate }: ParentPortalProps) {
+  const { currentUser, students, classes, homework, school, actions, cbtExams, remedialPackages, schoolDocuments } = useAppStore();
 
   const [linkAccessCodeInput, setLinkAccessCodeInput] = useState('');
   const [linkStatusMsg, setLinkStatusMsg] = useState<{ success: boolean; text: string } | null>(null);
@@ -57,7 +71,42 @@ export function ParentPortal() {
   const activeHomework = activeStudent ? homework.filter(h => h.classId === activeStudent.classId) : [];
   const activeTimetable = activeStudent ? actions.getTimetableForClass(activeStudent.classId) : null;
 
-  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'REPORT_CARD' | 'SCORES' | 'HOMEWORK' | 'ATTENDANCE' | 'TIMETABLE'>('OVERVIEW');
+  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'REPORT_CARD' | 'SCORES' | 'HOMEWORK' | 'ATTENDANCE' | 'TIMETABLE' | 'AI_ASSISTANT'>(
+    (initialTab as any) || 'AI_ASSISTANT'
+  );
+
+  // AI Parent Assistant State
+  const [aiSubject, setAiSubject] = useState<string>('Mathematics');
+  const [aiTopic, setAiTopic] = useState<string>('Quadratic Equations & Homework Guidance');
+  const [aiMode, setAiMode] = useState<'EXPLAIN' | 'QUIZ' | 'REAL_WORLD'>('EXPLAIN');
+  const [aiResponse, setAiResponse] = useState<string | null>(null);
+  const [isAiThinking, setIsAiThinking] = useState<boolean>(false);
+
+  const handleAskAITutor = async () => {
+    setIsAiThinking(true);
+    setAiResponse(null);
+    try {
+      const response = await fetch('/api/ai/suggest-lesson', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          className: activeClass?.name || 'SS 3',
+          subject: aiSubject,
+          topic: aiTopic,
+          subTopic: `Parent Homework Assistant Mode: ${aiMode}`,
+          prompt: `You are TeXora AI Parent Assistant. A parent is asking for help to guide their child in ${aiSubject} on topic "${aiTopic}". Mode: ${aiMode}. Provide clear, friendly, step-by-step explanation or practice questions with answers.`
+        })
+      });
+
+      const data = await response.json();
+      const resText = data.suggestions?.summary || data.data?.summary || `Here is guidance for ${aiTopic} in ${aiSubject}:\n\n1. Break the problem into small, manageable parts.\n2. Practice with 2-3 similar examples.\n3. Verify the final answer step by step.`;
+      setAiResponse(resText);
+    } catch (err) {
+      setAiResponse('TeXora AI Tutor encountered a network issue. Please retry.');
+    } finally {
+      setIsAiThinking(false);
+    }
+  };
 
   const handleLinkChild = (e: React.FormEvent) => {
     e.preventDefault();
@@ -175,7 +224,7 @@ export function ParentPortal() {
         </div>
       </div>
 
-      {activeStudent ? (
+      {activeStudent && (
         <>
           {/* Student Profile Card Header */}
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
@@ -259,10 +308,13 @@ export function ParentPortal() {
               <span>Download Promotion Certificate</span>
             </button>
           </div>
+        </>
+      )}
 
-          {/* Navigation Tabs */}
+      {/* Navigation Tabs */}
           <div className="flex space-x-2 border-b border-slate-200 dark:border-slate-800 overflow-x-auto pb-1">
             {[
+              { id: 'AI_ASSISTANT', label: 'AI Parent & Tutor Assistant', icon: Sparkles },
               { id: 'OVERVIEW', label: 'Overview & Charts', icon: TrendingUp },
               { id: 'REPORT_CARD', label: 'Terminal Report Card', icon: Award },
               { id: 'SCORES', label: 'Assessment Breakdowns', icon: BookOpen },
@@ -497,6 +549,207 @@ export function ParentPortal() {
             </div>
           )}
 
+          {/* Tab: AI Parent & Student Assistant */}
+          {activeTab === 'AI_ASSISTANT' && (
+            <div className="space-y-6">
+              {/* AI Banner */}
+              <div className="bg-gradient-to-r from-indigo-900 via-purple-950 to-slate-900 text-white p-6 rounded-2xl border border-indigo-500/30 shadow-xl space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-3 bg-indigo-500/20 rounded-2xl border border-indigo-400/30 text-indigo-300">
+                      <Sparkles className="w-7 h-7 animate-pulse text-indigo-300" />
+                    </div>
+                    <div>
+                      <span className="px-2.5 py-0.5 rounded-full bg-indigo-500/30 text-indigo-200 text-[10px] font-extrabold uppercase tracking-widest border border-indigo-400/20">
+                        GEMINI 3.6 FLASH POWERED
+                      </span>
+                      <h3 className="text-xl font-black mt-1">TeXora AI Parent & Homework Assistant</h3>
+                      <p className="text-xs text-indigo-200">
+                        Instant step-by-step guidance for homework, CBT practice tests, and school documents.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Voice Assistant Shortcut */}
+                  <div className="flex items-center gap-2">
+                    <div className="px-3 py-1.5 rounded-xl bg-purple-500/20 border border-purple-400/30 text-purple-200 text-xs font-bold flex items-center gap-2">
+                      <Brain className="w-4 h-4 text-purple-300" />
+                      <span>Voice Assistant Active (Floating Bottom-Right)</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Feature Launchers */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                  <button
+                    onClick={() => onNavigate && onNavigate('cbt_engine')}
+                    className="p-3.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-indigo-500/30 text-left transition-all hover:scale-[1.01] cursor-pointer group"
+                  >
+                    <div className="flex items-center justify-between text-indigo-300 mb-1">
+                      <Laptop className="w-5 h-5" />
+                      <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                    <div className="font-bold text-xs text-white">AI CBT Practice Hub</div>
+                    <div className="text-[10px] text-slate-300">Practice timed CBT exams with {activeStudent?.fullName || 'your child'}</div>
+                  </button>
+
+                  <button
+                    onClick={() => onNavigate && onNavigate('early_warning')}
+                    className="p-3.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-amber-500/30 text-left transition-all hover:scale-[1.01] cursor-pointer group"
+                  >
+                    <div className="flex items-center justify-between text-amber-300 mb-1">
+                      <AlertTriangle className="w-5 h-5" />
+                      <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                    <div className="font-bold text-xs text-white">Child Risk & Remedials</div>
+                    <div className="text-[10px] text-slate-300">View personalized AI remedial packages & weaknesses</div>
+                  </button>
+
+                  <button
+                    onClick={() => onNavigate && onNavigate('document_vault')}
+                    className="p-3.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-emerald-500/30 text-left transition-all hover:scale-[1.01] cursor-pointer group"
+                  >
+                    <div className="flex items-center justify-between text-emerald-300 mb-1">
+                      <FolderLock className="w-5 h-5" />
+                      <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                    <div className="font-bold text-xs text-white">Vault & Fee Receipts</div>
+                    <div className="text-[10px] text-slate-300">Access official school letters, syllabi, and fee records</div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Interactive Homework Tutor */}
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm space-y-5">
+                <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
+                  <div>
+                    <h3 className="font-bold text-slate-900 dark:text-white text-base flex items-center gap-2">
+                      <Brain className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                      <span>Interactive AI Homework & Tutor Assistant</span>
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Helping parents guide student learning for <strong className="text-slate-800 dark:text-slate-200">{activeStudent?.fullName} ({activeClass?.name})</strong>
+                    </p>
+                  </div>
+                  <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-extrabold text-[11px]">
+                    Online & Ready
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Subject
+                    </label>
+                    <select
+                      value={aiSubject}
+                      onChange={(e) => setAiSubject(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                    >
+                      <option value="Mathematics">Mathematics</option>
+                      <option value="English Language">English Language</option>
+                      <option value="Physics">Physics</option>
+                      <option value="Chemistry">Chemistry</option>
+                      <option value="Biology">Biology</option>
+                      <option value="Civic Education">Civic Education</option>
+                      <option value="Computer Science">Computer Science</option>
+                      <option value="Economics">Economics</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Assistance Goal
+                    </label>
+                    <div className="flex rounded-xl p-1 bg-slate-100 dark:bg-slate-800 text-xs font-bold">
+                      <button
+                        type="button"
+                        onClick={() => setAiMode('EXPLAIN')}
+                        className={`flex-1 py-1.5 rounded-lg text-[11px] transition-all cursor-pointer ${
+                          aiMode === 'EXPLAIN' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 dark:text-slate-400'
+                        }`}
+                      >
+                        Step-by-Step
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAiMode('QUIZ')}
+                        className={`flex-1 py-1.5 rounded-lg text-[11px] transition-all cursor-pointer ${
+                          aiMode === 'QUIZ' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 dark:text-slate-400'
+                        }`}
+                      >
+                        Practice Quiz
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAiMode('REAL_WORLD')}
+                        className={`flex-1 py-1.5 rounded-lg text-[11px] transition-all cursor-pointer ${
+                          aiMode === 'REAL_WORLD' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 dark:text-slate-400'
+                        }`}
+                      >
+                        Real Examples
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Homework Topic or Question
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={aiTopic}
+                      onChange={(e) => setAiTopic(e.target.value)}
+                      placeholder="e.g. Simultaneous Equations,Photosynthesis, Shakespeare's Macbeth..."
+                      className="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAskAITutor}
+                      disabled={isAiThinking || !aiTopic.trim()}
+                      className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold text-xs shadow-md shadow-indigo-600/20 flex items-center space-x-2 transition-all cursor-pointer shrink-0"
+                    >
+                      {isAiThinking ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Consulting AI...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4" />
+                          <span>Ask AI Tutor</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* AI Response Output Container */}
+                {aiResponse && (
+                  <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-3">
+                    <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
+                      <span className="text-xs font-extrabold text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
+                        <Sparkles className="w-4 h-4" />
+                        AI Parent Guidance Output
+                      </span>
+                      <button
+                        onClick={() => setAiResponse(null)}
+                        className="text-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-semibold cursor-pointer"
+                      >
+                        Clear Response
+                      </button>
+                    </div>
+                    <div className="text-xs leading-relaxed text-slate-800 dark:text-slate-200 whitespace-pre-wrap font-sans">
+                      {aiResponse}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Tab 5: Class Timetable */}
           {activeTab === 'TIMETABLE' && activeTimetable && (
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 space-y-4">
@@ -532,16 +785,16 @@ export function ParentPortal() {
               </div>
             </div>
           )}
-        </>
-      ) : (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-12 text-center space-y-4 border border-slate-200 dark:border-slate-800">
-          <Key className="w-12 h-12 text-indigo-500 mx-auto" />
-          <h3 className="text-xl font-bold text-slate-900 dark:text-white">No Student Linked Yet</h3>
-          <p className="text-sm text-slate-500 max-w-md mx-auto">
-            Please enter your child’s Parent Access Code (found on their admission letter or ID badge) in the top form to link their account.
-          </p>
-        </div>
-      )}
+
+          {!activeStudent && activeTab !== 'AI_ASSISTANT' && (
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-12 text-center space-y-4 border border-slate-200 dark:border-slate-800">
+              <Key className="w-12 h-12 text-indigo-500 mx-auto" />
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">No Student Linked Yet</h3>
+              <p className="text-sm text-slate-500 max-w-md mx-auto">
+                Please enter your child’s Parent Access Code (found on their admission letter or ID badge) in the top form to link their account.
+              </p>
+            </div>
+          )}
     </div>
   );
 }

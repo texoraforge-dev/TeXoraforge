@@ -25,7 +25,24 @@ import {
   ChatMessage,
   PublicChatMessage,
   GeneratedExamSet,
-  ExamQuestion
+  ExamQuestion,
+  CurriculumSubject,
+  CBTExam,
+  CBTAttempt,
+  StudentRiskProfile,
+  RemedialPackage,
+  SchoolDocument,
+  FinancialRecord,
+  SchoolEvent,
+  TransportRoute,
+  AttendanceSettings,
+  StaffAttendanceRecord,
+  SalaryProfile,
+  DeductionRule,
+  PayrollRecord,
+  StudentAccountCredentials,
+  ClassChatMessage,
+  ChatModerationLog
 } from './types';
 import {
   INITIAL_SCHOOLS,
@@ -45,7 +62,24 @@ import {
   INITIAL_CHAT_MESSAGES,
   INITIAL_PUBLIC_CHAT_MESSAGES,
   INITIAL_EXAM_SETS,
-  DEFAULT_SCHOOL_SUBJECTS
+  DEFAULT_SCHOOL_SUBJECTS,
+  INITIAL_CURRICULA,
+  INITIAL_CBT_EXAMS,
+  INITIAL_CBT_ATTEMPTS,
+  INITIAL_STUDENT_RISK_PROFILES,
+  INITIAL_REMEDIAL_PACKAGES,
+  INITIAL_DOCUMENTS,
+  INITIAL_FINANCIALS,
+  INITIAL_EVENTS,
+  INITIAL_TRANSPORT_ROUTES,
+  INITIAL_ATTENDANCE_SETTINGS,
+  INITIAL_STAFF_ATTENDANCE,
+  INITIAL_SALARY_PROFILES,
+  INITIAL_DEDUCTION_RULES,
+  INITIAL_PAYROLL_RECORDS,
+  INITIAL_STUDENT_CREDENTIALS,
+  INITIAL_CLASS_CHAT_MESSAGES,
+  INITIAL_CHAT_MODERATION_LOGS
 } from './mockData';
 import { SupabaseService } from './lib/supabaseService';
 import { DEFAULT_ROLE_PERMISSIONS } from './lib/permissions';
@@ -68,6 +102,23 @@ const STORAGE_KEYS = {
   CHAT_MESSAGES: 'texora_chat_messages_v1',
   PUBLIC_CHAT_MESSAGES: 'texora_public_chat_messages_v1',
   EXAM_SETS: 'texora_exam_sets_v1',
+  CURRICULA: 'texora_curricula_v1',
+  CBT_EXAMS: 'texora_cbt_exams_v1',
+  CBT_ATTEMPTS: 'texora_cbt_attempts_v1',
+  STUDENT_RISK_PROFILES: 'texora_student_risk_v1',
+  REMEDIAL_PACKAGES: 'texora_remedials_v1',
+  SCHOOL_DOCUMENTS: 'texora_documents_v1',
+  FINANCIAL_RECORDS: 'texora_financials_v1',
+  SCHOOL_EVENTS: 'texora_events_v1',
+  TRANSPORT_ROUTES: 'texora_transport_v1',
+  ATTENDANCE_SETTINGS: 'texora_attendance_settings_v1',
+  STAFF_ATTENDANCE: 'texora_staff_attendance_v1',
+  SALARY_PROFILES: 'texora_salary_profiles_v1',
+  DEDUCTION_RULES: 'texora_deduction_rules_v1',
+  PAYROLL_RECORDS: 'texora_payroll_records_v1',
+  STUDENT_CREDENTIALS: 'texora_student_credentials_v1',
+  CLASS_CHAT_MESSAGES: 'texora_class_chat_messages_v1',
+  CHAT_MODERATION_LOGS: 'texora_chat_moderation_logs_v1',
   CURRENT_USER_ID: 'texora_current_user_id_v1',
   CURRENT_SCHOOL_ID: 'texora_current_school_id_v1',
 };
@@ -137,6 +188,57 @@ export class AppStorage {
     }
     if (!localStorage.getItem(STORAGE_KEYS.CHAT_MESSAGES)) {
       setStored(STORAGE_KEYS.CHAT_MESSAGES, INITIAL_CHAT_MESSAGES);
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.CURRICULA)) {
+      setStored(STORAGE_KEYS.CURRICULA, INITIAL_CURRICULA);
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.CBT_EXAMS)) {
+      setStored(STORAGE_KEYS.CBT_EXAMS, INITIAL_CBT_EXAMS);
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.CBT_ATTEMPTS)) {
+      setStored(STORAGE_KEYS.CBT_ATTEMPTS, INITIAL_CBT_ATTEMPTS);
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.STUDENT_RISK_PROFILES)) {
+      setStored(STORAGE_KEYS.STUDENT_RISK_PROFILES, INITIAL_STUDENT_RISK_PROFILES);
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.REMEDIAL_PACKAGES)) {
+      setStored(STORAGE_KEYS.REMEDIAL_PACKAGES, INITIAL_REMEDIAL_PACKAGES);
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.SCHOOL_DOCUMENTS)) {
+      setStored(STORAGE_KEYS.SCHOOL_DOCUMENTS, INITIAL_DOCUMENTS);
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.FINANCIAL_RECORDS)) {
+      setStored(STORAGE_KEYS.FINANCIAL_RECORDS, INITIAL_FINANCIALS);
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.SCHOOL_EVENTS)) {
+      setStored(STORAGE_KEYS.SCHOOL_EVENTS, INITIAL_EVENTS);
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.TRANSPORT_ROUTES)) {
+      setStored(STORAGE_KEYS.TRANSPORT_ROUTES, INITIAL_TRANSPORT_ROUTES);
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.ATTENDANCE_SETTINGS)) {
+      setStored(STORAGE_KEYS.ATTENDANCE_SETTINGS, INITIAL_ATTENDANCE_SETTINGS);
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.STAFF_ATTENDANCE)) {
+      setStored(STORAGE_KEYS.STAFF_ATTENDANCE, INITIAL_STAFF_ATTENDANCE);
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.SALARY_PROFILES)) {
+      setStored(STORAGE_KEYS.SALARY_PROFILES, INITIAL_SALARY_PROFILES);
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.DEDUCTION_RULES)) {
+      setStored(STORAGE_KEYS.DEDUCTION_RULES, INITIAL_DEDUCTION_RULES);
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.PAYROLL_RECORDS)) {
+      setStored(STORAGE_KEYS.PAYROLL_RECORDS, INITIAL_PAYROLL_RECORDS);
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.STUDENT_CREDENTIALS)) {
+      setStored(STORAGE_KEYS.STUDENT_CREDENTIALS, INITIAL_STUDENT_CREDENTIALS);
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.CLASS_CHAT_MESSAGES)) {
+      setStored(STORAGE_KEYS.CLASS_CHAT_MESSAGES, INITIAL_CLASS_CHAT_MESSAGES);
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.CHAT_MODERATION_LOGS)) {
+      setStored(STORAGE_KEYS.CHAT_MODERATION_LOGS, INITIAL_CHAT_MODERATION_LOGS);
     }
     if (!localStorage.getItem(STORAGE_KEYS.CURRENT_SCHOOL_ID)) {
       setStored(STORAGE_KEYS.CURRENT_SCHOOL_ID, 'school_apex');
@@ -1490,6 +1592,622 @@ export class AppStorage {
     AppStorage.saveExamSet(generatedExamSet);
     return generatedExamSet;
   }
+
+  // --- Curriculum Methods ---
+  static getCurricula(schoolId?: string): CurriculumSubject[] {
+    const list = getStored<CurriculumSubject[]>(STORAGE_KEYS.CURRICULA, INITIAL_CURRICULA);
+    const sId = schoolId || this.getCurrentSchool()?.id;
+    return sId ? list.filter(c => c.schoolId === sId) : list;
+  }
+
+  static saveCurriculum(curriculum: CurriculumSubject): void {
+    const list = getStored<CurriculumSubject[]>(STORAGE_KEYS.CURRICULA, INITIAL_CURRICULA);
+    const idx = list.findIndex(c => c.id === curriculum.id);
+    if (idx !== -1) {
+      list[idx] = curriculum;
+    } else {
+      list.unshift(curriculum);
+    }
+    setStored(STORAGE_KEYS.CURRICULA, list);
+  }
+
+  // --- CBT Methods ---
+  static getCBTExams(schoolId?: string): CBTExam[] {
+    const list = getStored<CBTExam[]>(STORAGE_KEYS.CBT_EXAMS, INITIAL_CBT_EXAMS);
+    const sId = schoolId || this.getCurrentSchool()?.id;
+    return sId ? list.filter(e => e.schoolId === sId) : list;
+  }
+
+  static saveCBTExam(exam: CBTExam): void {
+    const list = getStored<CBTExam[]>(STORAGE_KEYS.CBT_EXAMS, INITIAL_CBT_EXAMS);
+    const idx = list.findIndex(e => e.id === exam.id);
+    if (idx !== -1) {
+      list[idx] = exam;
+    } else {
+      list.unshift(exam);
+    }
+    setStored(STORAGE_KEYS.CBT_EXAMS, list);
+  }
+
+  static getCBTAttempts(schoolId?: string): CBTAttempt[] {
+    const list = getStored<CBTAttempt[]>(STORAGE_KEYS.CBT_ATTEMPTS, INITIAL_CBT_ATTEMPTS);
+    const sId = schoolId || this.getCurrentSchool()?.id;
+    return sId ? list.filter(a => a.schoolId === sId) : list;
+  }
+
+  static saveCBTAttempt(attempt: CBTAttempt): void {
+    const list = getStored<CBTAttempt[]>(STORAGE_KEYS.CBT_ATTEMPTS, INITIAL_CBT_ATTEMPTS);
+    const idx = list.findIndex(a => a.id === attempt.id);
+    if (idx !== -1) {
+      list[idx] = attempt;
+    } else {
+      list.unshift(attempt);
+    }
+    setStored(STORAGE_KEYS.CBT_ATTEMPTS, list);
+  }
+
+  // --- Student Risk Profiles & Remedials ---
+  static getStudentRiskProfiles(schoolId?: string): StudentRiskProfile[] {
+    const list = getStored<StudentRiskProfile[]>(STORAGE_KEYS.STUDENT_RISK_PROFILES, INITIAL_STUDENT_RISK_PROFILES);
+    const sId = schoolId || this.getCurrentSchool()?.id;
+    return sId ? list.filter(r => r.schoolId === sId) : list;
+  }
+
+  static saveStudentRiskProfile(profile: StudentRiskProfile): void {
+    const list = getStored<StudentRiskProfile[]>(STORAGE_KEYS.STUDENT_RISK_PROFILES, INITIAL_STUDENT_RISK_PROFILES);
+    const idx = list.findIndex(r => r.id === profile.id);
+    if (idx !== -1) {
+      list[idx] = profile;
+    } else {
+      list.unshift(profile);
+    }
+    setStored(STORAGE_KEYS.STUDENT_RISK_PROFILES, list);
+  }
+
+  static getRemedialPackages(schoolId?: string): RemedialPackage[] {
+    const list = getStored<RemedialPackage[]>(STORAGE_KEYS.REMEDIAL_PACKAGES, INITIAL_REMEDIAL_PACKAGES);
+    const sId = schoolId || this.getCurrentSchool()?.id;
+    return sId ? list.filter(r => r.schoolId === sId) : list;
+  }
+
+  static saveRemedialPackage(pkg: RemedialPackage): void {
+    const list = getStored<RemedialPackage[]>(STORAGE_KEYS.REMEDIAL_PACKAGES, INITIAL_REMEDIAL_PACKAGES);
+    const idx = list.findIndex(r => r.id === pkg.id);
+    if (idx !== -1) {
+      list[idx] = pkg;
+    } else {
+      list.unshift(pkg);
+    }
+    setStored(STORAGE_KEYS.REMEDIAL_PACKAGES, list);
+  }
+
+  // --- Documents, Financials, Events, Transport ---
+  static getSchoolDocuments(schoolId?: string): SchoolDocument[] {
+    const list = getStored<SchoolDocument[]>(STORAGE_KEYS.SCHOOL_DOCUMENTS, INITIAL_DOCUMENTS);
+    const sId = schoolId || this.getCurrentSchool()?.id;
+    return sId ? list.filter(d => d.schoolId === sId) : list;
+  }
+
+  static saveSchoolDocument(doc: SchoolDocument): void {
+    const list = getStored<SchoolDocument[]>(STORAGE_KEYS.SCHOOL_DOCUMENTS, INITIAL_DOCUMENTS);
+    const idx = list.findIndex(d => d.id === doc.id);
+    if (idx !== -1) {
+      list[idx] = doc;
+    } else {
+      list.unshift(doc);
+    }
+    setStored(STORAGE_KEYS.SCHOOL_DOCUMENTS, list);
+  }
+
+  static getFinancialRecords(schoolId?: string): FinancialRecord[] {
+    const list = getStored<FinancialRecord[]>(STORAGE_KEYS.FINANCIAL_RECORDS, INITIAL_FINANCIALS);
+    const sId = schoolId || this.getCurrentSchool()?.id;
+    return sId ? list.filter(f => f.schoolId === sId) : list;
+  }
+
+  static saveFinancialRecord(record: FinancialRecord): void {
+    const list = getStored<FinancialRecord[]>(STORAGE_KEYS.FINANCIAL_RECORDS, INITIAL_FINANCIALS);
+    const idx = list.findIndex(f => f.id === record.id);
+    if (idx !== -1) {
+      list[idx] = record;
+    } else {
+      list.unshift(record);
+    }
+    setStored(STORAGE_KEYS.FINANCIAL_RECORDS, list);
+  }
+
+  static getSchoolEvents(schoolId?: string): SchoolEvent[] {
+    const list = getStored<SchoolEvent[]>(STORAGE_KEYS.SCHOOL_EVENTS, INITIAL_EVENTS);
+    const sId = schoolId || this.getCurrentSchool()?.id;
+    return sId ? list.filter(e => e.schoolId === sId) : list;
+  }
+
+  static saveSchoolEvent(event: SchoolEvent): void {
+    const list = getStored<SchoolEvent[]>(STORAGE_KEYS.SCHOOL_EVENTS, INITIAL_EVENTS);
+    const idx = list.findIndex(e => e.id === event.id);
+    if (idx !== -1) {
+      list[idx] = event;
+    } else {
+      list.unshift(event);
+    }
+    setStored(STORAGE_KEYS.SCHOOL_EVENTS, list);
+  }
+
+  static getTransportRoutes(schoolId?: string): TransportRoute[] {
+    const list = getStored<TransportRoute[]>(STORAGE_KEYS.TRANSPORT_ROUTES, INITIAL_TRANSPORT_ROUTES);
+    const sId = schoolId || this.getCurrentSchool()?.id;
+    return sId ? list.filter(t => t.schoolId === sId) : list;
+  }
+
+  static saveTransportRoute(route: TransportRoute): void {
+    const list = getStored<TransportRoute[]>(STORAGE_KEYS.TRANSPORT_ROUTES, INITIAL_TRANSPORT_ROUTES);
+    const idx = list.findIndex(t => t.id === route.id);
+    if (idx !== -1) {
+      list[idx] = route;
+    } else {
+      list.unshift(route);
+    }
+    setStored(STORAGE_KEYS.TRANSPORT_ROUTES, list);
+  }
+
+  // PART 1: Staff Attendance & Geofence Settings
+  static getAttendanceSettings(schoolId?: string): AttendanceSettings {
+    const sId = schoolId || this.getCurrentSchool()?.id || 'school_apex';
+    const settings = getStored<AttendanceSettings>(STORAGE_KEYS.ATTENDANCE_SETTINGS, INITIAL_ATTENDANCE_SETTINGS);
+    return { ...settings, schoolId: sId };
+  }
+
+  static saveAttendanceSettings(settings: AttendanceSettings): void {
+    setStored(STORAGE_KEYS.ATTENDANCE_SETTINGS, settings);
+    const user = this.getCurrentUser();
+    this.addAuditLog({
+      schoolId: settings.schoolId || 'school_apex',
+      userId: user?.id || 'system',
+      userName: user?.name || 'System',
+      userRole: user?.role || 'PROPRIETOR',
+      action: 'Updated Geofence Attendance Settings',
+      module: 'SETTINGS',
+      details: `Latitude: ${settings.schoolLatitude}, Longitude: ${settings.schoolLongitude}, Radius: ${settings.allowedRadiusMeters}m, Hours: ${settings.startTime} - ${settings.closingTime}`
+    });
+  }
+
+  static getStaffAttendanceRecords(schoolId?: string): StaffAttendanceRecord[] {
+    const list = getStored<StaffAttendanceRecord[]>(STORAGE_KEYS.STAFF_ATTENDANCE, INITIAL_STAFF_ATTENDANCE);
+    const sId = schoolId || this.getCurrentSchool()?.id;
+    return sId ? list.filter(a => a.schoolId === sId) : list;
+  }
+
+  static recordStaffSignIn(recordData: Partial<StaffAttendanceRecord>): StaffAttendanceRecord {
+    const list = getStored<StaffAttendanceRecord[]>(STORAGE_KEYS.STAFF_ATTENDANCE, INITIAL_STAFF_ATTENDANCE);
+    const school = this.getCurrentSchool();
+
+    const record: StaffAttendanceRecord = {
+      id: 'stf_att_' + Date.now(),
+      schoolId: recordData.schoolId || school?.id || 'school_apex',
+      staffId: recordData.staffId || '',
+      staffName: recordData.staffName || '',
+      staffEmail: recordData.staffEmail || '',
+      role: recordData.role || 'TEACHER',
+      department: recordData.department || 'Academic',
+      date: recordData.date || new Date().toISOString().split('T')[0],
+      signInTime: recordData.signInTime || new Date().toISOString(),
+      signInLat: recordData.signInLat || 0,
+      signInLng: recordData.signInLng || 0,
+      signInDistanceMeters: recordData.signInDistanceMeters || 0,
+      signInStatus: recordData.signInStatus || 'ON_TIME',
+      deviceInfo: recordData.deviceInfo || 'Standard Browser GPS',
+      flaggedSuspicious: recordData.flaggedSuspicious || false,
+      suspiciousReason: recordData.suspiciousReason,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    list.unshift(record);
+    setStored(STORAGE_KEYS.STAFF_ATTENDANCE, list);
+
+    const user = this.getCurrentUser();
+    this.addAuditLog({
+      schoolId: record.schoolId,
+      userId: record.staffId || user?.id || 'system',
+      userName: record.staffName || user?.name || 'Staff',
+      userRole: record.role,
+      action: `Staff Signed In (${record.signInStatus})`,
+      module: 'USER_MANAGEMENT',
+      details: `${record.staffName} signed in at ${new Date(record.signInTime).toLocaleTimeString()} (${Math.round(record.signInDistanceMeters)}m from school perimeter)`
+    });
+
+    return record;
+  }
+
+  static recordStaffSignOut(staffId: string, signOutData: Partial<StaffAttendanceRecord>): StaffAttendanceRecord | null {
+    const list = getStored<StaffAttendanceRecord[]>(STORAGE_KEYS.STAFF_ATTENDANCE, INITIAL_STAFF_ATTENDANCE);
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    const idx = list.findIndex(a => a.staffId === staffId && a.date === todayStr);
+    if (idx === -1) return null;
+
+    const existing = list[idx];
+    const signOutTime = signOutData.signOutTime || new Date().toISOString();
+    const signInMs = new Date(existing.signInTime).getTime();
+    const signOutMs = new Date(signOutTime).getTime();
+    const hoursWorked = Math.max(0, parseFloat(((signOutMs - signInMs) / (1000 * 60 * 60)).toFixed(1)));
+
+    const updated: StaffAttendanceRecord = {
+      ...existing,
+      signOutTime,
+      signOutLat: signOutData.signOutLat || existing.signInLat,
+      signOutLng: signOutData.signOutLng || existing.signInLng,
+      signOutDistanceMeters: signOutData.signOutDistanceMeters || existing.signInDistanceMeters,
+      signOutStatus: signOutData.signOutStatus || 'NORMAL',
+      totalHoursWorked: hoursWorked,
+      updatedAt: new Date().toISOString()
+    };
+
+    list[idx] = updated;
+    setStored(STORAGE_KEYS.STAFF_ATTENDANCE, list);
+
+    const user = this.getCurrentUser();
+    this.addAuditLog({
+      schoolId: updated.schoolId,
+      userId: updated.staffId || user?.id || 'system',
+      userName: updated.staffName || user?.name || 'Staff',
+      userRole: updated.role,
+      action: `Staff Signed Out (${updated.signOutStatus})`,
+      module: 'USER_MANAGEMENT',
+      details: `${updated.staffName} signed out at ${new Date(signOutTime).toLocaleTimeString()} (Worked ${hoursWorked} hours)`
+    });
+
+    return updated;
+  }
+
+  static overrideStaffAttendance(recordId: string, updates: Partial<StaffAttendanceRecord>, modifiedBy: string, reason: string): void {
+    const list = getStored<StaffAttendanceRecord[]>(STORAGE_KEYS.STAFF_ATTENDANCE, INITIAL_STAFF_ATTENDANCE);
+    const idx = list.findIndex(a => a.id === recordId);
+    if (idx === -1) return;
+
+    const original = list[idx];
+    const updated: StaffAttendanceRecord = {
+      ...original,
+      ...updates,
+      modifiedBy,
+      modificationReason: reason,
+      originalRecord: {
+        signInTime: original.signInTime,
+        signOutTime: original.signOutTime,
+        signInStatus: original.signInStatus,
+        signOutStatus: original.signOutStatus
+      },
+      updatedAt: new Date().toISOString()
+    };
+
+    list[idx] = updated;
+    setStored(STORAGE_KEYS.STAFF_ATTENDANCE, list);
+
+    const user = this.getCurrentUser();
+    this.addAuditLog({
+      schoolId: original.schoolId,
+      userId: user?.id || 'system',
+      userName: modifiedBy || user?.name || 'Proprietor',
+      userRole: 'PROPRIETOR',
+      action: 'Manual Attendance Override by Proprietor',
+      module: 'USER_MANAGEMENT',
+      details: `Modified record for ${original.staffName} on ${original.date}. Reason: ${reason}`
+    });
+  }
+
+  // PART 2: Staff Salary & Payroll Management
+  static getSalaryProfiles(schoolId?: string): SalaryProfile[] {
+    const list = getStored<SalaryProfile[]>(STORAGE_KEYS.SALARY_PROFILES, INITIAL_SALARY_PROFILES);
+    const sId = schoolId || this.getCurrentSchool()?.id;
+    return sId ? list.filter(s => s.schoolId === sId) : list;
+  }
+
+  static saveSalaryProfile(profile: SalaryProfile): void {
+    const list = getStored<SalaryProfile[]>(STORAGE_KEYS.SALARY_PROFILES, INITIAL_SALARY_PROFILES);
+    const idx = list.findIndex(s => s.id === profile.id || s.staffId === profile.staffId);
+    if (idx !== -1) {
+      list[idx] = profile;
+    } else {
+      list.unshift(profile);
+    }
+    setStored(STORAGE_KEYS.SALARY_PROFILES, list);
+
+    const user = this.getCurrentUser();
+    this.addAuditLog({
+      schoolId: profile.schoolId,
+      userId: user?.id || 'system',
+      userName: user?.name || 'Proprietor',
+      userRole: user?.role || 'PROPRIETOR',
+      action: 'Updated Staff Salary Profile',
+      module: 'SETTINGS',
+      details: `Set base salary for ${profile.staffName} (${profile.role}) to ₦${profile.baseSalary.toLocaleString()}`
+    });
+  }
+
+  static getDeductionRules(schoolId?: string): DeductionRule[] {
+    const list = getStored<DeductionRule[]>(STORAGE_KEYS.DEDUCTION_RULES, INITIAL_DEDUCTION_RULES);
+    const sId = schoolId || this.getCurrentSchool()?.id;
+    return sId ? list.filter(d => d.schoolId === sId) : list;
+  }
+
+  static saveDeductionRule(rule: DeductionRule): void {
+    const list = getStored<DeductionRule[]>(STORAGE_KEYS.DEDUCTION_RULES, INITIAL_DEDUCTION_RULES);
+    const idx = list.findIndex(d => d.id === rule.id);
+    if (idx !== -1) {
+      list[idx] = rule;
+    } else {
+      list.unshift(rule);
+    }
+    setStored(STORAGE_KEYS.DEDUCTION_RULES, list);
+
+    const user = this.getCurrentUser();
+    this.addAuditLog({
+      schoolId: rule.schoolId,
+      userId: user?.id || 'system',
+      userName: user?.name || 'Proprietor',
+      userRole: user?.role || 'PROPRIETOR',
+      action: 'Configured Salary Deduction Rule',
+      module: 'SETTINGS',
+      details: `Rule: ${rule.name} (${rule.deductionType === 'FIXED' ? '₦' + rule.value : rule.value + '%'})`
+    });
+  }
+
+  static getPayrollRecords(schoolId?: string): PayrollRecord[] {
+    const list = getStored<PayrollRecord[]>(STORAGE_KEYS.PAYROLL_RECORDS, INITIAL_PAYROLL_RECORDS);
+    const sId = schoolId || this.getCurrentSchool()?.id;
+    return sId ? list.filter(p => p.schoolId === sId) : list;
+  }
+
+  static savePayrollRecord(payroll: PayrollRecord): void {
+    const list = getStored<PayrollRecord[]>(STORAGE_KEYS.PAYROLL_RECORDS, INITIAL_PAYROLL_RECORDS);
+    const idx = list.findIndex(p => p.id === payroll.id);
+    if (idx !== -1) {
+      list[idx] = payroll;
+    } else {
+      list.unshift(payroll);
+    }
+    setStored(STORAGE_KEYS.PAYROLL_RECORDS, list);
+
+    const user = this.getCurrentUser();
+    this.addAuditLog({
+      schoolId: payroll.schoolId,
+      userId: user?.id || 'system',
+      userName: user?.name || 'Proprietor',
+      userRole: user?.role || 'PROPRIETOR',
+      action: `Generated Payroll (${payroll.periodName})`,
+      module: 'SETTINGS',
+      details: `Net Payroll: ₦${payroll.netPayroll.toLocaleString()} across ${payroll.staffPayrollItems.length} staff members`
+    });
+  }
+
+  static updatePayrollStatus(payrollId: string, status: 'DRAFT' | 'REVIEW' | 'APPROVED' | 'PAID', approvedBy?: string): void {
+    const list = getStored<PayrollRecord[]>(STORAGE_KEYS.PAYROLL_RECORDS, INITIAL_PAYROLL_RECORDS);
+    const idx = list.findIndex(p => p.id === payrollId);
+    if (idx === -1) return;
+
+    list[idx].status = status;
+    if (approvedBy) {
+      list[idx].approvedBy = approvedBy;
+      list[idx].approvedAt = new Date().toISOString();
+      list[idx].locked = true;
+    }
+    if (status === 'PAID') {
+      list[idx].staffPayrollItems.forEach(item => {
+        item.paymentStatus = 'PAID';
+        item.paymentDate = new Date().toISOString();
+      });
+    }
+
+    setStored(STORAGE_KEYS.PAYROLL_RECORDS, list);
+
+    const user = this.getCurrentUser();
+    this.addAuditLog({
+      schoolId: list[idx].schoolId,
+      userId: user?.id || 'system',
+      userName: approvedBy || user?.name || 'Proprietor',
+      userRole: 'PROPRIETOR',
+      action: `Updated Payroll Status to ${status}`,
+      module: 'SETTINGS',
+      details: `Payroll Period: ${list[idx].periodName}, Status: ${status}${approvedBy ? ' by ' + approvedBy : ''}`
+    });
+  }
+
+  // PART 3, 4, 5: Student Accounts, CBT & Class Chat
+  static getStudentCredentials(schoolId?: string): StudentAccountCredentials[] {
+    return getStored<StudentAccountCredentials[]>(STORAGE_KEYS.STUDENT_CREDENTIALS, INITIAL_STUDENT_CREDENTIALS);
+  }
+
+  static createStudentAccount(studentId: string, studentName: string, classId: string, className: string, createdByTeacherName: string): StudentAccountCredentials {
+    const list = getStored<StudentAccountCredentials[]>(STORAGE_KEYS.STUDENT_CREDENTIALS, INITIAL_STUDENT_CREDENTIALS);
+    const existing = list.find(s => s.studentId === studentId);
+    if (existing) return existing;
+
+    const classPrefix = className.replace(/[^a-zA-Z0-9]/g, '').substring(0, 3).toUpperCase();
+    const randomNum = Math.floor(10000 + Math.random() * 90000);
+    const studentCode = `TXR-${classPrefix}-${randomNum}`;
+    const accessPin = Math.floor(1000 + Math.random() * 9000).toString();
+
+    const credential: StudentAccountCredentials = {
+      studentId,
+      studentName,
+      classId,
+      className,
+      studentCode,
+      accessPin,
+      activationStatus: 'ACTIVE',
+      activatedAt: new Date().toISOString(),
+      createdByTeacherName,
+      chatMuted: false
+    };
+
+    list.unshift(credential);
+    setStored(STORAGE_KEYS.STUDENT_CREDENTIALS, list);
+
+    // Also register user account for login
+    const users = this.getUsers();
+    if (!users.some(u => u.id === 'usr_student_' + studentId)) {
+      users.push({
+        id: 'usr_student_' + studentId,
+        schoolId: this.getCurrentSchool()?.id || 'school_apex',
+        name: studentName,
+        email: `${studentCode.toLowerCase()}@student.texora.edu`,
+        role: 'STUDENT',
+        assignedClassIds: [classId],
+        assignedSubjects: [],
+        active: true,
+        createdAt: new Date().toISOString()
+      });
+      setStored(STORAGE_KEYS.USERS, users);
+    }
+
+    const user = this.getCurrentUser();
+    this.addAuditLog({
+      schoolId: this.getCurrentSchool()?.id || 'school_apex',
+      userId: user?.id || 'system',
+      userName: createdByTeacherName || user?.name || 'Teacher',
+      userRole: user?.role || 'TEACHER',
+      action: 'Created Student Account & Credentials',
+      module: 'USER_MANAGEMENT',
+      details: `Created login for ${studentName} (${className}). Student Code: ${studentCode}`
+    });
+
+    return credential;
+  }
+
+  static loginAsStudentWithCode(studentCode: string, pin?: string): User | null {
+    const codeClean = studentCode.trim().toUpperCase();
+    const creds = getStored<StudentAccountCredentials[]>(STORAGE_KEYS.STUDENT_CREDENTIALS, INITIAL_STUDENT_CREDENTIALS);
+    const foundCred = creds.find(c => c.studentCode.trim().toUpperCase() === codeClean);
+
+    const users = this.getUsers();
+
+    if (!foundCred) {
+      // Check if user exists by email prefix, student user id or student code
+      const studentUser = users.find(u => u.role === 'STUDENT' && (
+        u.email.toLowerCase().includes(studentCode.trim().toLowerCase()) ||
+        u.name.toLowerCase().includes(studentCode.trim().toLowerCase()) ||
+        u.id.toLowerCase().includes(studentCode.trim().toLowerCase())
+      ));
+      if (studentUser) {
+        this.setCurrentUserId(studentUser.id);
+        this.setCurrentSchoolId(studentUser.schoolId);
+        return studentUser;
+      }
+      return null;
+    }
+
+    if (pin && foundCred.accessPin && foundCred.accessPin.trim() !== pin.trim()) {
+      return null; // Invalid PIN
+    }
+
+    let studentUser = users.find(u => u.id === 'usr_student_' + foundCred.studentId || u.email.toLowerCase().startsWith(foundCred.studentCode.toLowerCase()));
+
+    if (!studentUser) {
+      studentUser = {
+        id: 'usr_student_' + foundCred.studentId,
+        schoolId: this.getCurrentSchool()?.id || 'school_apex',
+        name: foundCred.studentName,
+        email: `${foundCred.studentCode.toLowerCase()}@student.texora.edu`,
+        role: 'STUDENT',
+        assignedClassIds: [foundCred.classId],
+        assignedSubjects: [],
+        active: true,
+        createdAt: new Date().toISOString()
+      };
+      users.push(studentUser);
+      setStored(STORAGE_KEYS.USERS, users);
+    }
+
+    this.setCurrentUserId(studentUser.id);
+    this.setCurrentSchoolId(studentUser.schoolId);
+
+    return studentUser;
+  }
+
+  static getClassChatMessages(schoolId?: string, classId?: string): ClassChatMessage[] {
+    const list = getStored<ClassChatMessage[]>(STORAGE_KEYS.CLASS_CHAT_MESSAGES, INITIAL_CLASS_CHAT_MESSAGES);
+    const sId = schoolId || this.getCurrentSchool()?.id;
+    let filtered = sId ? list.filter(m => m.schoolId === sId) : list;
+    if (classId) {
+      filtered = filtered.filter(m => m.classId === classId);
+    }
+    return filtered;
+  }
+
+  static addClassChatMessage(msg: ClassChatMessage): void {
+    const list = getStored<ClassChatMessage[]>(STORAGE_KEYS.CLASS_CHAT_MESSAGES, INITIAL_CLASS_CHAT_MESSAGES);
+    list.push(msg);
+    setStored(STORAGE_KEYS.CLASS_CHAT_MESSAGES, list);
+  }
+
+  static deleteClassChatMessage(messageId: string, moderatorName: string, reason: string): void {
+    let list = getStored<ClassChatMessage[]>(STORAGE_KEYS.CLASS_CHAT_MESSAGES, INITIAL_CLASS_CHAT_MESSAGES);
+    const msg = list.find(m => m.id === messageId);
+    list = list.filter(m => m.id !== messageId);
+    setStored(STORAGE_KEYS.CLASS_CHAT_MESSAGES, list);
+
+    if (msg) {
+      const user = this.getCurrentUser();
+      this.addAuditLog({
+        schoolId: msg.schoolId,
+        userId: user?.id || 'system',
+        userName: moderatorName || user?.name || 'Moderator',
+        userRole: user?.role || 'SCHOOL_ADMIN',
+        action: 'Moderated Student Class Chat (Deleted Message)',
+        module: 'USER_MANAGEMENT',
+        details: `Deleted message by ${msg.senderName} in ${msg.className}. Reason: ${reason} (Moderated by ${moderatorName})`
+      });
+    }
+  }
+
+  static hideClassChatMessage(messageId: string, moderatorName: string, reason: string): void {
+    const list = getStored<ClassChatMessage[]>(STORAGE_KEYS.CLASS_CHAT_MESSAGES, INITIAL_CLASS_CHAT_MESSAGES);
+    const idx = list.findIndex(m => m.id === messageId);
+    if (idx !== -1) {
+      list[idx].hidden = true;
+      list[idx].hiddenBy = moderatorName;
+      list[idx].hiddenReason = reason;
+      setStored(STORAGE_KEYS.CLASS_CHAT_MESSAGES, list);
+
+      const user = this.getCurrentUser();
+      this.addAuditLog({
+        schoolId: list[idx].schoolId,
+        userId: user?.id || 'system',
+        userName: moderatorName || user?.name || 'Moderator',
+        userRole: user?.role || 'SCHOOL_ADMIN',
+        action: 'Moderated Student Class Chat (Hidden Message)',
+        module: 'USER_MANAGEMENT',
+        details: `Hidden message by ${list[idx].senderName} in ${list[idx].className}. Reason: ${reason}`
+      });
+    }
+  }
+
+  static muteStudentInChat(studentId: string, moderatorName: string, reason: string): void {
+    const creds = getStored<StudentAccountCredentials[]>(STORAGE_KEYS.STUDENT_CREDENTIALS, INITIAL_STUDENT_CREDENTIALS);
+    const idx = creds.findIndex(c => c.studentId === studentId);
+    if (idx !== -1) {
+      creds[idx].chatMuted = !creds[idx].chatMuted;
+      creds[idx].chatMutedReason = reason;
+      setStored(STORAGE_KEYS.STUDENT_CREDENTIALS, creds);
+
+      const user = this.getCurrentUser();
+      this.addAuditLog({
+        schoolId: this.getCurrentSchool()?.id || 'school_apex',
+        userId: user?.id || 'system',
+        userName: moderatorName || user?.name || 'Moderator',
+        userRole: user?.role || 'SCHOOL_ADMIN',
+        action: `Chat Privileges Updated for Student (${creds[idx].chatMuted ? 'Muted' : 'Unmuted'})`,
+        module: 'USER_MANAGEMENT',
+        details: `Student: ${creds[idx].studentName}. Moderator: ${moderatorName}. Reason: ${reason}`
+      });
+    }
+  }
+
+  static getChatModerationLogs(schoolId?: string): ChatModerationLog[] {
+    const list = getStored<ChatModerationLog[]>(STORAGE_KEYS.CHAT_MODERATION_LOGS, INITIAL_CHAT_MODERATION_LOGS);
+    const sId = schoolId || this.getCurrentSchool()?.id;
+    return sId ? list.filter(m => m.schoolId === sId) : list;
+  }
 }
 
 // React custom hook for auto-syncing state on changes with Supabase live fetch
@@ -1568,6 +2286,23 @@ export function useAppStore() {
     const chatMessages = AppStorage.getChatMessages();
     const publicChatMessages = AppStorage.getPublicChatMessages(school?.id);
     const examSets = AppStorage.getExamSets(school?.id);
+    const curricula = AppStorage.getCurricula(school?.id);
+    const cbtExams = AppStorage.getCBTExams(school?.id);
+    const cbtAttempts = AppStorage.getCBTAttempts(school?.id);
+    const studentRiskProfiles = AppStorage.getStudentRiskProfiles(school?.id);
+    const remedialPackages = AppStorage.getRemedialPackages(school?.id);
+    const schoolDocuments = AppStorage.getSchoolDocuments(school?.id);
+    const financialRecords = AppStorage.getFinancialRecords(school?.id);
+    const schoolEvents = AppStorage.getSchoolEvents(school?.id);
+    const transportRoutes = AppStorage.getTransportRoutes(school?.id);
+    const attendanceSettings = AppStorage.getAttendanceSettings(school?.id);
+    const staffAttendance = AppStorage.getStaffAttendanceRecords(school?.id);
+    const salaryProfiles = AppStorage.getSalaryProfiles(school?.id);
+    const deductionRules = AppStorage.getDeductionRules(school?.id);
+    const payrollRecords = AppStorage.getPayrollRecords(school?.id);
+    const studentCredentials = AppStorage.getStudentCredentials(school?.id);
+    const classChatMessages = AppStorage.getClassChatMessages(school?.id);
+    const chatModerationLogs = AppStorage.getChatModerationLogs(school?.id);
 
     return {
       school,
@@ -1587,6 +2322,23 @@ export function useAppStore() {
       chatMessages,
       publicChatMessages,
       examSets,
+      curricula,
+      cbtExams,
+      cbtAttempts,
+      studentRiskProfiles,
+      remedialPackages,
+      schoolDocuments,
+      financialRecords,
+      schoolEvents,
+      transportRoutes,
+      attendanceSettings,
+      staffAttendance,
+      salaryProfiles,
+      deductionRules,
+      payrollRecords,
+      studentCredentials,
+      classChatMessages,
+      chatModerationLogs,
       schools: AppStorage.getSchools(),
     };
   }, [version]);

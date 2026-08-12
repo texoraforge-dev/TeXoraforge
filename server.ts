@@ -78,7 +78,7 @@ Return ONLY a valid JSON object matching this exact schema:
 Ensure high academic standard, age-appropriate language, and clear student-teacher interactions. Do NOT wrap in markdown code blocks or extra text if possible, return raw JSON string.`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-1.5-flash",
         contents: prompt,
       });
 
@@ -86,8 +86,25 @@ Ensure high academic standard, age-appropriate language, and clear student-teach
       // Strip markdown code fences if present
       responseText = responseText.replace(/```json/gi, "").replace(/```/g, "").trim();
 
-      const parsedData = JSON.parse(responseText);
-      return res.json({ success: true, data: parsedData });
+      try {
+        const parsedData = JSON.parse(responseText);
+        return res.json({ success: true, data: parsedData, suggestions: parsedData });
+      } catch (parseError) {
+        return res.json({
+          success: true,
+          data: {
+            subTopic: topic,
+            summary: responseText,
+            evaluationQuestions: [`Explain key concepts of ${topic}.`, `Demonstrate practical application of ${topic}.`],
+            keyPoints: [responseText.substring(0, 150)]
+          },
+          suggestions: {
+            summary: responseText,
+            evaluationQuestions: [`Explain key concepts of ${topic}.`, `Demonstrate practical application of ${topic}.`],
+            keyPoints: [responseText.substring(0, 150)]
+          }
+        });
+      }
     } catch (error: any) {
       console.error("Error generating lesson note:", error);
       return res.status(500).json({

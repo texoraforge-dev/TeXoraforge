@@ -44,7 +44,10 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, AdminPermission[]> = {
     'USER_ROLE_MANAGEMENT',
     'SYSTEM_SETTINGS',
     'PROPRIETOR_MANAGEMENT',
-    'AUDIT_LOG_VIEW'
+    'AUDIT_LOG_VIEW',
+    'PAYROLL_MANAGEMENT',
+    'STAFF_ATTENDANCE_MANAGEMENT',
+    'STUDENT_CHAT_MODERATION'
   ],
   VICE_PRINCIPAL: [
     'ADMISSIONS',
@@ -53,17 +56,22 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, AdminPermission[]> = {
     'GUARDIAN_MANAGEMENT',
     'CLASS_ASSIGNMENT',
     'STUDENT_PROMOTION',
-    'AUDIT_LOG_VIEW'
+    'AUDIT_LOG_VIEW',
+    'STAFF_ATTENDANCE_MANAGEMENT',
+    'STUDENT_CHAT_MODERATION'
   ],
   SCHOOL_ADMIN: [
     'LESSON_NOTE_REVIEW',
     'LESSON_PLAN_REVIEW',
     'WEEKLY_DIARY_REVIEW',
     'EXAM_ADMINISTRATION',
-    'ACADEMIC_REVIEW'
+    'ACADEMIC_REVIEW',
+    'STAFF_ATTENDANCE_MANAGEMENT',
+    'STUDENT_CHAT_MODERATION'
   ],
   TEACHER: [],
-  PARENT: []
+  PARENT: [],
+  STUDENT: []
 };
 
 /**
@@ -85,9 +93,36 @@ export function canAccessView(user: User | null | undefined, view: string): bool
   if (!user) return false;
   if (user.role === 'PROPRIETOR') return true;
 
+  // Student specific constraints
+  if (user.role === 'STUDENT') {
+    const allowedStudentViews = [
+      'student_dashboard',
+      'student_cbt',
+      'student_chat',
+      'student_class_chat',
+      'cbt_engine',
+      'timetable',
+      'homework',
+      'curriculum',
+      'remedials',
+      'early_warning'
+    ];
+    return allowedStudentViews.includes(view);
+  }
+
   switch (view) {
     case 'dashboard':
       return true;
+    case 'staff_attendance':
+      return user.role === 'TEACHER' || user.role === 'SCHOOL_ADMIN' || user.role === 'VICE_PRINCIPAL' || hasPermission(user, 'STAFF_ATTENDANCE_MANAGEMENT');
+    case 'payroll':
+      return user.role === 'SCHOOL_ADMIN' || user.role === 'VICE_PRINCIPAL' || hasPermission(user, 'PAYROLL_MANAGEMENT');
+    case 'student_accounts':
+      return user.role === 'TEACHER' || user.role === 'SCHOOL_ADMIN' || user.role === 'VICE_PRINCIPAL' || hasPermission(user, 'STUDENT_MANAGEMENT');
+    case 'student_class_chat':
+      return user.role === 'TEACHER' || user.role === 'SCHOOL_ADMIN' || user.role === 'VICE_PRINCIPAL';
+    case 'chat_oversight':
+      return user.role === 'SCHOOL_ADMIN' || user.role === 'VICE_PRINCIPAL' || hasPermission(user, 'STUDENT_CHAT_MODERATION');
     case 'school_students':
     case 'students':
       return hasPermission(user, 'ADMISSIONS') || hasPermission(user, 'STUDENT_RECORDS');
@@ -155,6 +190,13 @@ export function getRoleBadgeInfo(role: UserRole): { label: string; bgClass: stri
         bgClass: 'bg-slate-100 dark:bg-slate-800',
         textClass: 'text-slate-700 dark:text-slate-300',
         borderClass: 'border-slate-300 dark:border-slate-700'
+      };
+    case 'STUDENT':
+      return {
+        label: 'Student Account',
+        bgClass: 'bg-indigo-100 dark:bg-indigo-950/70',
+        textClass: 'text-indigo-800 dark:text-indigo-300',
+        borderClass: 'border-indigo-300 dark:border-indigo-800'
       };
   }
 }

@@ -18,7 +18,8 @@ import {
   RefreshCw,
   CreditCard,
   Wifi,
-  WifiOff
+  WifiOff,
+  Menu
 } from 'lucide-react';
 import { useAppStore } from '../storage';
 import { UserRole, Submission } from '../types';
@@ -33,6 +34,7 @@ interface NavbarProps {
   onOpenNotifications: () => void;
   onNavigate: (view: string) => void;
   onSelectSubmission?: (submission: Submission) => void;
+  onToggleMobileMenu?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -40,7 +42,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   setDarkMode,
   onOpenNotifications,
   onNavigate,
-  onSelectSubmission
+  onSelectSubmission,
+  onToggleMobileMenu
 }) => {
   const { school, currentUser, users, notifications, actions } = useAppStore();
   const [showDemoMenu, setShowDemoMenu] = useState(false);
@@ -95,7 +98,16 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
         
         {/* Brand & School Title */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          {currentUser && onToggleMobileMenu && (
+            <button
+              onClick={onToggleMobileMenu}
+              className="md:hidden p-2 rounded-xl text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white bg-slate-100 dark:bg-slate-800 transition-colors cursor-pointer"
+              title="Toggle Navigation Menu"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+          )}
           <div className="flex items-center cursor-pointer shrink-0" onClick={() => onNavigate('dashboard')}>
             <Logo size="md" showText subtext={school ? school.name : 'Academic Management Platform'} />
           </div>

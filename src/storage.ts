@@ -42,7 +42,9 @@ import {
   PayrollRecord,
   StudentAccountCredentials,
   ClassChatMessage,
-  ChatModerationLog
+  ChatModerationLog,
+  PaymentTransaction,
+  SchoolBankAccountDetails
 } from './types';
 import {
   INITIAL_SCHOOLS,
@@ -79,7 +81,8 @@ import {
   INITIAL_PAYROLL_RECORDS,
   INITIAL_STUDENT_CREDENTIALS,
   INITIAL_CLASS_CHAT_MESSAGES,
-  INITIAL_CHAT_MODERATION_LOGS
+  INITIAL_CHAT_MODERATION_LOGS,
+  INITIAL_PAYMENT_TRANSACTIONS
 } from './mockData';
 import { SupabaseService } from './lib/supabaseService';
 import { DEFAULT_ROLE_PERMISSIONS } from './lib/permissions';
@@ -119,6 +122,7 @@ const STORAGE_KEYS = {
   STUDENT_CREDENTIALS: 'texora_student_credentials_v1',
   CLASS_CHAT_MESSAGES: 'texora_class_chat_messages_v1',
   CHAT_MODERATION_LOGS: 'texora_chat_moderation_logs_v1',
+  PAYMENT_TRANSACTIONS: 'texora_payment_transactions_v1',
   CURRENT_USER_ID: 'texora_current_user_id_v1',
   CURRENT_SCHOOL_ID: 'texora_current_school_id_v1',
 };
@@ -1618,15 +1622,169 @@ export class AppStorage {
     return sId ? list.filter(e => e.schoolId === sId) : list;
   }
 
-  static saveCBTExam(exam: CBTExam): void {
+  static saveCBTExam(exam: CBTExam, actor?: User): CBTExam {
     const list = getStored<CBTExam[]>(STORAGE_KEYS.CBT_EXAMS, INITIAL_CBT_EXAMS);
+    const user = actor || this.getCurrentUser();
+    
+    // Auto-calculate totalMarks from questions
+    const totalMarks = (exam.questions || []).reduce((sum, q) => sum + (Number(q.marks) || 0), 0);
+    
+    const enrichedExam: CBTExam = {
+      ...exam,
+      teacherId: exam.teacherId || (user?.role === 'TEACHER' ? user.id : 'usr_t1'),
+      teacherName: exam.teacherName || (user?.role === 'TEACHER' ? user.name : 'Teacher'),
+      visibilityMode: exam.visibilityMode || 'ALL_CLASS_STUDENTS',
+      totalMarks,
+      updatedAt: new Date().toISOString()
+    };
+
     const idx = list.findIndex(e => e.id === exam.id);
     if (idx !== -1) {
-      list[idx] = exam;
+      list[idx] = enrichedExam;
     } else {
-      list.unshift(exam);
+      list.unshift(enrichedExam);
     }
     setStored(STORAGE_KEYS.CBT_EXAMS, list);
+
+    // Audit log
+    if (user) {
+      this.addAuditLog({
+        schoolId: enrichedExam.schoolId,
+        userId: user.id,
+        userName: user.name,
+        userRole: user.role,
+        action: idx !== -1 ? 'Updated CBT Assessment' : 'Created CBT Assessment',
+        module: 'EXAMINATIONS',
+        details: `${user.name} (${user.role}) saved CBT Exam "${enrichedExam.title}" for ${enrichedExam.className} [Status: ${enrichedExam.status}, Visibility: ${enrichedExam.visibilityMode}, ${enrichedExam.questions.length} questions]`
+      });
+    }
+
+    // If published, notify students
+    if (enrichedExam.status === 'PUBLISHED') {
+      this.sendNotification({
+        schoolId: enrichedExam.schoolId,
+        recipientUserId: 'ALL_STUDENTS',
+        senderName: enrichedExam.teacherName || 'Teacher',
+        title: `New CBT Assessment Published: ${enrichedExam.title}`,
+        message: `${enrichedExam.teacherName || 'Your teacher'} published a ${enrichedExam.subject} CBT examination for ${enrichedExam.className}. ${enrichedExam.durationMinutes} mins, ${enrichedExam.questions.length} questions.`,
+        type: 'SUBMISSION',
+        linkId: enrichedExam.id
+      });
+    }
+
+    return enrichedExam;
+  }
+
+  static deleteCBTExam(examId: string, actor?: User): void {
+    let list = getStored<CBTExam[]>(STORAGE_KEYS.CBT_EXAMS, INITIAL_CBT_EXAMS);
+    const target = list.find(e => e.id === examId);
+    list = list.filter(e => e.id !== examId);
+    setStored(STORAGE_KEYS.CBT_EXAMS, list);
+
+    const user = actor || this.getCurrentUser();
+    if (user && target) {
+      this.addAuditLog({
+        schoolId: target.schoolId,
+        userId: user.id,
+        userName: user.name,
+        userRole: user.role,
+        action: 'Deleted CBT Assessment',
+        module: 'EXAMINATIONS',
+        details: `${user.name} deleted CBT Exam "${target.title}" for ${target.className}`
+      });
+    }
+  }
+
+  static toggleCBTExamStatus(examId: string, status: 'DRAFT' | 'PUBLISHED' | 'CLOSED', actor?: User): CBTExam | null {
+    const list = getStored<CBTExam[]>(STORAGE_KEYS.CBT_EXAMS, INITIAL_CBT_EXAMS);
+    const idx = list.findIndex(e => e.id === examId);
+    if (idx === -1) return null;
+
+    list[idx].status = status;
+    list[idx].updatedAt = new Date().toISOString();
+    setStored(STORAGE_KEYS.CBT_EXAMS, list);
+
+    const user = actor || this.getCurrentUser();
+    if (user) {
+      this.addAuditLog({
+        schoolId: list[idx].schoolId,
+        userId: user.id,
+        userName: user.name,
+        userRole: user.role,
+        action: `Changed CBT Status to ${status}`,
+        module: 'EXAMINATIONS',
+        details: `${user.name} changed status of CBT Exam "${list[idx].title}" to ${status}`
+      });
+    }
+
+    if (status === 'PUBLISHED') {
+      this.sendNotification({
+        schoolId: list[idx].schoolId,
+        recipientUserId: 'ALL_STUDENTS',
+        senderName: list[idx].teacherName || 'Teacher',
+        title: `CBT Test Live: ${list[idx].title}`,
+        message: `${list[idx].teacherName} has made ${list[idx].title} live for ${list[idx].className}. You can now start the test.`,
+        type: 'SUBMISSION',
+        linkId: list[idx].id
+      });
+    }
+
+    return list[idx];
+  }
+
+  static updateCBTExamVisibility(
+    examId: string,
+    visibilityConfig: {
+      visibilityMode: 'ALL_CLASS_STUDENTS' | 'SPECIFIC_STUDENTS' | 'HIDDEN_TEACHER_ONLY';
+      allowedStudentIds?: string[];
+      allowStudentStudyMode?: boolean;
+      showCorrectionsImmediately?: boolean;
+      releaseResultsToStudents?: boolean;
+      shuffleQuestions?: boolean;
+    },
+    actor?: User
+  ): CBTExam | null {
+    const list = getStored<CBTExam[]>(STORAGE_KEYS.CBT_EXAMS, INITIAL_CBT_EXAMS);
+    const idx = list.findIndex(e => e.id === examId);
+    if (idx === -1) return null;
+
+    list[idx] = {
+      ...list[idx],
+      ...visibilityConfig,
+      updatedAt: new Date().toISOString()
+    };
+    setStored(STORAGE_KEYS.CBT_EXAMS, list);
+
+    const user = actor || this.getCurrentUser();
+    if (user) {
+      this.addAuditLog({
+        schoolId: list[idx].schoolId,
+        userId: user.id,
+        userName: user.name,
+        userRole: user.role,
+        action: 'Updated CBT Student Visibility Permissions',
+        module: 'EXAMINATIONS',
+        details: `${user.name} configured student visibility for "${list[idx].title}" (Mode: ${visibilityConfig.visibilityMode}, Allowed: ${visibilityConfig.allowedStudentIds?.length || 'ALL'} students)`
+      });
+    }
+
+    return list[idx];
+  }
+
+  static toggleQuestionVisibilityInExam(examId: string, questionId: string): CBTExam | null {
+    const list = getStored<CBTExam[]>(STORAGE_KEYS.CBT_EXAMS, INITIAL_CBT_EXAMS);
+    const idx = list.findIndex(e => e.id === examId);
+    if (idx === -1) return null;
+
+    const qIdx = list[idx].questions.findIndex(q => q.id === questionId);
+    if (qIdx === -1) return null;
+
+    const currentVis = list[idx].questions[qIdx].isVisibleToStudents !== false;
+    list[idx].questions[qIdx].isVisibleToStudents = !currentVis;
+    list[idx].updatedAt = new Date().toISOString();
+    setStored(STORAGE_KEYS.CBT_EXAMS, list);
+
+    return list[idx];
   }
 
   static getCBTAttempts(schoolId?: string): CBTAttempt[] {
@@ -1644,6 +1802,20 @@ export class AppStorage {
       list.unshift(attempt);
     }
     setStored(STORAGE_KEYS.CBT_ATTEMPTS, list);
+  }
+
+  static updateCBTAttemptTeacherRemark(attemptId: string, teacherRemark: string, adjustedScore?: number): CBTAttempt | null {
+    const list = getStored<CBTAttempt[]>(STORAGE_KEYS.CBT_ATTEMPTS, INITIAL_CBT_ATTEMPTS);
+    const idx = list.findIndex(a => a.id === attemptId);
+    if (idx === -1) return null;
+
+    list[idx].teacherRemark = teacherRemark;
+    if (adjustedScore !== undefined) {
+      list[idx].score = adjustedScore;
+      list[idx].percentage = Math.round((adjustedScore / list[idx].totalMarks) * 100);
+    }
+    setStored(STORAGE_KEYS.CBT_ATTEMPTS, list);
+    return list[idx];
   }
 
   // --- Student Risk Profiles & Remedials ---
@@ -1714,6 +1886,160 @@ export class AppStorage {
       list.unshift(record);
     }
     setStored(STORAGE_KEYS.FINANCIAL_RECORDS, list);
+  }
+
+  // --- Parent & Proprietor Fees & Payments ---
+  static getPaymentTransactions(schoolId?: string): PaymentTransaction[] {
+    const list = getStored<PaymentTransaction[]>(STORAGE_KEYS.PAYMENT_TRANSACTIONS, INITIAL_PAYMENT_TRANSACTIONS);
+    const sId = schoolId || this.getCurrentSchool()?.id;
+    return sId ? list.filter(p => p.schoolId === sId) : list;
+  }
+
+  static savePaymentTransaction(transaction: PaymentTransaction): void {
+    const list = getStored<PaymentTransaction[]>(STORAGE_KEYS.PAYMENT_TRANSACTIONS, INITIAL_PAYMENT_TRANSACTIONS);
+    const idx = list.findIndex(p => p.id === transaction.id);
+    if (idx !== -1) {
+      list[idx] = transaction;
+    } else {
+      list.unshift(transaction);
+    }
+    setStored(STORAGE_KEYS.PAYMENT_TRANSACTIONS, list);
+
+    // Notify Proprietor and School Admin
+    const school = this.getCurrentSchool();
+    this.sendNotification({
+      schoolId: transaction.schoolId || school?.id || 'school_apex',
+      recipientUserId: 'ALL_ADMINS',
+      senderName: transaction.parentName,
+      title: 'New Fee Payment Submitted',
+      message: `${transaction.parentName} submitted payment of ₦${transaction.amountPaid.toLocaleString()} for ${transaction.studentName} (${transaction.feeTitle}). Ref: ${transaction.paymentReference}. Awaiting Proprietor confirmation.`,
+      type: 'SUBMISSION',
+      linkId: transaction.id
+    });
+
+    this.addAuditLog({
+      schoolId: transaction.schoolId || school?.id || 'school_apex',
+      userId: transaction.parentUserId,
+      userName: transaction.parentName,
+      userRole: 'PARENT',
+      action: 'Submitted Fee Payment',
+      module: 'SETTINGS',
+      details: `Submitted payment of ₦${transaction.amountPaid.toLocaleString()} for ${transaction.studentName}. Ref: ${transaction.paymentReference}`
+    });
+  }
+
+  static confirmPaymentTransaction(txId: string, confirmedByUserId: string, confirmedByName: string): PaymentTransaction | null {
+    const list = getStored<PaymentTransaction[]>(STORAGE_KEYS.PAYMENT_TRANSACTIONS, INITIAL_PAYMENT_TRANSACTIONS);
+    const idx = list.findIndex(p => p.id === txId);
+    if (idx === -1) return null;
+
+    const tx = list[idx];
+    const updatedTx: PaymentTransaction = {
+      ...tx,
+      status: 'CONFIRMED',
+      confirmedByProprietorId: confirmedByUserId,
+      confirmedByProprietorName: confirmedByName,
+      confirmedAt: new Date().toISOString()
+    };
+    list[idx] = updatedTx;
+    setStored(STORAGE_KEYS.PAYMENT_TRANSACTIONS, list);
+
+    // Automatically update student FinancialRecord
+    const financials = this.getFinancialRecords(tx.schoolId);
+    const finIdx = financials.findIndex(f => f.studentId === tx.studentId || (tx.financialRecordId && f.id === tx.financialRecordId));
+    if (finIdx !== -1) {
+      const rec = financials[finIdx];
+      const newPaid = Math.min(rec.totalAmount, rec.paidAmount + tx.amountPaid);
+      const newStatus = newPaid >= rec.totalAmount ? 'PAID' : newPaid > 0 ? 'PARTIAL' : 'UNPAID';
+      financials[finIdx] = {
+        ...rec,
+        paidAmount: newPaid,
+        status: newStatus,
+        lastPaymentDate: tx.paymentDate || new Date().toISOString().split('T')[0]
+      };
+      setStored(STORAGE_KEYS.FINANCIAL_RECORDS, financials);
+    }
+
+    // Notify Parent
+    this.sendNotification({
+      schoolId: tx.schoolId,
+      recipientUserId: tx.parentUserId,
+      senderName: confirmedByName,
+      title: 'Payment Confirmed by Proprietor 🎉',
+      message: `Your payment of ₦${tx.amountPaid.toLocaleString()} for ${tx.studentName} (${tx.feeTitle}) has been verified and officially confirmed by Proprietor ${confirmedByName}.`,
+      type: 'APPROVAL',
+      linkId: tx.id
+    });
+
+    this.addAuditLog({
+      schoolId: tx.schoolId,
+      userId: confirmedByUserId,
+      userName: confirmedByName,
+      userRole: 'PROPRIETOR',
+      action: 'Confirmed Student Fee Payment',
+      module: 'SETTINGS',
+      details: `Proprietor ${confirmedByName} confirmed payment of ₦${tx.amountPaid.toLocaleString()} for ${tx.studentName}. Ref: ${tx.paymentReference}`
+    });
+
+    return updatedTx;
+  }
+
+  static rejectPaymentTransaction(txId: string, rejectionReason: string, rejectedByUserId: string, rejectedByName: string): PaymentTransaction | null {
+    const list = getStored<PaymentTransaction[]>(STORAGE_KEYS.PAYMENT_TRANSACTIONS, INITIAL_PAYMENT_TRANSACTIONS);
+    const idx = list.findIndex(p => p.id === txId);
+    if (idx === -1) return null;
+
+    const tx = list[idx];
+    const updatedTx: PaymentTransaction = {
+      ...tx,
+      status: 'REJECTED',
+      rejectionReason,
+      confirmedByProprietorId: rejectedByUserId,
+      confirmedByProprietorName: rejectedByName,
+      confirmedAt: new Date().toISOString()
+    };
+    list[idx] = updatedTx;
+    setStored(STORAGE_KEYS.PAYMENT_TRANSACTIONS, list);
+
+    this.sendNotification({
+      schoolId: tx.schoolId,
+      recipientUserId: tx.parentUserId,
+      senderName: rejectedByName,
+      title: 'Payment Record Flagged / Rejected',
+      message: `Your payment submission of ₦${tx.amountPaid.toLocaleString()} for ${tx.studentName} was rejected. Reason: ${rejectionReason}. Please verify and resubmit.`,
+      type: 'REJECTION',
+      linkId: tx.id
+    });
+
+    return updatedTx;
+  }
+
+  static updateSchoolBankAccount(bankDetails: SchoolBankAccountDetails): void {
+    const school = this.getCurrentSchool();
+    if (!school) return;
+
+    const updatedSchool: School = {
+      ...school,
+      bankAccountDetails: bankDetails
+    };
+
+    const schools = this.getSchools();
+    const sIdx = schools.findIndex(s => s.id === school.id);
+    if (sIdx !== -1) {
+      schools[sIdx] = updatedSchool;
+      setStored(STORAGE_KEYS.SCHOOLS, schools);
+    }
+
+    const user = this.getCurrentUser();
+    this.addAuditLog({
+      schoolId: school.id,
+      userId: user?.id || 'proprietor',
+      userName: user?.name || 'Proprietor',
+      userRole: user?.role || 'PROPRIETOR',
+      action: 'Updated School Bank Account Details',
+      module: 'SETTINGS',
+      details: `Updated bank account to ${bankDetails.bankName} - ${bankDetails.accountNumber} (${bankDetails.accountName})`
+    });
   }
 
   static getSchoolEvents(schoolId?: string): SchoolEvent[] {
@@ -2303,6 +2629,7 @@ export function useAppStore() {
     const studentCredentials = AppStorage.getStudentCredentials(school?.id);
     const classChatMessages = AppStorage.getClassChatMessages(school?.id);
     const chatModerationLogs = AppStorage.getChatModerationLogs(school?.id);
+    const paymentTransactions = AppStorage.getPaymentTransactions(school?.id);
 
     return {
       school,
@@ -2339,6 +2666,7 @@ export function useAppStore() {
       studentCredentials,
       classChatMessages,
       chatModerationLogs,
+      paymentTransactions,
       schools: AppStorage.getSchools(),
     };
   }, [version]);

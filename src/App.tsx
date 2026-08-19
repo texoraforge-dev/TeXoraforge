@@ -36,6 +36,7 @@ import { VoiceAssistantWidget } from './components/VoiceAssistantWidget';
 import { StaffAttendance } from './components/StaffAttendance';
 import { PayrollManagement } from './components/PayrollManagement';
 import { StudentAccountsAndChat } from './components/StudentAccountsAndChat';
+import { DigitalTextbookLibrary } from './components/DigitalTextbookLibrary';
 import { LessonNoteModal } from './components/modals/LessonNoteModal';
 import { UploadPdfModal } from './components/modals/UploadPdfModal';
 import { WeeklyDiaryModal } from './components/modals/WeeklyDiaryModal';
@@ -224,7 +225,9 @@ export default function App() {
                 {currentView === 'user_permissions' && <PermissionManagement onNavigate={(v) => setCurrentView(v)} />}
                 {currentView === 'audit_logs' && <AuditLogView />}
                 {currentView === 'settings' && <SchoolSettings />}
-                {currentView === 'parent' && <ParentPortal />}
+                {currentView === 'textbook_library' && <DigitalTextbookLibrary initialRole={currentUser.role} onNavigate={(v) => setCurrentView(v)} />}
+                {currentView === 'parent_fees' && <ParentPortal initialTab="FEES_AND_PAYMENTS" onNavigate={(v) => setCurrentView(v)} />}
+                {currentView === 'parent' && <ParentPortal onNavigate={(v) => setCurrentView(v)} />}
               </>
             )}
 
@@ -239,6 +242,14 @@ export default function App() {
                     onOpenCreateLessonPlan={() => { setSubmissionToEdit(null); setIsLessonNoteModalOpen(true); }}
                     onOpenCreateWeeklyDiary={() => { setSubmissionToEdit(null); setIsWeeklyDiaryModalOpen(true); }}
                   />
+                )}
+
+                {currentView === 'textbook_library' && (
+                  <DigitalTextbookLibrary initialRole="TEACHER" onNavigate={(v) => setCurrentView(v)} />
+                )}
+
+                {currentView === 'parent_fees' && (
+                  <ParentPortal initialTab="FEES_AND_PAYMENTS" onNavigate={(v) => setCurrentView(v)} />
                 )}
 
                 {currentView === 'staff_attendance' && (
@@ -293,7 +304,6 @@ export default function App() {
                 {currentView === 'curriculum' && <CurriculumEngine />}
                 {currentView === 'cbt_engine' && <CBTEngine />}
                 {currentView === 'early_warning' && <StudentEarlyWarningSystem />}
-                {currentView === 'document_vault' && <DocumentVaultView />}
 
                 {currentView === 'timetable' && (
                   <TimetableManagement onNavigate={(v) => setCurrentView(v)} />
@@ -309,7 +319,11 @@ export default function App() {
             {/* Parent Views */}
             {currentUser.role === 'PARENT' && (
               <>
-                {currentView === 'public_chat' ? (
+                {currentView === 'textbook_library' ? (
+                  <DigitalTextbookLibrary initialRole="PARENT" onNavigate={(v) => setCurrentView(v)} />
+                ) : currentView === 'parent_fees' ? (
+                  <ParentPortal initialTab="FEES_AND_PAYMENTS" onNavigate={(v) => setCurrentView(v)} />
+                ) : currentView === 'public_chat' ? (
                   <PublicParentTeacherChat onStartDirectChat={() => setCurrentView('direct_chat')} />
                 ) : (currentView === 'direct_chat' || currentView === 'chat') ? (
                   <TeacherParentChat />
@@ -320,7 +334,7 @@ export default function App() {
                 ) : currentView === 'early_warning' ? (
                   <StudentEarlyWarningSystem />
                 ) : currentView === 'document_vault' ? (
-                  <DocumentVaultView />
+                  <ParentPortal initialTab="FEES_AND_PAYMENTS" onNavigate={(v) => setCurrentView(v)} />
                 ) : currentView === 'curriculum' ? (
                   <CurriculumEngine />
                 ) : currentView === 'parent_ai_assistant' ? (
@@ -334,7 +348,9 @@ export default function App() {
             {/* Student Views */}
             {currentUser.role === 'STUDENT' && (
               <>
-                {currentView === 'cbt_engine' ? (
+                {currentView === 'textbook_library' ? (
+                  <DigitalTextbookLibrary initialRole="STUDENT" onNavigate={(v) => setCurrentView(v)} />
+                ) : currentView === 'cbt_engine' ? (
                   <CBTEngine />
                 ) : currentView === 'timetable' ? (
                   <TimetableManagement onNavigate={(v) => setCurrentView(v)} />

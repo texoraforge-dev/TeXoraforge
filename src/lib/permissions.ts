@@ -105,14 +105,18 @@ export function canAccessView(user: User | null | undefined, view: string): bool
       'homework',
       'curriculum',
       'remedials',
-      'early_warning'
+      'early_warning',
+      'textbook_library'
     ];
     return allowedStudentViews.includes(view);
   }
 
   switch (view) {
     case 'dashboard':
+    case 'textbook_library':
       return true;
+    case 'parent_fees':
+      return user.role === 'PARENT' || user.role === 'SCHOOL_ADMIN' || user.role === 'VICE_PRINCIPAL';
     case 'staff_attendance':
       return user.role === 'TEACHER' || user.role === 'SCHOOL_ADMIN' || user.role === 'VICE_PRINCIPAL' || hasPermission(user, 'STAFF_ATTENDANCE_MANAGEMENT');
     case 'payroll':
@@ -140,6 +144,8 @@ export function canAccessView(user: User | null | undefined, view: string): bool
       return user.role === 'TEACHER' || user.role === 'SCHOOL_ADMIN' || user.role === 'VICE_PRINCIPAL' || hasPermission(user, 'EXAM_ADMINISTRATION');
     case 'attendance':
       return true;
+    case 'document_vault':
+      return user.role === 'VICE_PRINCIPAL' || user.role === 'SCHOOL_ADMIN';
     case 'settings':
       return hasPermission(user, 'SYSTEM_SETTINGS');
     case 'audit_logs':

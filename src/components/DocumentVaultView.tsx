@@ -24,6 +24,32 @@ export const DocumentVaultView: React.FC = () => {
   const { school, schoolDocuments, financialRecords, schoolEvents, transportRoutes, actions, currentUser } = useAppStore();
   const [activeTab, setActiveTab] = useState<'DOCUMENTS' | 'FINANCE' | 'EVENTS' | 'TRANSPORT'>('DOCUMENTS');
 
+  const isAdmin = currentUser?.role === 'PROPRIETOR' || currentUser?.role === 'VICE_PRINCIPAL' || currentUser?.role === 'SCHOOL_ADMIN';
+
+  // Secure Guard: General School Vault & school-wide fee ledgers are strictly restricted to administrative staff and NOT teachers, parents, or students
+  if (!isAdmin) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto space-y-6">
+        <div className="bg-amber-50 dark:bg-amber-950/50 border-2 border-amber-300 dark:border-amber-800 rounded-3xl p-8 text-center space-y-4 shadow-lg">
+          <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/60 rounded-full flex items-center justify-center mx-auto text-amber-700 dark:text-amber-300">
+            <Lock className="w-8 h-8" />
+          </div>
+          <h2 className="text-xl font-black text-slate-900 dark:text-slate-100">
+            Access Restricted: Administrative Staff Only
+          </h2>
+          <p className="text-xs text-slate-600 dark:text-slate-300 max-w-lg mx-auto leading-relaxed">
+            The General School Vault, administrative policies, internal exam banks, and school-wide fee ledgers are strictly restricted to school administrative personnel (Proprietor, Vice Principal, and School Admin).
+          </p>
+          <div className="pt-2">
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              Please use your role dashboard to access the specific academic, attendance, and assessment tools assigned to your account.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Document Upload Form State
   const [docTitle, setDocTitle] = useState<string>('');
   const [docCategory, setDocCategory] = useState<SchoolDocument['category']>('ACADEMIC');
@@ -207,21 +233,35 @@ export const DocumentVaultView: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <select
-                    value={f.status}
-                    onChange={e => handleUpdatePayment(f.id, e.target.value as FinancialRecord['status'])}
-                    className={`text-xs font-bold px-3 py-1.5 rounded-xl border cursor-pointer ${
-                      f.status === 'PAID'
-                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300'
-                        : f.status === 'PARTIAL'
-                        ? 'bg-amber-50 text-amber-800 border-amber-300'
-                        : 'bg-rose-50 text-rose-800 border-rose-300'
-                    }`}
-                  >
-                    <option value="PAID">PAID FULL</option>
-                    <option value="PARTIAL">PARTIAL PAYMENT</option>
-                    <option value="UNPAID">UNPAID</option>
-                  </select>
+                  {isAdmin ? (
+                    <select
+                      value={f.status}
+                      onChange={e => handleUpdatePayment(f.id, e.target.value as FinancialRecord['status'])}
+                      className={`text-xs font-bold px-3 py-1.5 rounded-xl border cursor-pointer ${
+                        f.status === 'PAID'
+                          ? 'bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300'
+                          : f.status === 'PARTIAL'
+                          ? 'bg-amber-50 text-amber-800 border-amber-300'
+                          : 'bg-rose-50 text-rose-800 border-rose-300'
+                      }`}
+                    >
+                      <option value="PAID">PAID FULL</option>
+                      <option value="PARTIAL">PARTIAL PAYMENT</option>
+                      <option value="UNPAID">UNPAID</option>
+                    </select>
+                  ) : (
+                    <span
+                      className={`text-xs font-bold px-3 py-1.5 rounded-xl border ${
+                        f.status === 'PAID'
+                          ? 'bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300'
+                          : f.status === 'PARTIAL'
+                          ? 'bg-amber-50 text-amber-800 border-amber-300'
+                          : 'bg-rose-50 text-rose-800 border-rose-300'
+                      }`}
+                    >
+                      {f.status === 'PAID' ? 'PAID FULL' : f.status === 'PARTIAL' ? 'PARTIAL PAYMENT' : 'UNPAID'}
+                    </span>
+                  )}
                 </div>
               </div>
             ))}

@@ -113,6 +113,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </button>
             )}
             <button
+              onClick={() => onNavigate('textbook_library')}
+              className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-2 shadow-md transition-all cursor-pointer"
+            >
+              <BookOpen className="h-4 w-4" /> Textbook Library
+            </button>
+            <button
+              onClick={() => onNavigate('parent_fees')}
+              className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold flex items-center gap-2 shadow-md transition-all cursor-pointer"
+            >
+              <CreditCard className="h-4 w-4" /> Fees & Bank Payments
+            </button>
+            <button
               onClick={() => onNavigate('audit_logs')}
               className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold flex items-center gap-2 transition-all cursor-pointer"
             >

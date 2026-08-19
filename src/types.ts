@@ -409,6 +409,9 @@ export interface ExamQuestion {
   correctAnswer: string;
   explanation?: string;
   marks: number;
+  isVisibleToStudents?: boolean; // Teacher control: show to students or keep in teacher bank
+  category?: string; // e.g. "Theory", "Calculation", "Diagram", "Definitions"
+  difficulty?: 'EASY' | 'MEDIUM' | 'HARD';
 }
 
 export interface GeneratedExamSet {
@@ -538,16 +541,32 @@ export interface CBTExam {
   id: string;
   schoolId: string;
   examSetId?: string;
+  teacherId?: string; // Teacher who created and manages the exam
+  teacherName?: string;
   classId: string;
   className: string;
   subject: string;
+  academicSession?: string;
+  academicTerm?: string;
   title: string;
   instructions: string;
   durationMinutes: number; // e.g. 45
   passMarkPercent: number; // e.g. 50
   status: 'DRAFT' | 'PUBLISHED' | 'CLOSED';
+  
+  // Teacher visibility & Student access controls
+  visibilityMode: 'ALL_CLASS_STUDENTS' | 'SPECIFIC_STUDENTS' | 'HIDDEN_TEACHER_ONLY';
+  allowedStudentIds?: string[]; // Specific student IDs allowed to see/take exam
+  allowStudentStudyMode?: boolean; // Whether students can view revision/study questions
+  showCorrectionsImmediately?: boolean; // Whether students see correct answers immediately upon submitting
+  releaseResultsToStudents?: boolean; // Whether full score reports are released to students
+  shuffleQuestions?: boolean; // Shuffle question order for students
+  dueDate?: string; // Optional deadline
+  
   questions: ExamQuestion[];
+  totalMarks?: number;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface CBTAttempt {
@@ -566,6 +585,7 @@ export interface CBTAttempt {
   timeSpentSeconds: number;
   startedAt: string;
   completedAt: string;
+  teacherRemark?: string;
   topicBreakdown?: { topic: string; score: number; total: number }[];
 }
 

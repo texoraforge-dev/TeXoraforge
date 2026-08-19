@@ -106,6 +106,13 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
             >
               <Upload className="h-4 w-4 text-indigo-400" /> Upload PDF Lesson Note
             </button>
+
+            <button
+              onClick={() => onNavigate('textbook_library')}
+              className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-2 shadow-md transition-all cursor-pointer"
+            >
+              <BookOpen className="h-4 w-4" /> Textbook Library
+            </button>
           </div>
         </div>
       </div>

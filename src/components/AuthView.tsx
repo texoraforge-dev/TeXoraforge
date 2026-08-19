@@ -199,14 +199,6 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
           <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-md mx-auto">
             The Next-Gen School Lesson & Academic Management Platform
           </p>
-
-          {/* Supabase Status Indicator */}
-          <div className="mt-3 inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-bold bg-slate-800 border border-slate-700">
-            <Database className={`h-3.5 w-3.5 ${isSupabaseActive ? 'text-emerald-400' : 'text-amber-400'}`} />
-            <span className="text-slate-300">
-              Backend Engine: {isSupabaseActive ? 'Supabase Database Active' : 'Supabase (Awaiting Vercel Env Keys)'}
-            </span>
-          </div>
         </div>
 
         {/* Tab Switcher */}

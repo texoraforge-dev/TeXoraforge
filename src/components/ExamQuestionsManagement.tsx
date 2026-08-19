@@ -29,10 +29,10 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { useAppStore } from '../storage';
-import { GeneratedExamSet, ExamQuestion, QuestionType, Submission } from '../types';
+import { GeneratedExamSet, ExamQuestion, QuestionType, Submission, CBTExam } from '../types';
 
 export const ExamQuestionsManagement: React.FC = () => {
-  const { school, currentUser, users, submissions, examSets, actions } = useAppStore();
+  const { school, classes, currentUser, users, submissions, examSets, actions } = useAppStore();
 
   const isTeacher = currentUser?.role === 'TEACHER';
   const isProprietor = currentUser?.role === 'PROPRIETOR';
@@ -65,11 +65,25 @@ export const ExamQuestionsManagement: React.FC = () => {
   const [newQExplanation, setNewQExplanation] = useState('');
   const [newQMarks, setNewQMarks] = useState(5);
 
+  // Appointed classes for current user
+  const visibleClasses = useMemo(() => {
+    if (isTeacher) {
+      const assigned = currentUser?.assignedClassIds || [];
+      const filtered = classes.filter(c => assigned.includes(c.id));
+      return filtered.length > 0 ? filtered : (classes.length > 0 ? [classes[0]] : []);
+    }
+    return classes;
+  }, [classes, isTeacher, currentUser]);
+
   // Filter available submissions for auto-generation (Lesson Notes)
   const availableLessonNotes = useMemo(() => {
     return submissions.filter(s => {
       if (s.type !== 'LESSON_NOTE' && !s.lessonNoteContent) return false;
-      if (isTeacher) return s.teacherId === currentUser?.id;
+      if (isTeacher) {
+        const isTeacherOwner = s.teacherId === currentUser?.id;
+        const isAppointedClass = !s.classId || currentUser?.assignedClassIds?.includes(s.classId);
+        return isTeacherOwner && isAppointedClass;
+      }
       if (selectedTeacherId !== 'ALL') return s.teacherId === selectedTeacherId;
       return true;
     });
@@ -83,9 +97,15 @@ export const ExamQuestionsManagement: React.FC = () => {
   // Filtered Exam Sets based on user role and selected filters
   const filteredExamSets = useMemo(() => {
     return examSets.filter(set => {
-      // Role access rules: Teachers only see their questions; Proprietor/Admin see ALL
-      if (isTeacher && set.teacherId !== currentUser?.id) {
-        return false;
+      // Role access rules: Teachers only see their questions and appointed classes; Proprietor/Admin see ALL
+      if (isTeacher) {
+        if (set.teacherId !== currentUser?.id) {
+          return false;
+        }
+        const teacherAssignedClassIds = currentUser?.assignedClassIds || [];
+        if (set.classId && teacherAssignedClassIds.length > 0 && !teacherAssignedClassIds.includes(set.classId)) {
+          return false;
+        }
       }
       if (!isTeacher && selectedTeacherId !== 'ALL' && set.teacherId !== selectedTeacherId) {
         return false;
@@ -182,6 +202,46 @@ export const ExamQuestionsManagement: React.FC = () => {
     setActiveExamSet(updatedSet);
   };
 
+  // Convert Active Exam Set into CBT Online Examination
+  const handleDeployToCBT = () => {
+    if (!activeExamSet) return;
+
+    const newCbt: CBTExam = {
+      id: `cbt_${Date.now()}`,
+      schoolId: activeExamSet.schoolId,
+      examSetId: activeExamSet.id,
+      teacherId: activeExamSet.teacherId,
+      teacherName: activeExamSet.teacherName,
+      classId: activeExamSet.classId,
+      className: activeExamSet.className,
+      subject: activeExamSet.subject,
+      academicSession: activeExamSet.academicSession,
+      academicTerm: activeExamSet.academicTerm,
+      title: `${activeExamSet.title} (CBT Online Assessment)`,
+      instructions: activeExamSet.instructions || 'Answer all questions. Timer begins when you click Start Exam.',
+      durationMinutes: 30,
+      passMarkPercent: 50,
+      status: 'PUBLISHED',
+      visibilityMode: 'ALL_CLASS_STUDENTS',
+      allowStudentStudyMode: true,
+      showCorrectionsImmediately: true,
+      releaseResultsToStudents: true,
+      shuffleQuestions: true,
+      questions: activeExamSet.questions.map(q => ({
+        ...q,
+        isVisibleToStudents: true,
+        category: q.category || 'General Assessment',
+        difficulty: q.difficulty || 'MEDIUM'
+      })),
+      totalMarks: activeExamSet.totalMarks,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    actions.saveCBTExam(newCbt, currentUser || undefined);
+    alert(`Successfully deployed "${activeExamSet.title}" to CBT Online Exam Center for ${activeExamSet.className}! Students can now view and take the assessment.`);
+  };
+
   // Delete entire exam set
   const handleDeleteExamSet = (setId: string) => {
     if (confirm('Are you sure you want to delete this Exam Question Paper?')) {
@@ -271,7 +331,7 @@ export const ExamQuestionsManagement: React.FC = () => {
 
       {/* Filters and Controls */}
       <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
           
           {/* Search Input */}
           <div className="relative">
@@ -283,6 +343,20 @@ export const ExamQuestionsManagement: React.FC = () => {
               placeholder="Search exam papers..."
               className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/80 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
+          </div>
+
+          {/* Class Filter */}
+          <div>
+            <select
+              value={selectedClassId}
+              onChange={e => setSelectedClassId(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/80 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold"
+            >
+              <option value="ALL">{isTeacher ? 'All Appointed Classes' : 'All Classes'}</option>
+              {visibleClasses.map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
           </div>
 
           {/* Teacher Filter (For Proprietor/Admin) */}
@@ -318,7 +392,7 @@ export const ExamQuestionsManagement: React.FC = () => {
           </div>
 
           {/* Result Count Indicator */}
-          <div className="flex items-center justify-end px-2">
+          <div className="flex items-center justify-end px-2 sm:col-span-2 md:col-span-4 lg:col-span-1">
             <span className="text-xs font-extrabold text-slate-500 dark:text-slate-400">
               Showing {filteredExamSets.length} Exam Paper{filteredExamSets.length !== 1 ? 's' : ''}
             </span>
@@ -426,7 +500,16 @@ export const ExamQuestionsManagement: React.FC = () => {
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                    <button
+                      onClick={handleDeployToCBT}
+                      className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
+                      title="Make this exam paper available for students on the CBT Online Portal"
+                    >
+                      <Sparkles className="h-3.5 w-3.5 text-purple-200" />
+                      Deploy to CBT Online
+                    </button>
+
                     <button
                       onClick={() => setIsPrintPreviewModalOpen(true)}
                       className="px-3.5 py-2 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"

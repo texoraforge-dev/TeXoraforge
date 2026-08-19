@@ -1316,20 +1316,173 @@ export const INITIAL_CBT_EXAMS: CBTExam[] = [
   {
     id: 'cbt_001',
     schoolId: 'school_apex',
+    teacherId: 'usr_t1',
+    teacherName: 'Mr. David Okon',
     classId: 'cls_ss3',
     className: 'SS 3',
     subject: 'Physics',
+    academicSession: '2025/2026',
+    academicTerm: 'First Term',
     title: 'SS 3 Physics Continuous Assessment CBT 1',
-    instructions: 'Select the best answer for each multiple choice question. Timer starts automatically when you click Start Exam.',
+    instructions: 'Select the best answer for each question. Countdown timer starts automatically when you click Start Test.',
     durationMinutes: 30,
     passMarkPercent: 50,
     status: 'PUBLISHED',
+    visibilityMode: 'ALL_CLASS_STUDENTS',
+    allowStudentStudyMode: true,
+    showCorrectionsImmediately: true,
+    releaseResultsToStudents: true,
+    shuffleQuestions: true,
+    totalMarks: 30,
     questions: [
-      { id: 'cq_1', type: 'MULTIPLE_CHOICE', questionText: 'Faraday’s law of electromagnetic induction states that induced e.m.f is directly proportional to:', options: ['A. Resistance', 'B. Rate of change of flux linkage', 'C. Temperature', 'D. Current'], correctAnswer: 'B. Rate of change of flux linkage', marks: 10 },
-      { id: 'cq_2', type: 'MULTIPLE_CHOICE', questionText: 'The unit of magnetic flux is:', options: ['A. Tesla', 'B. Weber', 'C. Henry', 'D. Farad'], correctAnswer: 'B. Weber', marks: 10 },
-      { id: 'cq_3', type: 'TRUE_FALSE', questionText: 'Lenz’s law obeys the law of conservation of momentum.', correctAnswer: 'False', explanation: 'It obeys the law of conservation of ENERGY.', marks: 10 }
+      {
+        id: 'cq_1',
+        type: 'MULTIPLE_CHOICE',
+        questionText: 'Faraday’s law of electromagnetic induction states that induced e.m.f is directly proportional to:',
+        options: ['A. Resistance', 'B. Rate of change of flux linkage', 'C. Temperature', 'D. Current'],
+        correctAnswer: 'B. Rate of change of flux linkage',
+        explanation: 'Faraday discovered that ε = -N(dΦ/dt), meaning induced EMF directly depends on the time rate of change of magnetic flux.',
+        marks: 10,
+        isVisibleToStudents: true,
+        category: 'Theory',
+        difficulty: 'MEDIUM'
+      },
+      {
+        id: 'cq_2',
+        type: 'MULTIPLE_CHOICE',
+        questionText: 'The S.I. unit of magnetic flux is:',
+        options: ['A. Tesla (T)', 'B. Weber (Wb)', 'C. Henry (H)', 'D. Farad (F)'],
+        correctAnswer: 'B. Weber (Wb)',
+        explanation: 'Magnetic flux Φ = B · A (Tesla × m²), which is defined as Weber (Wb).',
+        marks: 10,
+        isVisibleToStudents: true,
+        category: 'Units & Measurement',
+        difficulty: 'EASY'
+      },
+      {
+        id: 'cq_3',
+        type: 'TRUE_FALSE',
+        questionText: 'Lenz’s law directly exemplifies the conservation of energy principle.',
+        options: ['A. True', 'B. False'],
+        correctAnswer: 'A. True',
+        explanation: 'The mechanical work done against the opposing induced magnetic field is converted into electrical energy in the circuit.',
+        marks: 10,
+        isVisibleToStudents: true,
+        category: 'Conceptual Physics',
+        difficulty: 'MEDIUM'
+      }
     ],
     createdAt: '2026-08-01T09:00:00.000Z'
+  },
+  {
+    id: 'cbt_002',
+    schoolId: 'school_apex',
+    teacherId: 'usr_t2',
+    teacherName: 'Mrs. Sarah Jenkins',
+    classId: 'cls_p5',
+    className: 'Primary 5',
+    subject: 'Mathematics',
+    academicSession: '2025/2026',
+    academicTerm: 'First Term',
+    title: 'Primary 5 Mathematics Mastery Quiz: Fractions & Decimals',
+    instructions: 'Read each question carefully before choosing the answer. Make sure to complete within the allocated time.',
+    durationMinutes: 20,
+    passMarkPercent: 60,
+    status: 'PUBLISHED',
+    visibilityMode: 'ALL_CLASS_STUDENTS',
+    allowStudentStudyMode: true,
+    showCorrectionsImmediately: true,
+    releaseResultsToStudents: true,
+    shuffleQuestions: false,
+    totalMarks: 30,
+    questions: [
+      {
+        id: 'cq_m1',
+        type: 'MULTIPLE_CHOICE',
+        questionText: 'What is 3/4 converted into a decimal?',
+        options: ['A. 0.25', 'B. 0.50', 'C. 0.75', 'D. 0.85'],
+        correctAnswer: 'C. 0.75',
+        explanation: 'Divide 3 by 4: 3 ÷ 4 = 0.75 (or 75%).',
+        marks: 10,
+        isVisibleToStudents: true,
+        category: 'Fractions',
+        difficulty: 'EASY'
+      },
+      {
+        id: 'cq_m2',
+        type: 'MULTIPLE_CHOICE',
+        questionText: 'Simplify the fraction 18/24 to its simplest lowest term.',
+        options: ['A. 2/3', 'B. 3/4', 'C. 6/8', 'D. 9/12'],
+        correctAnswer: 'B. 3/4',
+        explanation: 'Divide numerator and denominator by highest common factor (6): 18÷6 = 3, 24÷6 = 4.',
+        marks: 10,
+        isVisibleToStudents: true,
+        category: 'Fractions',
+        difficulty: 'EASY'
+      },
+      {
+        id: 'cq_m3',
+        type: 'MULTIPLE_CHOICE',
+        questionText: 'Which of the following numbers is equivalent to 40%?',
+        options: ['A. 0.04', 'B. 2/5', 'C. 4/5', 'D. 1/4'],
+        correctAnswer: 'B. 2/5',
+        explanation: '40% = 40/100 = 4/10 = 2/5 = 0.40.',
+        marks: 10,
+        isVisibleToStudents: true,
+        category: 'Percentages',
+        difficulty: 'MEDIUM'
+      }
+    ],
+    createdAt: '2026-08-05T10:30:00.000Z'
+  },
+  {
+    id: 'cbt_003',
+    schoolId: 'school_apex',
+    teacherId: 'usr_t1',
+    teacherName: 'Mr. David Okon',
+    classId: 'cls_ss3',
+    className: 'SS 3',
+    subject: 'Physics',
+    academicSession: '2025/2026',
+    academicTerm: 'First Term',
+    title: 'SS 3 Honors Physics Challenge (Selective Remedial & Gifted Test)',
+    instructions: 'Assigned specifically for advanced physics students and remedial check-in.',
+    durationMinutes: 25,
+    passMarkPercent: 70,
+    status: 'PUBLISHED',
+    visibilityMode: 'SPECIFIC_STUDENTS',
+    allowedStudentIds: ['std_001'],
+    allowStudentStudyMode: true,
+    showCorrectionsImmediately: false,
+    releaseResultsToStudents: true,
+    totalMarks: 20,
+    questions: [
+      {
+        id: 'cq_h1',
+        type: 'MULTIPLE_CHOICE',
+        questionText: 'What is the root-mean-square (r.m.s) voltage of an AC supply whose peak voltage is 311V?',
+        options: ['A. 110V', 'B. 220V', 'C. 240V', 'D. 311V'],
+        correctAnswer: 'B. 220V',
+        explanation: 'Vrms = Vpeak / √2 = 311 / 1.414 ≈ 220V.',
+        marks: 10,
+        isVisibleToStudents: true,
+        category: 'AC Circuits',
+        difficulty: 'HARD'
+      },
+      {
+        id: 'cq_h2',
+        type: 'MULTIPLE_CHOICE',
+        questionText: 'In a series R-L-C circuit at resonance, the total impedance Z is equal to:',
+        options: ['A. Inductive Reactance XL', 'B. Capacitive Reactance XC', 'C. Resistance R', 'D. Zero'],
+        correctAnswer: 'C. Resistance R',
+        explanation: 'At resonance, XL = XC, therefore Z = √[R² + (XL - XC)²] = √[R² + 0] = R.',
+        marks: 10,
+        isVisibleToStudents: true,
+        category: 'AC Resonance',
+        difficulty: 'HARD'
+      }
+    ],
+    createdAt: '2026-08-10T11:00:00.000Z'
   }
 ];
 
@@ -1794,5 +1947,51 @@ export const INITIAL_CHAT_MODERATION_LOGS: ChatModerationLog[] = [
     createdAt: '2026-08-11T08:01:00.000Z'
   }
 ];
+
+export const INITIAL_PAYMENT_TRANSACTIONS: PaymentTransaction[] = [
+  {
+    id: 'pay_tx_001',
+    schoolId: 'school_apex',
+    financialRecordId: 'fin_001',
+    studentId: 'std_001',
+    studentName: 'Adebayo Tobi',
+    className: 'SS 3',
+    parentUserId: 'usr_parent1',
+    parentName: 'Chief Olumide Adebayo',
+    feeTitle: 'First Term Tuition & Lab Fee',
+    amountPaid: 180000,
+    paymentMethod: 'BANK_TRANSFER',
+    paymentReference: 'GTB-TRF-20250910-884920',
+    paymentDate: '2025-09-10',
+    notes: 'Paid via GTBank Mobile App for Adebayo Tobi First Term 2025/2026',
+    status: 'CONFIRMED',
+    confirmedByProprietorId: 'usr_proprietor',
+    confirmedByProprietorName: 'Prof. Emmanuel Vance',
+    confirmedAt: '2025-09-10T14:30:00.000Z',
+    createdAt: '2025-09-10T10:00:00.000Z'
+  },
+  {
+    id: 'pay_tx_002',
+    schoolId: 'school_apex',
+    financialRecordId: 'fin_002',
+    studentId: 'std_002',
+    studentName: 'Chidiebere Okafor',
+    className: 'Primary 5',
+    parentUserId: 'usr_parent1',
+    parentName: 'Chief Olumide Adebayo',
+    feeTitle: 'First Term Tuition Fee (Part Payment)',
+    amountPaid: 60000,
+    paymentMethod: 'BANK_TRANSFER',
+    paymentReference: 'ZEN-TRF-20250915-110294',
+    paymentDate: '2025-09-15',
+    notes: 'First installment of ₦60,000 for Chidiebere Okafor',
+    status: 'CONFIRMED',
+    confirmedByProprietorId: 'usr_proprietor',
+    confirmedByProprietorName: 'Prof. Emmanuel Vance',
+    confirmedAt: '2025-09-15T16:00:00.000Z',
+    createdAt: '2025-09-15T12:00:00.000Z'
+  }
+];
+
 
 

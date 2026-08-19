@@ -28,7 +28,9 @@ import {
   X,
   MapPin,
   DollarSign,
-  Calculator
+  Calculator,
+  CreditCard,
+  Library
 } from 'lucide-react';
 import { UserRole } from '../types';
 import { useAppStore } from '../storage';
@@ -70,6 +72,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const adminNavItems: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'textbook_library', label: 'Textbook Library', icon: Library },
+    { id: 'parent_fees', label: 'Student Fees & Payments', icon: CreditCard },
     { id: 'staff_attendance', label: 'Staff Attendance & Geofence', icon: MapPin },
     { id: 'payroll', label: 'Proprietor Payroll & Salaries', icon: DollarSign },
     { id: 'student_accounts', label: 'Student Accounts & Chat', icon: Key },
@@ -100,12 +104,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const teacherNavItems: NavItem[] = [
     { id: 'dashboard', label: 'Teacher Dashboard', icon: LayoutDashboard },
+    { id: 'textbook_library', label: 'Textbook Library', icon: Library },
     { id: 'staff_attendance', label: 'Staff Sign-In & Sign-Out', icon: MapPin },
     { id: 'student_accounts', label: 'Student Accounts & Class Chat', icon: Key },
     { id: 'curriculum', label: 'Curriculum & Scheme', icon: BookOpen },
     { id: 'cbt_engine', label: 'AI CBT Examination Hub', icon: Laptop },
     { id: 'early_warning', label: 'Student Risk Radar', icon: AlertTriangle },
-    { id: 'document_vault', label: 'School Vault & Documents', icon: FolderLock },
     { id: 'timetable', label: 'Class & Exam Timetables', icon: CalendarCheck2 },
     { id: 'scores', label: 'Continuous Assessment & Scores', icon: FileText },
     { id: 'teacher_submissions', label: 'My Lesson Submissions', icon: FileText },
@@ -117,6 +121,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const studentNavItems: NavItem[] = [
     { id: 'student_class_chat', label: 'Class Discussion Chat', icon: MessageSquare },
+    { id: 'textbook_library', label: 'Textbook Library', icon: Library },
     { id: 'cbt_engine', label: 'CBT Examination Hub', icon: Laptop },
     { id: 'timetable', label: 'Class Timetable', icon: CalendarCheck2 },
     { id: 'early_warning', label: 'Remedials & Study Plans', icon: BookOpen }
@@ -124,10 +129,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const parentNavItems: NavItem[] = [
     { id: 'parent', label: 'Parent Portal Home', icon: ShieldCheck },
+    { id: 'parent_fees', label: 'Child Fees & Payments', icon: CreditCard },
+    { id: 'textbook_library', label: 'Textbook Library', icon: Library },
     { id: 'parent_ai_assistant', label: 'AI Parent & Tutor Assistant', icon: Sparkles },
     { id: 'cbt_engine', label: 'AI CBT Practice Hub', icon: Laptop },
     { id: 'early_warning', label: 'Child Risk & Remedials', icon: AlertTriangle },
-    { id: 'document_vault', label: 'School Vault & Fee Records', icon: FolderLock },
     { id: 'timetable', label: 'Class & Exam Timetables', icon: CalendarCheck2 },
     { id: 'scores', label: 'Terminal Report Cards', icon: FileText },
     { id: 'public_chat', label: 'Parent-Teacher Room', icon: MessagesSquare },

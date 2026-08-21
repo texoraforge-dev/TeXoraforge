@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export type UserRole = 'PROPRIETOR' | 'VICE_PRINCIPAL' | 'SCHOOL_ADMIN' | 'TEACHER' | 'PARENT' | 'STUDENT';
+export type UserRole = 'PROPRIETOR' | 'VICE_PRINCIPAL' | 'SCHOOL_ADMIN' | 'TEACHER' | 'PARENT' | 'STUDENT' | 'DRIVER';
 
 export type AdminPermission =
   | 'ADMISSIONS'
@@ -124,6 +124,7 @@ export interface SchoolClass {
   category: 'Pre-Nursery & Nursery' | 'Primary' | 'Junior Secondary' | 'Senior Secondary';
   arm?: string; // e.g. "Buttercups", "Gold", "A"
   capacity: number;
+  subjects?: string[]; // Specific list of subjects offered in this class (Determined by Principal/Admin)
 }
 
 export interface PromotionRecord {
@@ -683,16 +684,54 @@ export interface SchoolEvent {
   createdAt: string;
 }
 
+export interface TransportStop {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  estimatedTime?: string;
+  studentCount?: number;
+}
+
 export interface TransportRoute {
   id: string;
   schoolId: string;
   routeName: string;
   vehicleNo: string;
+  vehicleModel?: string;
   driverName: string;
   driverPhone: string;
+  driverUserId?: string;
+  driverAccessCode: string;
+  driverPin?: string;
+  driverPhotoUrl?: string;
   pickupLocations: string[];
+  stops?: TransportStop[];
   assignedStudentIds: string[];
   capacity: number;
+  isTrackingActive: boolean;
+  tripStatus: 'IDLE' | 'MORNING_PICKUP' | 'AFTERNOON_DROPOFF' | 'SPECIAL_TRIP' | 'COMPLETED';
+  currentLocation?: {
+    lat: number;
+    lng: number;
+    speedKmH: number;
+    heading: number;
+    lastUpdated: string;
+    currentStopIndex: number;
+    addressDescription?: string;
+    batteryLevel?: number;
+  };
+  locationHistory?: {
+    lat: number;
+    lng: number;
+    timestamp: string;
+    speedKmH?: number;
+  }[];
+  activeAlert?: {
+    type: 'DELAY' | 'TRAFFIC' | 'EMERGENCY' | 'INFO';
+    message: string;
+    timestamp: string;
+  } | null;
 }
 
 // PART 1: Staff Attendance & Geofencing

@@ -28,10 +28,14 @@ import {
   X,
   Sparkles,
   CreditCard,
-  Upload
+  Upload,
+  GraduationCap,
+  Users,
+  Layers,
+  CheckSquare
 } from 'lucide-react';
 import { useAppStore } from '../storage';
-import { DEFAULT_SCHOOL_SUBJECTS } from '../mockData';
+import { DEFAULT_SCHOOL_SUBJECTS, SUBJECT_OPTIONS_BY_TIER } from '../mockData';
 import { Logo, COMPANY_LOGO_DATA_URI } from './Logo';
 
 export const SchoolSettings: React.FC = () => {
@@ -68,6 +72,50 @@ export const SchoolSettings: React.FC = () => {
   const [subjectSearch, setSubjectSearch] = useState('');
   const [subjectMessage, setSubjectMessage] = useState('');
   const [subjectError, setSubjectError] = useState('');
+
+  // Class-Specific Curriculum Management State (Principal Authority)
+  const [curriculumViewMode, setCurriculumViewMode] = useState<'CLASS_OFFERINGS' | 'GLOBAL_DIRECTORY'>('CLASS_OFFERINGS');
+  const [selectedClassForSubjects, setSelectedClassForSubjects] = useState<string>(classes[0]?.id || 'cls_ss3');
+  const [newClassSubjectInput, setNewClassSubjectInput] = useState('');
+
+  const targetClassObj = classes.find(c => c.id === selectedClassForSubjects) || classes[0];
+  const targetClassSubjects = targetClassObj ? actions.getClassSubjects(targetClassObj.id) : [];
+  const targetClassStudents = students.filter(s => s.classId === targetClassObj?.id);
+
+  // Add subject specifically to target class
+  const handleAddSubjectToClass = (subjectName: string) => {
+    if (!targetClassObj || !subjectName.trim()) return;
+    const cleanSub = subjectName.trim();
+    if (targetClassSubjects.some(s => s.toLowerCase() === cleanSub.toLowerCase())) {
+      setSubjectError(`"${cleanSub}" is already offered in ${targetClassObj.name}.`);
+      setTimeout(() => setSubjectError(''), 3000);
+      return;
+    }
+
+    actions.addSubjectToClass(targetClassObj.id, cleanSub);
+    setNewClassSubjectInput('');
+    setSubjectMessage(`Added "${cleanSub}" to ${targetClassObj.name}. Synced to all ${targetClassStudents.length} enrolled student(s)!`);
+    setTimeout(() => setSubjectMessage(''), 3500);
+  };
+
+  // Remove subject specifically from target class
+  const handleRemoveSubjectFromClass = (subjectName: string) => {
+    if (!targetClassObj) return;
+    actions.removeSubjectFromClass(targetClassObj.id, subjectName);
+    setSubjectMessage(`Removed "${subjectName}" from ${targetClassObj.name}. Updated all enrolled students.`);
+    setTimeout(() => setSubjectMessage(''), 3500);
+  };
+
+  // Reset class subjects to standard tier defaults
+  const handleResetClassSubjectsToTier = () => {
+    if (!targetClassObj) return;
+    if (window.confirm(`Reset curriculum for ${targetClassObj.name} to standard recommended subjects for ${targetClassObj.category}?`)) {
+      const defaultTierSubjects = SUBJECT_OPTIONS_BY_TIER[targetClassObj.category] || DEFAULT_SCHOOL_SUBJECTS;
+      actions.updateClassSubjects(targetClassObj.id, [...defaultTierSubjects]);
+      setSubjectMessage(`Reset ${targetClassObj.name} curriculum to standard ${defaultTierSubjects.length} subjects.`);
+      setTimeout(() => setSubjectMessage(''), 3500);
+    }
+  };
 
   // Security Settings state
   const [autoSync, setAutoSync] = useState(() => {
@@ -419,29 +467,60 @@ export const SchoolSettings: React.FC = () => {
       {activeTab === 'subjects' && (
         <div className="p-6 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 shadow-xs space-y-6">
           
-          {/* Header Info */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-700/80 pb-4">
+          {/* Header Info & Sub-view Toggle */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-700/80 pb-4">
             <div className="flex items-start gap-3">
               <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 shrink-0">
                 <BookOpen className="h-5 w-5" />
               </div>
               <div>
                 <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
-                  Academic Subject Directory
+                  Curriculum & Class Subjects Management
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Add or remove subjects taught in your school. Changes instantly update teacher assignments and submission options.
+                  Configure specific subjects offered in each class. Students admitted to a class automatically inherit its configured subjects.
                 </p>
               </div>
             </div>
 
-            <button
-              onClick={handleResetDefaultSubjects}
-              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer self-start sm:self-auto shrink-0"
-            >
-              <RefreshCw className="h-3.5 w-3.5 text-slate-500" />
-              Restore Defaults
-            </button>
+            <div className="flex items-center gap-2">
+              <div className="p-1 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setCurriculumViewMode('CLASS_OFFERINGS')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    curriculumViewMode === 'CLASS_OFFERINGS'
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  <GraduationCap className="h-3.5 w-3.5" />
+                  Class Subject Allotment
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurriculumViewMode('GLOBAL_DIRECTORY')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    curriculumViewMode === 'GLOBAL_DIRECTORY'
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  <Tag className="h-3.5 w-3.5" />
+                  Global Subject Master
+                </button>
+              </div>
+
+              {curriculumViewMode === 'GLOBAL_DIRECTORY' && (
+                <button
+                  onClick={handleResetDefaultSubjects}
+                  className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer self-start sm:self-auto shrink-0"
+                >
+                  <RefreshCw className="h-3.5 w-3.5 text-slate-500" />
+                  Restore Defaults
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Feedback Alerts */}
@@ -458,6 +537,216 @@ export const SchoolSettings: React.FC = () => {
               <span>{subjectError}</span>
             </div>
           )}
+
+          {/* SECTION A: CLASS-SPECIFIC SUBJECT ALLOTMENT (PRINCIPAL AUTHORITY) */}
+          {curriculumViewMode === 'CLASS_OFFERINGS' && (
+            <div className="space-y-6">
+              
+              {/* Class Selector Bar */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <Layers className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                    Select Target Class to Configure Subjects:
+                  </label>
+                  <span className="text-xs text-slate-500 font-bold">
+                    {classes.length} Classes Available
+                  </span>
+                </div>
+
+                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
+                  {classes.map(cls => {
+                    const isSelected = cls.id === selectedClassForSubjects;
+                    const subCount = (cls.subjects || []).length;
+                    return (
+                      <button
+                        key={cls.id}
+                        type="button"
+                        onClick={() => setSelectedClassForSubjects(cls.id)}
+                        className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shrink-0 transition-all cursor-pointer border ${
+                          isSelected
+                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                            : 'bg-slate-50 dark:bg-slate-900/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-300'
+                        }`}
+                      >
+                        <span>{cls.name}</span>
+                        <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-extrabold ${
+                          isSelected ? 'bg-indigo-700 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                        }`}>
+                          {subCount} subs
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Class Subject Management Deck */}
+              {targetClassObj && (
+                <div className="p-5 rounded-2xl bg-gradient-to-br from-indigo-50/50 via-slate-50 to-white dark:from-slate-900 dark:via-slate-900/80 dark:to-slate-800 border border-indigo-100 dark:border-slate-700 shadow-xs space-y-4">
+                  
+                  {/* Class Header Banner */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-700/80 pb-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="px-2.5 py-0.5 rounded-md bg-indigo-600 text-white text-[11px] font-extrabold">
+                          {targetClassObj.category}
+                        </span>
+                        <h4 className="text-base font-extrabold text-slate-900 dark:text-white">
+                          {targetClassObj.name} Curriculum & Subject Allocation
+                        </h4>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        Currently offering <span className="font-extrabold text-indigo-600 dark:text-indigo-400">{targetClassSubjects.length} subjects</span> • All <span className="font-extrabold text-slate-800 dark:text-slate-200">{targetClassStudents.length} enrolled student(s)</span> automatically take this curriculum.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleResetClassSubjectsToTier}
+                      className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-amber-400 text-slate-700 dark:text-slate-300 hover:text-amber-600 text-xs font-bold flex items-center gap-1.5 shadow-2xs cursor-pointer transition-colors shrink-0"
+                    >
+                      <RefreshCw className="h-3.5 w-3.5 text-amber-500" />
+                      Apply Tier Recommendations
+                    </button>
+                  </div>
+
+                  {/* Add Subject to This Class Form */}
+                  <div className="p-3.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2.5">
+                    <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                      <Plus className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                      Add Subject to {targetClassObj.name}
+                    </label>
+
+                    <div className="flex flex-col sm:flex-row items-center gap-2">
+                      {/* Dropdown of available school subjects not yet in this class */}
+                      <select
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            handleAddSubjectToClass(e.target.value);
+                            e.target.value = '';
+                          }
+                        }}
+                        defaultValue=""
+                        className="w-full sm:w-64 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      >
+                        <option value="" disabled>+ Choose from Approved Directory...</option>
+                        {currentSubjects
+                          .filter(s => !targetClassSubjects.some(t => t.toLowerCase() === s.toLowerCase()))
+                          .map(s => (
+                            <option key={s} value={s}>{s}</option>
+                          ))}
+                      </select>
+
+                      {/* Or type custom subject */}
+                      <div className="flex items-center gap-1.5 w-full sm:flex-1">
+                        <input
+                          type="text"
+                          value={newClassSubjectInput}
+                          onChange={e => setNewClassSubjectInput(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleAddSubjectToClass(newClassSubjectInput);
+                            }
+                          }}
+                          placeholder="Or type custom subject name..."
+                          className="flex-1 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-medium placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleAddSubjectToClass(newClassSubjectInput)}
+                          disabled={!newClassSubjectInput.trim()}
+                          className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-bold flex items-center gap-1 shadow-xs cursor-pointer shrink-0 transition-colors"
+                        >
+                          <Plus className="h-3.5 w-3.5" /> Add
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Quick Add Suggestions based on category */}
+                    <div className="pt-1 flex flex-wrap items-center gap-1.5">
+                      <span className="text-[10px] font-bold text-slate-400">Quick additions:</span>
+                      {['Coding & Robotics', 'French', 'Music', 'Technical Drawing', 'Civic Education', 'Agricultural Science', 'Data Processing', 'History']
+                        .filter(s => !targetClassSubjects.some(t => t.toLowerCase() === s.toLowerCase()))
+                        .slice(0, 5)
+                        .map(s => (
+                          <button
+                            key={s}
+                            type="button"
+                            onClick={() => handleAddSubjectToClass(s)}
+                            className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-indigo-100 dark:hover:bg-indigo-950 hover:text-indigo-600 border border-slate-200 dark:border-slate-700 cursor-pointer flex items-center gap-1 transition-colors"
+                          >
+                            <Plus className="h-2.5 w-2.5 text-indigo-500" />
+                            {s}
+                          </button>
+                        ))}
+                    </div>
+                  </div>
+
+                  {/* Active Subjects List for this class */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                        <CheckSquare className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                        Subjects Offered in {targetClassObj.name} ({targetClassSubjects.length}):
+                      </span>
+                      <span className="text-[11px] text-slate-400 italic">
+                        Click the trash icon to remove/reduce a subject from this class
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                      {targetClassSubjects.map((sub, index) => (
+                        <div
+                          key={sub}
+                          className="flex items-center justify-between p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-2xs hover:border-indigo-300 transition-all"
+                        >
+                          <div className="flex items-center gap-2 min-w-0 pr-1">
+                            <span className="w-5 h-5 rounded-md bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 text-[10px] font-extrabold flex items-center justify-center shrink-0">
+                              {index + 1}
+                            </span>
+                            <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                              {sub}
+                            </span>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveSubjectFromClass(sub)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/60 transition-colors cursor-pointer shrink-0"
+                            title={`Remove ${sub} from ${targetClassObj.name}`}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      ))}
+
+                      {targetClassSubjects.length === 0 && (
+                        <div className="col-span-full p-6 text-center rounded-xl border border-dashed border-slate-300 dark:border-slate-700">
+                          <p className="text-xs font-bold text-slate-500">No subjects currently assigned to {targetClassObj.name}. Add subjects above or restore tier defaults.</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Auto-sync Information Notice */}
+                  <div className="p-3 rounded-xl bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50 flex items-start gap-2.5">
+                    <Sparkles className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
+                    <p className="text-xs text-indigo-900 dark:text-indigo-200 leading-relaxed font-medium">
+                      <span className="font-extrabold">Automatic Student Inheritance Active:</span> Every student admitted to <span className="font-extrabold underline">{targetClassObj.name}</span> automatically offers these <span className="font-extrabold">{targetClassSubjects.length} subjects</span>. Any additions or reductions made by the Principal immediately update the academic roster and CBT exam eligibility.
+                    </p>
+                  </div>
+
+                </div>
+              )}
+
+            </div>
+          )}
+
+          {/* SECTION B: GLOBAL SUBJECT MASTER DIRECTORY */}
+          {curriculumViewMode === 'GLOBAL_DIRECTORY' && (
+            <div className="space-y-6">
 
           {/* 1. Add New Subject Input Form */}
           <form onSubmit={handleAddSubjectSubmit} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 space-y-3">
@@ -592,6 +881,9 @@ export const SchoolSettings: React.FC = () => {
               </div>
             )}
           </div>
+
+        </div>
+          )}
 
         </div>
       )}

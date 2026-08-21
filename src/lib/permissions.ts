@@ -71,7 +71,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, AdminPermission[]> = {
   ],
   TEACHER: [],
   PARENT: [],
-  STUDENT: []
+  STUDENT: [],
+  DRIVER: []
 };
 
 /**
@@ -91,6 +92,12 @@ export function hasPermission(user: User | null | undefined, permission: AdminPe
  */
 export function canAccessView(user: User | null | undefined, view: string): boolean {
   if (!user) return false;
+
+  // Driver constraint: strictly driver_console only
+  if (user.role === 'DRIVER') {
+    return view === 'driver_console';
+  }
+
   if (user.role === 'PROPRIETOR') return true;
 
   // Student specific constraints
@@ -106,7 +113,8 @@ export function canAccessView(user: User | null | undefined, view: string): bool
       'curriculum',
       'remedials',
       'early_warning',
-      'textbook_library'
+      'textbook_library',
+      'bus_tracking'
     ];
     return allowedStudentViews.includes(view);
   }
@@ -114,6 +122,7 @@ export function canAccessView(user: User | null | undefined, view: string): bool
   switch (view) {
     case 'dashboard':
     case 'textbook_library':
+    case 'bus_tracking':
       return true;
     case 'parent_fees':
       return user.role === 'PARENT' || user.role === 'SCHOOL_ADMIN' || user.role === 'VICE_PRINCIPAL';
@@ -203,6 +212,13 @@ export function getRoleBadgeInfo(role: UserRole): { label: string; bgClass: stri
         bgClass: 'bg-indigo-100 dark:bg-indigo-950/70',
         textClass: 'text-indigo-800 dark:text-indigo-300',
         borderClass: 'border-indigo-300 dark:border-indigo-800'
+      };
+    case 'DRIVER':
+      return {
+        label: 'School Bus Driver',
+        bgClass: 'bg-amber-100 dark:bg-amber-950/70',
+        textClass: 'text-amber-800 dark:text-amber-300',
+        borderClass: 'border-amber-300 dark:border-amber-800'
       };
   }
 }

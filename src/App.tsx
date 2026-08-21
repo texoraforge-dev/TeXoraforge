@@ -37,6 +37,8 @@ import { StaffAttendance } from './components/StaffAttendance';
 import { PayrollManagement } from './components/PayrollManagement';
 import { StudentAccountsAndChat } from './components/StudentAccountsAndChat';
 import { DigitalTextbookLibrary } from './components/DigitalTextbookLibrary';
+import { DriverTrackingConsole } from './components/DriverTrackingConsole';
+import { SchoolBusLiveTracker } from './components/SchoolBusLiveTracker';
 import { LessonNoteModal } from './components/modals/LessonNoteModal';
 import { UploadPdfModal } from './components/modals/UploadPdfModal';
 import { WeeklyDiaryModal } from './components/modals/WeeklyDiaryModal';
@@ -58,6 +60,7 @@ export default function App() {
     classChatMessages, 
     chatModerationLogs, 
     cbtExams, 
+    actions,
     refreshState 
   } = useAppStore();
 
@@ -113,6 +116,8 @@ export default function App() {
       
       {!currentUser ? (
         <AuthView onSuccess={() => setCurrentView('dashboard')} />
+      ) : currentUser.role === 'DRIVER' ? (
+        <DriverTrackingConsole onLogout={() => actions.setCurrentUserId(null)} />
       ) : (
         <>
           <Navbar
@@ -167,6 +172,7 @@ export default function App() {
                     onReviewSubmission={handleSelectSubmissionFromSearch}
                   />
                 )}
+                {currentView === 'bus_tracking' && <SchoolBusLiveTracker />}
                 {currentView === 'staff_attendance' && (
                   <StaffAttendance
                     currentUser={currentUser}
@@ -305,6 +311,7 @@ export default function App() {
                 {currentView === 'cbt_engine' && <CBTEngine />}
                 {currentView === 'early_warning' && <StudentEarlyWarningSystem />}
 
+                {currentView === 'bus_tracking' && <SchoolBusLiveTracker />}
                 {currentView === 'timetable' && (
                   <TimetableManagement onNavigate={(v) => setCurrentView(v)} />
                 )}
@@ -321,6 +328,8 @@ export default function App() {
               <>
                 {currentView === 'textbook_library' ? (
                   <DigitalTextbookLibrary initialRole="PARENT" onNavigate={(v) => setCurrentView(v)} />
+                ) : currentView === 'bus_tracking' ? (
+                  <SchoolBusLiveTracker />
                 ) : currentView === 'parent_fees' ? (
                   <ParentPortal initialTab="FEES_AND_PAYMENTS" onNavigate={(v) => setCurrentView(v)} />
                 ) : currentView === 'public_chat' ? (

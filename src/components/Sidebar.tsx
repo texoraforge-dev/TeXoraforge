@@ -30,7 +30,8 @@ import {
   DollarSign,
   Calculator,
   CreditCard,
-  Library
+  Library,
+  Bus
 } from 'lucide-react';
 import { UserRole } from '../types';
 import { useAppStore } from '../storage';
@@ -72,6 +73,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const adminNavItems: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'bus_tracking', label: 'Live School Bus Fleet', icon: Bus },
     { id: 'textbook_library', label: 'Textbook Library', icon: Library },
     { id: 'parent_fees', label: 'Student Fees & Payments', icon: CreditCard },
     { id: 'staff_attendance', label: 'Staff Attendance & Geofence', icon: MapPin },
@@ -104,6 +106,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const teacherNavItems: NavItem[] = [
     { id: 'dashboard', label: 'Teacher Dashboard', icon: LayoutDashboard },
+    { id: 'bus_tracking', label: 'Live School Bus Fleet', icon: Bus },
     { id: 'textbook_library', label: 'Textbook Library', icon: Library },
     { id: 'staff_attendance', label: 'Staff Sign-In & Sign-Out', icon: MapPin },
     { id: 'student_accounts', label: 'Student Accounts & Class Chat', icon: Key },
@@ -129,6 +132,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const parentNavItems: NavItem[] = [
     { id: 'parent', label: 'Parent Portal Home', icon: ShieldCheck },
+    { id: 'bus_tracking', label: 'Live School Bus Tracking', icon: Bus },
     { id: 'parent_fees', label: 'Child Fees & Payments', icon: CreditCard },
     { id: 'textbook_library', label: 'Textbook Library', icon: Library },
     { id: 'parent_ai_assistant', label: 'AI Parent & Tutor Assistant', icon: Sparkles },

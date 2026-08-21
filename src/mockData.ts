@@ -139,27 +139,147 @@ export const INITIAL_SCHOOLS: School[] = [
 
 export const INITIAL_CLASSES: SchoolClass[] = [
   // Early Childhood / Pre-Nursery & Nursery Tier (Before Primary)
-  { id: 'cls_prenursery', schoolId: 'school_apex', name: 'PRE-NURSERY', category: 'Pre-Nursery & Nursery', arm: 'Buttercups', capacity: 20 },
-  { id: 'cls_nursery1', schoolId: 'school_apex', name: 'NURSERY 1', category: 'Pre-Nursery & Nursery', arm: 'Sunflowers', capacity: 25 },
-  { id: 'cls_nursery2', schoolId: 'school_apex', name: 'NURSERY 2', category: 'Pre-Nursery & Nursery', arm: 'Daffodils', capacity: 25 },
-  { id: 'cls_nursery3', schoolId: 'school_apex', name: 'NURSERY 3', category: 'Pre-Nursery & Nursery', arm: 'Bluebells', capacity: 25 },
+  {
+    id: 'cls_prenursery',
+    schoolId: 'school_apex',
+    name: 'PRE-NURSERY',
+    category: 'Pre-Nursery & Nursery',
+    arm: 'Buttercups',
+    capacity: 20,
+    subjects: ['Numeracy', 'Literacy & Phonics', 'Rhymes & Songs', 'Basic Science & Nature', 'Social Norms', 'Creative & Fine Arts', 'Physical & Health Ed', 'Handwriting']
+  },
+  {
+    id: 'cls_nursery1',
+    schoolId: 'school_apex',
+    name: 'NURSERY 1',
+    category: 'Pre-Nursery & Nursery',
+    arm: 'Sunflowers',
+    capacity: 25,
+    subjects: ['Numeracy', 'Literacy & Phonics', 'Rhymes & Songs', 'Basic Science & Nature', 'Social Norms', 'Creative & Fine Arts', 'Physical & Health Ed', 'Handwriting']
+  },
+  {
+    id: 'cls_nursery2',
+    schoolId: 'school_apex',
+    name: 'NURSERY 2',
+    category: 'Pre-Nursery & Nursery',
+    arm: 'Daffodils',
+    capacity: 25,
+    subjects: ['Numeracy', 'Literacy & Phonics', 'Rhymes & Songs', 'Basic Science & Nature', 'Social Norms', 'Creative & Fine Arts', 'Physical & Health Ed', 'Handwriting']
+  },
+  {
+    id: 'cls_nursery3',
+    schoolId: 'school_apex',
+    name: 'NURSERY 3',
+    category: 'Pre-Nursery & Nursery',
+    arm: 'Bluebells',
+    capacity: 25,
+    subjects: ['Numeracy', 'Literacy & Phonics', 'Rhymes & Songs', 'Basic Science & Nature', 'Social Norms', 'Creative & Fine Arts', 'Physical & Health Ed', 'Handwriting']
+  },
 
   // Primary Tier
-  { id: 'cls_pri1', schoolId: 'school_apex', name: 'Primary 1', category: 'Primary', arm: 'Gold', capacity: 30 },
-  { id: 'cls_pri2', schoolId: 'school_apex', name: 'Primary 2', category: 'Primary', arm: 'Gold', capacity: 30 },
-  { id: 'cls_pri3', schoolId: 'school_apex', name: 'Primary 3', category: 'Primary', arm: 'Silver', capacity: 28 },
-  { id: 'cls_pri4', schoolId: 'school_apex', name: 'Primary 4', category: 'Primary', arm: 'Gold', capacity: 32 },
-  { id: 'cls_pri5', schoolId: 'school_apex', name: 'Primary 5', category: 'Primary', arm: 'Diamond', capacity: 30 },
+  {
+    id: 'cls_pri1',
+    schoolId: 'school_apex',
+    name: 'Primary 1',
+    category: 'Primary',
+    arm: 'Gold',
+    capacity: 30,
+    subjects: ['Mathematics', 'English Language', 'Basic Science & Tech', 'Social Studies', 'Civic Education', 'Agricultural Science', 'Creative Arts', 'Physical & Health Ed']
+  },
+  {
+    id: 'cls_pri2',
+    schoolId: 'school_apex',
+    name: 'Primary 2',
+    category: 'Primary',
+    arm: 'Gold',
+    capacity: 30,
+    subjects: ['Mathematics', 'English Language', 'Basic Science & Tech', 'Social Studies', 'Civic Education', 'Agricultural Science', 'Creative Arts', 'Physical & Health Ed']
+  },
+  {
+    id: 'cls_pri3',
+    schoolId: 'school_apex',
+    name: 'Primary 3',
+    category: 'Primary',
+    arm: 'Silver',
+    capacity: 28,
+    subjects: ['Mathematics', 'English Language', 'Basic Science & Tech', 'Social Studies', 'Civic Education', 'Agricultural Science', 'Creative Arts', 'Physical & Health Ed']
+  },
+  {
+    id: 'cls_pri4',
+    schoolId: 'school_apex',
+    name: 'Primary 4',
+    category: 'Primary',
+    arm: 'Gold',
+    capacity: 32,
+    subjects: ['Mathematics', 'English Language', 'Basic Science & Tech', 'Social Studies', 'Civic Education', 'Agricultural Science', 'Creative Arts', 'Physical & Health Ed']
+  },
+  {
+    id: 'cls_pri5',
+    schoolId: 'school_apex',
+    name: 'Primary 5',
+    category: 'Primary',
+    arm: 'Diamond',
+    capacity: 30,
+    subjects: ['Mathematics', 'English Language', 'Basic Science & Tech', 'Social Studies', 'Civic Education', 'Agricultural Science', 'Creative Arts', 'Physical & Health Ed']
+  },
 
   // Junior Secondary Tier
-  { id: 'cls_jss1', schoolId: 'school_apex', name: 'JSS 1', category: 'Junior Secondary', arm: 'A', capacity: 35 },
-  { id: 'cls_jss2', schoolId: 'school_apex', name: 'JSS 2', category: 'Junior Secondary', arm: 'A', capacity: 35 },
-  { id: 'cls_jss3', schoolId: 'school_apex', name: 'JSS 3', category: 'Junior Secondary', arm: 'B', capacity: 35 },
+  {
+    id: 'cls_jss1',
+    schoolId: 'school_apex',
+    name: 'JSS 1',
+    category: 'Junior Secondary',
+    arm: 'A',
+    capacity: 35,
+    subjects: ['Mathematics', 'English Language', 'Basic Science', 'Basic Technology', 'Business Studies', 'Computer Science', 'Social Studies', 'Agricultural Science', 'Civic Education']
+  },
+  {
+    id: 'cls_jss2',
+    schoolId: 'school_apex',
+    name: 'JSS 2',
+    category: 'Junior Secondary',
+    arm: 'A',
+    capacity: 35,
+    subjects: ['Mathematics', 'English Language', 'Basic Science', 'Basic Technology', 'Business Studies', 'Computer Science', 'Social Studies', 'Agricultural Science', 'Civic Education']
+  },
+  {
+    id: 'cls_jss3',
+    schoolId: 'school_apex',
+    name: 'JSS 3',
+    category: 'Junior Secondary',
+    arm: 'B',
+    capacity: 35,
+    subjects: ['Mathematics', 'English Language', 'Basic Science', 'Basic Technology', 'Business Studies', 'Computer Science', 'Social Studies', 'Agricultural Science', 'Civic Education']
+  },
 
   // Senior Secondary Tier
-  { id: 'cls_ss1', schoolId: 'school_apex', name: 'SS 1', category: 'Senior Secondary', arm: 'Science', capacity: 30 },
-  { id: 'cls_ss2', schoolId: 'school_apex', name: 'SS 2', category: 'Senior Secondary', arm: 'Arts & Commercial', capacity: 30 },
-  { id: 'cls_ss3', schoolId: 'school_apex', name: 'SS 3', category: 'Senior Secondary', arm: 'Science', capacity: 28 },
+  {
+    id: 'cls_ss1',
+    schoolId: 'school_apex',
+    name: 'SS 1',
+    category: 'Senior Secondary',
+    arm: 'Science',
+    capacity: 30,
+    subjects: ['Mathematics', 'English Language', 'Physics', 'Chemistry', 'Biology', 'Further Mathematics', 'Computer Studies', 'Civic Education']
+  },
+  {
+    id: 'cls_ss2',
+    schoolId: 'school_apex',
+    name: 'SS 2',
+    category: 'Senior Secondary',
+    arm: 'Arts & Commercial',
+    capacity: 30,
+    subjects: ['Mathematics', 'English Language', 'Economics', 'Financial Accounting', 'Literature in English', 'Government', 'Civic Education', 'Commerce']
+  },
+  {
+    id: 'cls_ss3',
+    schoolId: 'school_apex',
+    name: 'SS 3',
+    category: 'Senior Secondary',
+    arm: 'Science',
+    capacity: 28,
+    subjects: ['Mathematics', 'English Language', 'Physics', 'Chemistry', 'Biology', 'Further Mathematics', 'Computer Studies', 'Civic Education']
+  },
 ];
 
 export const SUBJECT_OPTIONS_BY_TIER: Record<string, string[]> = {
@@ -300,6 +420,34 @@ export const INITIAL_USERS: User[] = [
     assignedSubjects: ['Mathematics', 'English Language', 'Basic Science & Tech'],
     active: true,
     createdAt: '2025-09-06T08:00:00.000Z',
+  },
+  // Driver 1: Mr. Samuel Igwe (Bus 01 - Island / Lekki Express)
+  {
+    id: 'usr_drv1',
+    schoolId: 'school_apex',
+    name: 'Mr. Samuel Igwe',
+    email: 'samuel.igwe@transport.apexhorizon.edu',
+    role: 'DRIVER',
+    avatarUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80',
+    phone: '+234 803 111 2233',
+    assignedClassIds: [],
+    assignedSubjects: [],
+    active: true,
+    createdAt: '2025-09-01T08:00:00.000Z',
+  },
+  // Driver 2: Mr. Babatunde Alabi (Bus 02 - Mainland Express)
+  {
+    id: 'usr_drv2',
+    schoolId: 'school_apex',
+    name: 'Mr. Babatunde Alabi',
+    email: 'babatunde.alabi@transport.apexhorizon.edu',
+    role: 'DRIVER',
+    avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80',
+    phone: '+234 802 888 9900',
+    assignedClassIds: [],
+    assignedSubjects: [],
+    active: true,
+    createdAt: '2025-09-01T08:00:00.000Z',
   }
 ];
 
@@ -363,20 +511,190 @@ export const INITIAL_AUDIT_LOGS: AuditLogEntry[] = [
 
 export const INITIAL_STUDENTS: Student[] = [
   // SS 3 Students
-  { id: 'std_ss3_1', schoolId: 'school_apex', classId: 'cls_ss3', admissionNo: 'APX/2022/001', fullName: 'Adebayo Tobi', gender: 'Male', guardianName: 'Chief Adebayo', guardianPhone: '+2348030001111', guardianEmail: 'parent@apexhorizon.edu', address: '12 Admiralty Way, Lekki Phase 1', dob: '2008-04-12', dateAdmitted: '2022-09-10', photoUrl: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=200&q=80', accessCode: 'PAR-2022-001', active: true },
-  { id: 'std_ss3_2', schoolId: 'school_apex', classId: 'cls_ss3', admissionNo: 'APX/2022/002', fullName: 'Chidinma Eze', gender: 'Female', guardianName: 'Mrs. Eze', guardianPhone: '+2348030001112', guardianEmail: 'mrs.eze@gmail.com', address: '45 Glover Road, Ikoyi', dob: '2008-08-23', dateAdmitted: '2022-09-10', photoUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=200&q=80', accessCode: 'PAR-2022-002', active: true },
-  { id: 'std_ss3_3', schoolId: 'school_apex', classId: 'cls_ss3', admissionNo: 'APX/2022/003', fullName: 'David Oladipo', gender: 'Male', guardianName: 'Engr. Oladipo', guardianPhone: '+2348030001113', guardianEmail: 'engr.oladipo@yahoo.com', address: '8 Banana Island Crescent', dob: '2008-01-15', dateAdmitted: '2022-09-10', photoUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80', accessCode: 'PAR-2022-003', active: true },
-  { id: 'std_ss3_4', schoolId: 'school_apex', classId: 'cls_ss3', admissionNo: 'APX/2022/004', fullName: 'Fatima Abubakar', gender: 'Female', guardianName: 'Alhaji Abubakar', guardianPhone: '+2348030001114', guardianEmail: 'abubakar.fam@gmail.com', address: '19 Parkview Estate', dob: '2008-11-05', dateAdmitted: '2022-09-10', photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80', accessCode: 'PAR-2022-004', active: true },
-  { id: 'std_ss3_5', schoolId: 'school_apex', classId: 'cls_ss3', admissionNo: 'APX/2022/005', fullName: 'Gabriel Okafor', gender: 'Male', guardianName: 'Dr. Okafor', guardianPhone: '+2348030001115', guardianEmail: 'dr.okafor@clinic.ng', address: '22 Bourdillon Road, Ikoyi', dob: '2008-06-30', dateAdmitted: '2022-09-10', photoUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&q=80', accessCode: 'PAR-2022-005', active: true },
+  {
+    id: 'std_ss3_1',
+    schoolId: 'school_apex',
+    classId: 'cls_ss3',
+    admissionNo: 'APX/2022/001',
+    fullName: 'Adebayo Tobi',
+    gender: 'Male',
+    guardianName: 'Chief Adebayo',
+    guardianPhone: '+2348030001111',
+    guardianEmail: 'parent@apexhorizon.edu',
+    address: '12 Admiralty Way, Lekki Phase 1',
+    dob: '2008-04-12',
+    dateAdmitted: '2022-09-10',
+    photoUrl: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=200&q=80',
+    accessCode: 'PAR-2022-001',
+    enrolledSubjects: ['Mathematics', 'English Language', 'Physics', 'Chemistry', 'Biology', 'Further Mathematics', 'Computer Studies', 'Civic Education'],
+    active: true
+  },
+  {
+    id: 'std_ss3_2',
+    schoolId: 'school_apex',
+    classId: 'cls_ss3',
+    admissionNo: 'APX/2022/002',
+    fullName: 'Chidinma Eze',
+    gender: 'Female',
+    guardianName: 'Mrs. Eze',
+    guardianPhone: '+2348030001112',
+    guardianEmail: 'mrs.eze@gmail.com',
+    address: '45 Glover Road, Ikoyi',
+    dob: '2008-08-23',
+    dateAdmitted: '2022-09-10',
+    photoUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=200&q=80',
+    accessCode: 'PAR-2022-002',
+    enrolledSubjects: ['Mathematics', 'English Language', 'Physics', 'Chemistry', 'Biology', 'Further Mathematics', 'Computer Studies', 'Civic Education'],
+    active: true
+  },
+  {
+    id: 'std_ss3_3',
+    schoolId: 'school_apex',
+    classId: 'cls_ss3',
+    admissionNo: 'APX/2022/003',
+    fullName: 'David Oladipo',
+    gender: 'Male',
+    guardianName: 'Engr. Oladipo',
+    guardianPhone: '+2348030001113',
+    guardianEmail: 'engr.oladipo@yahoo.com',
+    address: '8 Banana Island Crescent',
+    dob: '2008-01-15',
+    dateAdmitted: '2022-09-10',
+    photoUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80',
+    accessCode: 'PAR-2022-003',
+    enrolledSubjects: ['Mathematics', 'English Language', 'Physics', 'Chemistry', 'Biology', 'Further Mathematics', 'Computer Studies', 'Civic Education'],
+    active: true
+  },
+  {
+    id: 'std_ss3_4',
+    schoolId: 'school_apex',
+    classId: 'cls_ss3',
+    admissionNo: 'APX/2022/004',
+    fullName: 'Fatima Abubakar',
+    gender: 'Female',
+    guardianName: 'Alhaji Abubakar',
+    guardianPhone: '+2348030001114',
+    guardianEmail: 'abubakar.fam@gmail.com',
+    address: '19 Parkview Estate',
+    dob: '2008-11-05',
+    dateAdmitted: '2022-09-10',
+    photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+    accessCode: 'PAR-2022-004',
+    enrolledSubjects: ['Mathematics', 'English Language', 'Physics', 'Chemistry', 'Biology', 'Further Mathematics', 'Computer Studies', 'Civic Education'],
+    active: true
+  },
+  {
+    id: 'std_ss3_5',
+    schoolId: 'school_apex',
+    classId: 'cls_ss3',
+    admissionNo: 'APX/2022/005',
+    fullName: 'Gabriel Okafor',
+    gender: 'Male',
+    guardianName: 'Dr. Okafor',
+    guardianPhone: '+2348030001115',
+    guardianEmail: 'dr.okafor@clinic.ng',
+    address: '22 Bourdillon Road, Ikoyi',
+    dob: '2008-06-30',
+    dateAdmitted: '2022-09-10',
+    photoUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&q=80',
+    accessCode: 'PAR-2022-005',
+    enrolledSubjects: ['Mathematics', 'English Language', 'Physics', 'Chemistry', 'Biology', 'Further Mathematics', 'Computer Studies', 'Civic Education'],
+    active: true
+  },
 
   // SS 2 Students
-  { id: 'std_ss2_1', schoolId: 'school_apex', classId: 'cls_ss2', admissionNo: 'APX/2023/101', fullName: 'Grace Ibrahim', gender: 'Female', guardianName: 'Chief Adebayo', guardianPhone: '+2348030001111', guardianEmail: 'parent@apexhorizon.edu', address: '12 Admiralty Way, Lekki Phase 1', dob: '2009-02-14', dateAdmitted: '2023-09-12', photoUrl: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=200&q=80', accessCode: 'PAR-2023-101', active: true },
-  { id: 'std_ss2_2', schoolId: 'school_apex', classId: 'cls_ss2', admissionNo: 'APX/2023/102', fullName: 'Hannah Kalu', gender: 'Female', guardianName: 'Prof. Kalu', guardianPhone: '+2348030002222', guardianEmail: 'prof.kalu@unilag.edu', address: '15 Commercial Ave, Yaba', dob: '2009-07-19', dateAdmitted: '2023-09-12', photoUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80', accessCode: 'PAR-2023-102', active: true },
-  { id: 'std_ss2_3', schoolId: 'school_apex', classId: 'cls_ss2', admissionNo: 'APX/2023/103', fullName: 'Israel Danjuma', gender: 'Male', guardianName: 'Capt. Danjuma', guardianPhone: '+2348030002223', guardianEmail: 'capt.danjuma@navy.gov', address: '7 Isaac John St, Ikeja', dob: '2009-10-02', dateAdmitted: '2023-09-12', photoUrl: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=200&q=80', accessCode: 'PAR-2023-103', active: true },
+  {
+    id: 'std_ss2_1',
+    schoolId: 'school_apex',
+    classId: 'cls_ss2',
+    admissionNo: 'APX/2023/101',
+    fullName: 'Grace Ibrahim',
+    gender: 'Female',
+    guardianName: 'Chief Adebayo',
+    guardianPhone: '+2348030001111',
+    guardianEmail: 'parent@apexhorizon.edu',
+    address: '12 Admiralty Way, Lekki Phase 1',
+    dob: '2009-02-14',
+    dateAdmitted: '2023-09-12',
+    photoUrl: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=200&q=80',
+    accessCode: 'PAR-2023-101',
+    enrolledSubjects: ['Mathematics', 'English Language', 'Economics', 'Financial Accounting', 'Literature in English', 'Government', 'Civic Education', 'Commerce'],
+    active: true
+  },
+  {
+    id: 'std_ss2_2',
+    schoolId: 'school_apex',
+    classId: 'cls_ss2',
+    admissionNo: 'APX/2023/102',
+    fullName: 'Hannah Kalu',
+    gender: 'Female',
+    guardianName: 'Prof. Kalu',
+    guardianPhone: '+2348030002222',
+    guardianEmail: 'prof.kalu@unilag.edu',
+    address: '15 Commercial Ave, Yaba',
+    dob: '2009-07-19',
+    dateAdmitted: '2023-09-12',
+    photoUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80',
+    accessCode: 'PAR-2023-102',
+    enrolledSubjects: ['Mathematics', 'English Language', 'Economics', 'Financial Accounting', 'Literature in English', 'Government', 'Civic Education', 'Commerce'],
+    active: true
+  },
+  {
+    id: 'std_ss2_3',
+    schoolId: 'school_apex',
+    classId: 'cls_ss2',
+    admissionNo: 'APX/2023/103',
+    fullName: 'Israel Danjuma',
+    gender: 'Male',
+    guardianName: 'Capt. Danjuma',
+    guardianPhone: '+2348030002223',
+    guardianEmail: 'capt.danjuma@navy.gov',
+    address: '7 Isaac John St, Ikeja',
+    dob: '2009-10-02',
+    dateAdmitted: '2023-09-12',
+    photoUrl: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=200&q=80',
+    accessCode: 'PAR-2023-103',
+    enrolledSubjects: ['Mathematics', 'English Language', 'Economics', 'Financial Accounting', 'Literature in English', 'Government', 'Civic Education', 'Commerce'],
+    active: true
+  },
 
   // Primary 3 Students
-  { id: 'std_pri3_1', schoolId: 'school_apex', classId: 'cls_pri3', admissionNo: 'APX/2024/301', fullName: 'Joy Nnamdi', gender: 'Female', guardianName: 'Mrs. Nnamdi', guardianPhone: '+2348030003331', guardianEmail: 'nnamdi.joy@gmail.com', address: '10 Chevron Drive, Lekki', dob: '2016-03-20', dateAdmitted: '2024-09-08', photoUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=200&q=80', accessCode: 'PAR-2024-301', active: true },
-  { id: 'std_pri3_2', schoolId: 'school_apex', classId: 'cls_pri3', admissionNo: 'APX/2024/302', fullName: 'Kenneth Sowore', gender: 'Male', guardianName: 'Mr. Sowore', guardianPhone: '+2348030003332', guardianEmail: 'sowore.k@gmail.com', address: '3 Allen Avenue, Ikeja', dob: '2016-09-11', dateAdmitted: '2024-09-08', photoUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80', accessCode: 'PAR-2024-302', active: true },
+  {
+    id: 'std_pri3_1',
+    schoolId: 'school_apex',
+    classId: 'cls_pri3',
+    admissionNo: 'APX/2024/301',
+    fullName: 'Joy Nnamdi',
+    gender: 'Female',
+    guardianName: 'Mrs. Nnamdi',
+    guardianPhone: '+2348030003331',
+    guardianEmail: 'nnamdi.joy@gmail.com',
+    address: '10 Chevron Drive, Lekki',
+    dob: '2016-03-20',
+    dateAdmitted: '2024-09-08',
+    photoUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=200&q=80',
+    accessCode: 'PAR-2024-301',
+    enrolledSubjects: ['Mathematics', 'English Language', 'Basic Science & Tech', 'Social Studies', 'Civic Education', 'Agricultural Science', 'Creative Arts', 'Physical & Health Ed'],
+    active: true
+  },
+  {
+    id: 'std_pri3_2',
+    schoolId: 'school_apex',
+    classId: 'cls_pri3',
+    admissionNo: 'APX/2024/302',
+    fullName: 'Kenneth Sowore',
+    gender: 'Male',
+    guardianName: 'Mr. Sowore',
+    guardianPhone: '+2348030003332',
+    guardianEmail: 'sowore.k@gmail.com',
+    address: '3 Allen Avenue, Ikeja',
+    dob: '2016-09-11',
+    dateAdmitted: '2024-09-08',
+    photoUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
+    accessCode: 'PAR-2024-302',
+    enrolledSubjects: ['Mathematics', 'English Language', 'Basic Science & Tech', 'Social Studies', 'Civic Education', 'Agricultural Science', 'Creative Arts', 'Physical & Health Ed'],
+    active: true
+  },
 ];
 
 export const INITIAL_SUBMISSIONS: Submission[] = [
@@ -1592,7 +1910,94 @@ export const INITIAL_EVENTS: SchoolEvent[] = [
 ];
 
 export const INITIAL_TRANSPORT_ROUTES: TransportRoute[] = [
-  { id: 'tr_001', schoolId: 'school_apex', routeName: 'Victoria Island - Lekki Phase 1 Express', vehicleNo: 'LAG-849-XY', driverName: 'Mr. Samuel Igwe', driverPhone: '+234 803 111 2233', pickupLocations: ['Chevron Tollgate', 'Agungi Bus Stop', 'Lekki Phase 1 Gate'], assignedStudentIds: ['std_001', 'std_002'], capacity: 25 }
+  {
+    id: 'tr_001',
+    schoolId: 'school_apex',
+    routeName: 'Victoria Island - Lekki Express Shuttle',
+    vehicleNo: 'LAG-849-XY',
+    vehicleModel: 'Toyota Coaster (32-Seater Executive)',
+    driverName: 'Mr. Samuel Igwe',
+    driverPhone: '+234 803 111 2233',
+    driverUserId: 'usr_drv1',
+    driverAccessCode: 'DRV-8492-BUS',
+    driverPin: '1234',
+    driverPhotoUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80',
+    capacity: 32,
+    assignedStudentIds: ['std_001', 'std_002'],
+    pickupLocations: [
+      'Apex Horizon Campus (Main Gate)',
+      'Admiralty Way, Lekki Phase 1',
+      'Agungi Bus Stop & Chevron Drive',
+      'Ikota Shopping Complex Gate',
+      'Ajah Jubilee Bridge Terminal'
+    ],
+    stops: [
+      { id: 'stp_1', name: 'Apex Horizon Campus', lat: 6.4281, lng: 3.4219, estimatedTime: '15:30', studentCount: 0 },
+      { id: 'stp_2', name: 'Admiralty Way, Lekki Phase 1', lat: 6.4385, lng: 3.4682, estimatedTime: '15:45', studentCount: 1 },
+      { id: 'stp_3', name: 'Agungi Bus Stop', lat: 6.4421, lng: 3.5187, estimatedTime: '16:00', studentCount: 1 },
+      { id: 'stp_4', name: 'Ikota Shopping Complex Gate', lat: 6.4475, lng: 3.5512, estimatedTime: '16:15', studentCount: 0 },
+      { id: 'stp_5', name: 'Ajah Jubilee Bridge Terminal', lat: 6.4680, lng: 3.5685, estimatedTime: '16:30', studentCount: 0 }
+    ],
+    isTrackingActive: true,
+    tripStatus: 'AFTERNOON_DROPOFF',
+    currentLocation: {
+      lat: 6.4392,
+      lng: 3.4715,
+      speedKmH: 38,
+      heading: 95,
+      lastUpdated: new Date().toISOString(),
+      currentStopIndex: 1,
+      addressDescription: 'En route to Admiralty Way Stop, Lekki Phase 1 (Near Ebeano Supermarket)',
+      batteryLevel: 88
+    },
+    locationHistory: [
+      { lat: 6.4281, lng: 3.4219, timestamp: new Date(Date.now() - 900000).toISOString(), speedKmH: 25 },
+      { lat: 6.4325, lng: 3.4450, timestamp: new Date(Date.now() - 600000).toISOString(), speedKmH: 45 },
+      { lat: 6.4392, lng: 3.4715, timestamp: new Date().toISOString(), speedKmH: 38 }
+    ],
+    activeAlert: null
+  },
+  {
+    id: 'tr_002',
+    schoolId: 'school_apex',
+    routeName: 'Mainland - Ikeja & Maryland Shuttle',
+    vehicleNo: 'KJA-204-BD',
+    vehicleModel: 'Mercedes Sprinter Bus (18-Seater)',
+    driverName: 'Mr. Babatunde Alabi',
+    driverPhone: '+234 802 888 9900',
+    driverUserId: 'usr_drv2',
+    driverAccessCode: 'DRV-2026-5541',
+    driverPin: '1234',
+    driverPhotoUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80',
+    capacity: 18,
+    assignedStudentIds: ['std_003'],
+    pickupLocations: [
+      'Apex Horizon Campus (Main Gate)',
+      'Maryland Mall Underpass',
+      'GRA Ikeja Isaac John Junction',
+      'Alausa Secretariat Bus Terminal'
+    ],
+    stops: [
+      { id: 'stp_m1', name: 'Apex Horizon Campus', lat: 6.4281, lng: 3.4219, estimatedTime: '15:30', studentCount: 0 },
+      { id: 'stp_m2', name: 'Maryland Mall Underpass', lat: 6.5722, lng: 3.3678, estimatedTime: '16:05', studentCount: 1 },
+      { id: 'stp_m3', name: 'Isaac John St, GRA Ikeja', lat: 6.5925, lng: 3.3562, estimatedTime: '16:20', studentCount: 0 },
+      { id: 'stp_m4', name: 'Alausa Secretariat Terminal', lat: 6.6180, lng: 3.3590, estimatedTime: '16:40', studentCount: 0 }
+    ],
+    isTrackingActive: false,
+    tripStatus: 'IDLE',
+    currentLocation: {
+      lat: 6.4281,
+      lng: 3.4219,
+      speedKmH: 0,
+      heading: 0,
+      lastUpdated: new Date().toISOString(),
+      currentStopIndex: 0,
+      addressDescription: 'Parked at School Campus Bus Bay',
+      batteryLevel: 95
+    },
+    locationHistory: [],
+    activeAlert: null
+  }
 ];
 
 export const INITIAL_ATTENDANCE_SETTINGS: AttendanceSettings = {

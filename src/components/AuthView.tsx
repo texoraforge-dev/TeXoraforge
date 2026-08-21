@@ -20,7 +20,9 @@ import {
   Image as ImageIcon,
   X,
   GraduationCap,
-  KeyRound
+  KeyRound,
+  Bus,
+  Navigation
 } from 'lucide-react';
 import { useAppStore } from '../storage';
 import { UserRole } from '../types';
@@ -34,7 +36,7 @@ interface AuthViewProps {
 
 export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
   const { users, actions, isSupabaseActive } = useAppStore();
-  const [tab, setTab] = useState<'STUDENT_CODE' | 'LOGIN' | 'PARENT_CODE' | 'REGISTER_SCHOOL'>('STUDENT_CODE');
+  const [tab, setTab] = useState<'STUDENT_CODE' | 'LOGIN' | 'PARENT_CODE' | 'DRIVER_CODE' | 'REGISTER_SCHOOL'>('STUDENT_CODE');
   
   // Login form state
   const [loginEmail, setLoginEmail] = useState('admin@apexhorizon.edu');
@@ -45,6 +47,10 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
   // Student portal login state
   const [studentCodeInput, setStudentCodeInput] = useState('TXR-P5-00482');
   const [studentPinInput, setStudentPinInput] = useState('1234');
+
+  // Driver portal login state
+  const [driverAccessCodeInput, setDriverAccessCodeInput] = useState('DRV-8492-BUS');
+  const [driverPinInput, setDriverPinInput] = useState('1234');
 
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -171,6 +177,24 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
     }
   };
 
+  const handleDriverCodeLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage('');
+    setSuccessMessage('');
+
+    if (!driverAccessCodeInput.trim()) {
+      setErrorMessage('Please enter your unique Driver Access Code (e.g. DRV-8492-BUS).');
+      return;
+    }
+
+    const res = actions.loginAsDriverWithCode(driverAccessCodeInput.trim(), driverPinInput.trim());
+    if (res) {
+      onSuccess();
+    } else {
+      setErrorMessage('Invalid Driver Access Code or PIN. Please check your credential card from the School Proprietor.');
+    }
+  };
+
   const handleQuickDemo = (userId: string) => {
     const user = users.find(u => u.id === userId);
     if (user) {
@@ -202,7 +226,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
         </div>
 
         {/* Tab Switcher */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 bg-slate-900/80 p-1 border-b border-slate-700/80 text-[11px] font-bold">
+        <div className="grid grid-cols-2 sm:grid-cols-5 bg-slate-900/80 p-1 border-b border-slate-700/80 text-[11px] font-bold gap-1">
           <button
             type="button"
             onClick={() => { setTab('STUDENT_CODE'); setErrorMessage(''); setSuccessMessage(''); }}
@@ -212,7 +236,18 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <GraduationCap className="h-3.5 w-3.5 text-indigo-400" /> Student Portal
+            <GraduationCap className="h-3.5 w-3.5 text-indigo-400" /> Student
+          </button>
+          <button
+            type="button"
+            onClick={() => { setTab('DRIVER_CODE'); setErrorMessage(''); setSuccessMessage(''); }}
+            className={`py-2.5 text-center transition-all rounded-lg flex items-center justify-center gap-1.5 ${
+              tab === 'DRIVER_CODE'
+                ? 'bg-amber-950/90 text-amber-300 shadow-xs border border-amber-600/80'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Bus className="h-3.5 w-3.5 text-amber-400" /> Driver
           </button>
           <button
             type="button"
@@ -223,7 +258,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <Lock className="h-3.5 w-3.5" /> Staff Sign In
+            <Lock className="h-3.5 w-3.5" /> Staff
           </button>
           <button
             type="button"
@@ -234,7 +269,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" /> Parent Portal
+            <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" /> Parent
           </button>
           <button
             type="button"
@@ -245,7 +280,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <Building2 className="h-3.5 w-3.5" /> New School
+            <Building2 className="h-3.5 w-3.5" /> School
           </button>
         </div>
 
@@ -342,6 +377,80 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
                   >
                     <p className="text-xs font-bold text-indigo-300">Amina Bello</p>
                     <p className="text-[10px] text-slate-400">JSS 2 • Code: TXR-J2-00109</p>
+                  </button>
+                </div>
+              </div>
+            </form>
+          ) : tab === 'DRIVER_CODE' ? (
+            <form onSubmit={handleDriverCodeLogin} className="space-y-4">
+              <div className="p-4 rounded-xl bg-amber-950/40 border border-amber-800/60 text-amber-200 text-xs space-y-1">
+                <span className="font-bold block text-sm flex items-center gap-1.5 text-amber-300">
+                  <Bus className="h-4 w-4 text-amber-400" /> School Bus Driver Portal
+                </span>
+                <p>Enter the unique Driver Code issued by your School Proprietor (e.g. <span className="font-mono text-amber-300 font-bold">DRV-8492-BUS</span>) to access your vehicle tracking toggle and broadcast live transit GPS.</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                  Driver Access Code
+                </label>
+                <div className="relative">
+                  <Bus className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-400" />
+                  <input
+                    type="text"
+                    required
+                    value={driverAccessCodeInput}
+                    onChange={e => setDriverAccessCodeInput(e.target.value)}
+                    placeholder="e.g. DRV-8492-BUS"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-amber-500/50 text-amber-300 font-mono font-bold text-sm uppercase placeholder-slate-600 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                  Security PIN / Passcode
+                </label>
+                <div className="relative">
+                  <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-400" />
+                  <input
+                    type="password"
+                    required
+                    value={driverPinInput}
+                    onChange={e => setDriverPinInput(e.target.value)}
+                    placeholder="e.g. 1234"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white font-mono text-sm placeholder-slate-600 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-slate-950 text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-amber-600/30 transition-all cursor-pointer"
+              >
+                <span>Launch Driver Tracking Console</span> <ArrowRight className="h-4 w-4" />
+              </button>
+
+              <div className="pt-2">
+                <p className="text-[11px] font-bold text-slate-400 mb-1.5 flex items-center gap-1">
+                  <Sparkles className="h-3 w-3 text-amber-400" /> Quick Driver Presets:
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { setDriverAccessCodeInput('DRV-8492-BUS'); setDriverPinInput('1234'); }}
+                    className="p-2.5 rounded-lg bg-slate-900/80 border border-amber-900/60 hover:border-amber-500 text-left transition-all cursor-pointer"
+                  >
+                    <p className="text-xs font-bold text-amber-300">Mr. Samuel Igwe (Bus 01)</p>
+                    <p className="text-[10px] text-slate-400">Island Shuttle • Code: DRV-8492-BUS</p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setDriverAccessCodeInput('DRV-2026-5541'); setDriverPinInput('1234'); }}
+                    className="p-2.5 rounded-lg bg-slate-900/80 border border-amber-900/60 hover:border-amber-500 text-left transition-all cursor-pointer"
+                  >
+                    <p className="text-xs font-bold text-amber-300">Mr. Babatunde Alabi (Bus 02)</p>
+                    <p className="text-[10px] text-slate-400">Mainland Shuttle • Code: DRV-2026-5541</p>
                   </button>
                 </div>
               </div>
@@ -611,14 +720,14 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
             <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
               <Sparkles className="h-3.5 w-3.5 text-amber-400" /> Instant Demo Presets (1-Click)
             </p>
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-6 gap-2">
               <button
                 type="button"
                 onClick={() => handleQuickDemo('usr_proprietor1')}
                 className="p-2 rounded-xl bg-amber-950/40 border border-amber-800/60 hover:bg-amber-900/50 text-left transition-colors cursor-pointer"
               >
-                <p className="text-xs font-bold text-amber-200 truncate">Dr. Arthur Pendelton</p>
-                <p className="text-[10px] text-amber-400 font-semibold">Proprietor (Owner)</p>
+                <p className="text-xs font-bold text-amber-200 truncate">Dr. Pendelton</p>
+                <p className="text-[10px] text-amber-400 font-semibold">Proprietor</p>
               </button>
 
               <button
@@ -635,7 +744,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
                 onClick={() => handleQuickDemo('usr_admin1')}
                 className="p-2 rounded-xl bg-purple-950/40 border border-purple-800/60 hover:bg-purple-900/50 text-left transition-colors cursor-pointer"
               >
-                <p className="text-xs font-bold text-purple-200 truncate">Dr. Eleanor Vance</p>
+                <p className="text-xs font-bold text-purple-200 truncate">Dr. Vance</p>
                 <p className="text-[10px] text-purple-400 font-semibold">School Admin</p>
               </button>
 
@@ -644,8 +753,8 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
                 onClick={() => handleQuickDemo('usr_t1')}
                 className="p-2 rounded-xl bg-emerald-950/40 border border-emerald-800/60 hover:bg-emerald-900/50 text-left transition-colors cursor-pointer"
               >
-                <p className="text-xs font-bold text-emerald-200 truncate">Mr. David Okon</p>
-                <p className="text-[10px] text-emerald-400 font-semibold">Physics Teacher</p>
+                <p className="text-xs font-bold text-emerald-200 truncate">Mr. Okon</p>
+                <p className="text-[10px] text-emerald-400 font-semibold">Teacher</p>
               </button>
 
               <button
@@ -654,10 +763,22 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
                   const std = actions.loginAsStudentWithCode('TXR-P5-00482', '1234');
                   if (std) onSuccess();
                 }}
-                className="p-2 rounded-xl bg-indigo-950/40 border border-indigo-800/60 hover:bg-indigo-900/50 text-left transition-colors cursor-pointer col-span-2 sm:col-span-1"
+                className="p-2 rounded-xl bg-indigo-950/40 border border-indigo-800/60 hover:bg-indigo-900/50 text-left transition-colors cursor-pointer"
               >
-                <p className="text-xs font-bold text-indigo-200 truncate">Adebayo Tobi</p>
-                <p className="text-[10px] text-indigo-400 font-semibold">Student (Primary 5)</p>
+                <p className="text-xs font-bold text-indigo-200 truncate">Adebayo T.</p>
+                <p className="text-[10px] text-indigo-400 font-semibold">Student</p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const drv = actions.loginAsDriverWithCode('DRV-8492-BUS', '1234');
+                  if (drv) onSuccess();
+                }}
+                className="p-2 rounded-xl bg-amber-950/50 border border-amber-500/80 hover:bg-amber-900/60 text-left transition-colors cursor-pointer"
+              >
+                <p className="text-xs font-bold text-amber-200 truncate">Mr. Samuel I.</p>
+                <p className="text-[10px] text-amber-400 font-semibold">Bus Driver</p>
               </button>
             </div>
           </div>

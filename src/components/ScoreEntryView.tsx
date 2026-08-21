@@ -34,12 +34,17 @@ export function ScoreEntryView() {
   const teacherClasses = classes.filter(c => 
     isAdmin || (currentUser?.assignedClassIds || []).includes(c.id)
   );
-  const teacherSubjects = currentUser?.assignedSubjects?.length 
-    ? currentUser.assignedSubjects 
-    : ['Mathematics', 'English Language', 'Basic Science', 'Social Studies', 'ICT & Robotics', 'Chemistry', 'Physics'];
 
   const [selectedClassId, setSelectedClassId] = useState<string>(teacherClasses[0]?.id || 'cls_ss3');
-  const [selectedSubject, setSelectedSubject] = useState<string>(teacherSubjects[0] || 'Mathematics');
+
+  const selectedClass = classes.find(c => c.id === selectedClassId) || teacherClasses[0] || classes[0];
+  const classSubjects = selectedClass ? actions.getClassSubjects(selectedClass.id) : [];
+
+  const availableSubjectsForSelection = isTeacher && currentUser?.assignedSubjects?.length
+    ? currentUser.assignedSubjects
+    : (classSubjects.length > 0 ? classSubjects : (school?.subjects || ['Mathematics', 'English Language']));
+
+  const [selectedSubject, setSelectedSubject] = useState<string>(availableSubjectsForSelection[0] || 'Mathematics');
   const [adminComment, setAdminComment] = useState<string>('');
 
   // Current Working Score Sheet
@@ -325,7 +330,7 @@ export function ScoreEntryView() {
             onChange={(e) => setSelectedSubject(e.target.value)}
             className="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm font-semibold focus:ring-2 focus:ring-indigo-500 outline-none"
           >
-            {teacherSubjects.map(sub => (
+            {availableSubjectsForSelection.map(sub => (
               <option key={sub} value={sub}>{sub}</option>
             ))}
           </select>

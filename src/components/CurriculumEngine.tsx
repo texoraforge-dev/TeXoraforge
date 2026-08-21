@@ -206,13 +206,13 @@ export const CurriculumEngine: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Academic Subject</label>
+              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Academic Subject (Class Curriculum)</label>
               <select
                 value={selectedSubject}
                 onChange={e => setSelectedSubject(e.target.value)}
                 className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500"
               >
-                {(school?.subjects || []).map(subj => (
+                {((activeClass ? actions.getClassSubjects(activeClass.id) : school?.subjects) || []).map(subj => (
                   <option key={subj} value={subj}>{subj}</option>
                 ))}
               </select>

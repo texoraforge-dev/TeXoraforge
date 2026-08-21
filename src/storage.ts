@@ -35,6 +35,7 @@ import {
   FinancialRecord,
   SchoolEvent,
   TransportRoute,
+  TransportStop,
   AttendanceSettings,
   StaffAttendanceRecord,
   SalaryProfile,
@@ -82,7 +83,8 @@ import {
   INITIAL_STUDENT_CREDENTIALS,
   INITIAL_CLASS_CHAT_MESSAGES,
   INITIAL_CHAT_MODERATION_LOGS,
-  INITIAL_PAYMENT_TRANSACTIONS
+  INITIAL_PAYMENT_TRANSACTIONS,
+  SUBJECT_OPTIONS_BY_TIER
 } from './mockData';
 import { SupabaseService } from './lib/supabaseService';
 import { DEFAULT_ROLE_PERMISSIONS } from './lib/permissions';
@@ -370,8 +372,38 @@ export class AppStorage {
       classes = [...earlyClasses, ...classes];
       setStored(STORAGE_KEYS.CLASSES, classes);
     }
+
+    // Ensure every class has defined subjects array
+    let updatedSubjectsNeeded = false;
+    classes = classes.map(c => {
+      if (!c.subjects || c.subjects.length === 0) {
+        const initialMatch = INITIAL_CLASSES.find(ic => ic.id === c.id || ic.name.toLowerCase() === c.name.toLowerCase());
+        const defaultTierSubjects = SUBJECT_OPTIONS_BY_TIER[c.category] || DEFAULT_SCHOOL_SUBJECTS;
+        updatedSubjectsNeeded = true;
+        return {
+          ...c,
+          subjects: initialMatch?.subjects || defaultTierSubjects
+        };
+      }
+      return c;
+    });
+
+    if (updatedSubjectsNeeded) {
+      setStored(STORAGE_KEYS.CLASSES, classes);
+    }
+
     if (!schoolId) return classes;
     return classes.filter(c => c.schoolId === schoolId);
+  }
+
+  static getClassSubjects(classId: string): string[] {
+    const classes = this.getClasses();
+    const cls = classes.find(c => c.id === classId);
+    if (!cls) return DEFAULT_SCHOOL_SUBJECTS;
+    if (cls.subjects && cls.subjects.length > 0) {
+      return cls.subjects;
+    }
+    return SUBJECT_OPTIONS_BY_TIER[cls.category] || DEFAULT_SCHOOL_SUBJECTS;
   }
 
   static getStudents(schoolId?: string, classId?: string): Student[] {
@@ -633,9 +665,31 @@ export class AppStorage {
 
   static createClass(newClass: Omit<SchoolClass, 'id'>) {
     const classes = this.getClasses();
-    const cls: SchoolClass = { ...newClass, id: 'cls_' + Date.now() };
+    const defaultSubjects = newClass.subjects && newClass.subjects.length > 0
+      ? newClass.subjects
+      : (SUBJECT_OPTIONS_BY_TIER[newClass.category] || DEFAULT_SCHOOL_SUBJECTS);
+
+    const cls: SchoolClass = {
+      ...newClass,
+      subjects: defaultSubjects,
+      id: 'cls_' + Date.now()
+    };
     classes.push(cls);
     setStored(STORAGE_KEYS.CLASSES, classes);
+
+    // Audit log
+    const actorUser = this.getCurrentUser();
+    if (actorUser) {
+      this.addAuditLog({
+        schoolId: cls.schoolId,
+        userId: actorUser.id,
+        userName: actorUser.name,
+        userRole: actorUser.role,
+        action: 'Created New Class',
+        module: 'CLASSES',
+        details: `Created class ${cls.name} (${cls.category}) with ${cls.subjects?.length || 0} offered subjects.`
+      });
+    }
 
     if (isSupabaseConfigured()) {
       SupabaseService.upsertClass(cls).catch(console.error);
@@ -644,9 +698,105 @@ export class AppStorage {
     return cls;
   }
 
+  static updateClass(classId: string, updates: Partial<SchoolClass>, syncToStudents = true): SchoolClass | null {
+    const classes = this.getClasses();
+    const idx = classes.findIndex(c => c.id === classId);
+    if (idx === -1) return null;
+
+    const oldSubjectsCount = classes[idx].subjects?.length || 0;
+    classes[idx] = {
+      ...classes[idx],
+      ...updates
+    };
+    setStored(STORAGE_KEYS.CLASSES, classes);
+
+    // If subjects were updated and syncToStudents is true, auto-sync all enrolled students
+    if (updates.subjects && syncToStudents) {
+      this.syncClassSubjectsToStudents(classId, updates.subjects);
+    }
+
+    // Audit log
+    const actorUser = this.getCurrentUser();
+    if (actorUser) {
+      const subjectDetail = updates.subjects
+        ? ` (Curriculum: ${updates.subjects.length} subjects offered, changed from ${oldSubjectsCount})`
+        : '';
+      this.addAuditLog({
+        schoolId: classes[idx].schoolId,
+        userId: actorUser.id,
+        userName: actorUser.name,
+        userRole: actorUser.role,
+        action: 'Updated Class Configuration',
+        module: 'CLASSES',
+        details: `Updated class ${classes[idx].name}${subjectDetail}.`
+      });
+    }
+
+    if (isSupabaseConfigured()) {
+      SupabaseService.upsertClass(classes[idx]).catch(console.error);
+    }
+
+    return classes[idx];
+  }
+
+  static updateClassSubjects(classId: string, subjects: string[], syncToStudents = true): SchoolClass | null {
+    return this.updateClass(classId, { subjects }, syncToStudents);
+  }
+
+  static addSubjectToClass(classId: string, subject: string, syncToStudents = true): SchoolClass | null {
+    const trimmed = subject.trim();
+    if (!trimmed) return null;
+    const current = this.getClassSubjects(classId);
+    if (current.some(s => s.toLowerCase() === trimmed.toLowerCase())) {
+      return null; // Already exists
+    }
+    const updated = [...current, trimmed];
+    return this.updateClass(classId, { subjects: updated }, syncToStudents);
+  }
+
+  static removeSubjectFromClass(classId: string, subject: string, syncToStudents = true): SchoolClass | null {
+    const trimmed = subject.trim();
+    if (!trimmed) return null;
+    const current = this.getClassSubjects(classId);
+    const updated = current.filter(s => s.toLowerCase() !== trimmed.toLowerCase());
+    return this.updateClass(classId, { subjects: updated }, syncToStudents);
+  }
+
+  static syncClassSubjectsToStudents(classId: string, explicitSubjects?: string[]): number {
+    const targetSubjects = explicitSubjects || this.getClassSubjects(classId);
+    let students = this.getStudents();
+    let updatedCount = 0;
+
+    students = students.map(s => {
+      if (s.classId === classId) {
+        updatedCount++;
+        return {
+          ...s,
+          enrolledSubjects: [...targetSubjects]
+        };
+      }
+      return s;
+    });
+
+    if (updatedCount > 0) {
+      setStored(STORAGE_KEYS.STUDENTS, students);
+    }
+    return updatedCount;
+  }
+
   static createStudent(student: Omit<Student, 'id'>) {
     const students = this.getStudents();
-    const newStd: Student = { ...student, id: 'std_' + Date.now() };
+    // Auto-inherit class subjects if none explicitly provided
+    const classSubjects = this.getClassSubjects(student.classId);
+    const enrolledSubjects = (student.enrolledSubjects && student.enrolledSubjects.length > 0)
+      ? student.enrolledSubjects
+      : [...classSubjects];
+
+    const newStd: Student = {
+      ...student,
+      enrolledSubjects,
+      id: 'std_' + Date.now()
+    };
     students.push(newStd);
     setStored(STORAGE_KEYS.STUDENTS, students);
 
@@ -660,7 +810,7 @@ export class AppStorage {
         userRole: actorUser.role,
         action: 'Admitted New Student',
         module: 'ADMISSIONS',
-        details: `Admitted student ${newStd.fullName} (Admission No: ${newStd.admissionNo}).`
+        details: `Admitted student ${newStd.fullName} (Admission No: ${newStd.admissionNo}) into class with ${enrolledSubjects.length} auto-assigned subjects.`
       });
     }
 
@@ -940,16 +1090,45 @@ export class AppStorage {
   }
 
   // Student CRUD Operations
-  static updateStudent(studentId: string, updates: Partial<Student>) {
+  static updateStudent(studentId: string, updates: Partial<Student>): Student | null {
     const students = getStored<Student[]>(STORAGE_KEYS.STUDENTS, INITIAL_STUDENTS);
     const idx = students.findIndex(s => s.id === studentId);
-    if (idx !== -1) {
-      students[idx] = { ...students[idx], ...updates };
-      setStored(STORAGE_KEYS.STUDENTS, students);
-      if (isSupabaseConfigured()) {
-        SupabaseService.upsertStudent(students[idx]).catch(console.error);
-      }
+    if (idx === -1) return null;
+
+    const oldStudent = students[idx];
+    let finalEnrolledSubjects = updates.enrolledSubjects || oldStudent.enrolledSubjects;
+
+    // If classId is changing and enrolledSubjects is not explicitly given, auto-inherit new class's subjects
+    if (updates.classId && updates.classId !== oldStudent.classId && !updates.enrolledSubjects) {
+      finalEnrolledSubjects = this.getClassSubjects(updates.classId);
     }
+
+    students[idx] = {
+      ...oldStudent,
+      ...updates,
+      enrolledSubjects: finalEnrolledSubjects
+    };
+    setStored(STORAGE_KEYS.STUDENTS, students);
+
+    // Audit log
+    const actorUser = this.getCurrentUser();
+    if (actorUser) {
+      this.addAuditLog({
+        schoolId: students[idx].schoolId,
+        userId: actorUser.id,
+        userName: actorUser.name,
+        userRole: actorUser.role,
+        action: 'Updated Student Profile',
+        module: 'ADMISSIONS',
+        details: `Updated details for student ${students[idx].fullName} (${students[idx].admissionNo}).`
+      });
+    }
+
+    if (isSupabaseConfigured()) {
+      SupabaseService.upsertStudent(students[idx]).catch(console.error);
+    }
+
+    return students[idx];
   }
 
   static promoteStudent(
@@ -984,11 +1163,15 @@ export class AppStorage {
     };
 
     const history = student.promotionHistory || [];
+    const newClassSubjects = status === 'REPEATED'
+      ? student.enrolledSubjects
+      : this.getClassSubjects(targetClassId);
 
     const updatedStudent: Student = {
       ...student,
       classId: status === 'REPEATED' ? student.classId : targetClassId,
       promotionStatus: status,
+      enrolledSubjects: newClassSubjects,
       promotionHistory: [newRecord, ...history]
     };
 
@@ -1036,10 +1219,25 @@ export class AppStorage {
     return count;
   }
 
-  static deleteStudent(studentId: string) {
+  static deleteStudent(studentId: string): void {
     let students = getStored<Student[]>(STORAGE_KEYS.STUDENTS, INITIAL_STUDENTS);
+    const target = students.find(s => s.id === studentId);
     students = students.filter(s => s.id !== studentId);
     setStored(STORAGE_KEYS.STUDENTS, students);
+
+    // Audit log
+    const actorUser = this.getCurrentUser();
+    if (actorUser && target) {
+      this.addAuditLog({
+        schoolId: target.schoolId,
+        userId: actorUser.id,
+        userName: actorUser.name,
+        userRole: actorUser.role,
+        action: 'Deleted Student Record',
+        module: 'ADMISSIONS',
+        details: `Deleted student record for ${target.fullName} (${target.admissionNo}).`
+      });
+    }
   }
 
   static getStudentByAccessCode(accessCode: string): Student | undefined {
@@ -2065,6 +2263,21 @@ export class AppStorage {
     return sId ? list.filter(t => t.schoolId === sId) : list;
   }
 
+  static getTransportRouteById(routeId: string): TransportRoute | undefined {
+    const list = getStored<TransportRoute[]>(STORAGE_KEYS.TRANSPORT_ROUTES, INITIAL_TRANSPORT_ROUTES);
+    return list.find(t => t.id === routeId);
+  }
+
+  static getTransportRouteByDriver(driverUserIdOrCode: string): TransportRoute | undefined {
+    const clean = driverUserIdOrCode.trim().toUpperCase();
+    const list = getStored<TransportRoute[]>(STORAGE_KEYS.TRANSPORT_ROUTES, INITIAL_TRANSPORT_ROUTES);
+    return list.find(t => 
+      (t.driverUserId && t.driverUserId.toUpperCase() === clean) ||
+      (t.driverAccessCode && t.driverAccessCode.trim().toUpperCase() === clean) ||
+      (t.driverPhone && t.driverPhone.replace(/[^0-9]/g, '') === clean.replace(/[^0-9]/g, ''))
+    );
+  }
+
   static saveTransportRoute(route: TransportRoute): void {
     const list = getStored<TransportRoute[]>(STORAGE_KEYS.TRANSPORT_ROUTES, INITIAL_TRANSPORT_ROUTES);
     const idx = list.findIndex(t => t.id === route.id);
@@ -2074,6 +2287,275 @@ export class AppStorage {
       list.unshift(route);
     }
     setStored(STORAGE_KEYS.TRANSPORT_ROUTES, list);
+  }
+
+  static toggleDriverTracking(
+    routeId: string,
+    isTrackingActive: boolean,
+    tripStatus?: TransportRoute['tripStatus'],
+    customLocation?: TransportRoute['currentLocation']
+  ): TransportRoute | null {
+    const list = getStored<TransportRoute[]>(STORAGE_KEYS.TRANSPORT_ROUTES, INITIAL_TRANSPORT_ROUTES);
+    const idx = list.findIndex(t => t.id === routeId);
+    if (idx === -1) return null;
+
+    const route = list[idx];
+    const newStatus = tripStatus || (isTrackingActive ? (route.tripStatus === 'IDLE' ? 'AFTERNOON_DROPOFF' : route.tripStatus) : 'IDLE');
+
+    let updatedLoc = route.currentLocation;
+    if (customLocation) {
+      updatedLoc = customLocation;
+    } else if (route.currentLocation) {
+      updatedLoc = {
+        ...route.currentLocation,
+        speedKmH: isTrackingActive ? (route.currentLocation.speedKmH || 35) : 0,
+        lastUpdated: new Date().toISOString()
+      };
+    }
+
+    const updatedRoute: TransportRoute = {
+      ...route,
+      isTrackingActive,
+      tripStatus: newStatus,
+      currentLocation: updatedLoc
+    };
+
+    list[idx] = updatedRoute;
+    setStored(STORAGE_KEYS.TRANSPORT_ROUTES, list);
+
+    // Send notification to school community / parents
+    if (isTrackingActive) {
+      this.sendNotification({
+        schoolId: route.schoolId,
+        recipientUserId: 'ALL_PARENTS',
+        senderName: route.driverName,
+        title: `School Bus Live: ${route.routeName} 🚌`,
+        message: `${route.driverName} has started live GPS tracking for ${route.vehicleNo} (${newStatus === 'MORNING_PICKUP' ? 'Morning Pickup' : 'Afternoon Drop-off'}). Track real-time progress on your portal.`,
+        type: 'SYSTEM'
+      });
+    }
+
+    return updatedRoute;
+  }
+
+  static updateDriverLocation(routeId: string, location: NonNullable<TransportRoute['currentLocation']>): TransportRoute | null {
+    const list = getStored<TransportRoute[]>(STORAGE_KEYS.TRANSPORT_ROUTES, INITIAL_TRANSPORT_ROUTES);
+    const idx = list.findIndex(t => t.id === routeId);
+    if (idx === -1) return null;
+
+    const history = list[idx].locationHistory || [];
+    const newHistory = [
+      { lat: location.lat, lng: location.lng, timestamp: location.lastUpdated, speedKmH: location.speedKmH },
+      ...history.slice(0, 30)
+    ];
+
+    list[idx] = {
+      ...list[idx],
+      currentLocation: location,
+      locationHistory: newHistory
+    };
+
+    setStored(STORAGE_KEYS.TRANSPORT_ROUTES, list);
+    return list[idx];
+  }
+
+  static broadcastDriverAlert(
+    routeId: string,
+    alert: TransportRoute['activeAlert']
+  ): TransportRoute | null {
+    const list = getStored<TransportRoute[]>(STORAGE_KEYS.TRANSPORT_ROUTES, INITIAL_TRANSPORT_ROUTES);
+    const idx = list.findIndex(t => t.id === routeId);
+    if (idx === -1) return null;
+
+    list[idx] = {
+      ...list[idx],
+      activeAlert: alert
+    };
+
+    setStored(STORAGE_KEYS.TRANSPORT_ROUTES, list);
+
+    if (alert) {
+      this.sendNotification({
+        schoolId: list[idx].schoolId,
+        recipientUserId: 'ALL_PARENTS',
+        senderName: list[idx].driverName,
+        title: `Bus Transit Alert: ${list[idx].vehicleNo} ⚠️`,
+        message: alert.message,
+        type: 'SYSTEM'
+      });
+    }
+
+    return list[idx];
+  }
+
+  static createDriverAccount(data: {
+    routeName: string;
+    vehicleNo: string;
+    vehicleModel?: string;
+    driverName: string;
+    driverPhone: string;
+    pickupLocations: string[];
+    stops?: TransportStop[];
+    assignedStudentIds: string[];
+    capacity: number;
+    driverAccessCode?: string;
+    driverPin?: string;
+    schoolId?: string;
+  }): { route: TransportRoute; user: User } {
+    const schoolId = data.schoolId || this.getCurrentSchool()?.id || 'school_apex';
+    const driverAccessCode = (data.driverAccessCode && data.driverAccessCode.trim()) || `DRV-${Math.floor(1000 + Math.random() * 9000)}-BUS`;
+    const driverUserId = 'usr_drv_' + Date.now();
+
+    const initialStops: TransportStop[] = data.stops && data.stops.length > 0
+      ? data.stops
+      : data.pickupLocations.map((loc, i) => ({
+          id: 'stp_' + Date.now() + '_' + i,
+          name: loc,
+          lat: 6.4281 + (i * 0.0085),
+          lng: 3.4219 + (i * 0.025),
+          estimatedTime: `${15 + Math.floor(i * 15 / 60)}:${((i * 15) % 60).toString().padStart(2, '0')}`,
+          studentCount: i === 0 ? 0 : 1
+        }));
+
+    const newRoute: TransportRoute = {
+      id: 'tr_' + Date.now(),
+      schoolId,
+      routeName: data.routeName,
+      vehicleNo: data.vehicleNo.toUpperCase(),
+      vehicleModel: data.vehicleModel || 'Standard School Shuttle Bus',
+      driverName: data.driverName,
+      driverPhone: data.driverPhone,
+      driverUserId,
+      driverAccessCode,
+      driverPin: data.driverPin || '1234',
+      driverPhotoUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80',
+      capacity: data.capacity || 25,
+      assignedStudentIds: data.assignedStudentIds || [],
+      pickupLocations: data.pickupLocations,
+      stops: initialStops,
+      isTrackingActive: false,
+      tripStatus: 'IDLE',
+      currentLocation: {
+        lat: initialStops[0]?.lat || 6.4281,
+        lng: initialStops[0]?.lng || 3.4219,
+        speedKmH: 0,
+        heading: 0,
+        lastUpdated: new Date().toISOString(),
+        currentStopIndex: 0,
+        addressDescription: 'Stationed at School Campus Bus Terminal',
+        batteryLevel: 100
+      },
+      locationHistory: [],
+      activeAlert: null
+    };
+
+    const newUser: User = {
+      id: driverUserId,
+      schoolId,
+      name: data.driverName,
+      email: `${driverAccessCode.toLowerCase().replace(/[^a-z0-9]/g, '')}@driver.texora.edu`,
+      role: 'DRIVER',
+      phone: data.driverPhone,
+      assignedClassIds: [],
+      assignedSubjects: [],
+      active: true,
+      createdAt: new Date().toISOString()
+    };
+
+    // Save route
+    const routes = getStored<TransportRoute[]>(STORAGE_KEYS.TRANSPORT_ROUTES, INITIAL_TRANSPORT_ROUTES);
+    routes.unshift(newRoute);
+    setStored(STORAGE_KEYS.TRANSPORT_ROUTES, routes);
+
+    // Save user
+    const users = this.getUsers();
+    users.push(newUser);
+    setStored(STORAGE_KEYS.USERS, users);
+
+    const currentUser = this.getCurrentUser();
+    this.addAuditLog({
+      schoolId,
+      userId: currentUser?.id || 'proprietor',
+      userName: currentUser?.name || 'Proprietor',
+      userRole: currentUser?.role || 'PROPRIETOR',
+      action: 'Created Driver Account & Bus Route',
+      module: 'SETTINGS',
+      details: `Created Driver Account for ${data.driverName} (${data.vehicleNo}) with Access Code: ${driverAccessCode}`
+    });
+
+    return { route: newRoute, user: newUser };
+  }
+
+  static deleteDriverAccount(routeId: string): void {
+    let routes = getStored<TransportRoute[]>(STORAGE_KEYS.TRANSPORT_ROUTES, INITIAL_TRANSPORT_ROUTES);
+    const target = routes.find(r => r.id === routeId);
+    if (!target) return;
+
+    routes = routes.filter(r => r.id !== routeId);
+    setStored(STORAGE_KEYS.TRANSPORT_ROUTES, routes);
+
+    if (target.driverUserId) {
+      let users = this.getUsers();
+      users = users.filter(u => u.id !== target.driverUserId);
+      setStored(STORAGE_KEYS.USERS, users);
+    }
+
+    const currentUser = this.getCurrentUser();
+    this.addAuditLog({
+      schoolId: target.schoolId,
+      userId: currentUser?.id || 'proprietor',
+      userName: currentUser?.name || 'Proprietor',
+      userRole: currentUser?.role || 'PROPRIETOR',
+      action: 'Deleted Driver Account & Bus Route',
+      module: 'SETTINGS',
+      details: `Deleted Driver ${target.driverName} (${target.vehicleNo} - ${target.routeName})`
+    });
+  }
+
+  static loginAsDriverWithCode(driverCode: string, pin?: string): { user: User; route: TransportRoute } | null {
+    const codeClean = driverCode.trim().toUpperCase();
+    const routes = getStored<TransportRoute[]>(STORAGE_KEYS.TRANSPORT_ROUTES, INITIAL_TRANSPORT_ROUTES);
+    const foundRoute = routes.find(r => 
+      (r.driverAccessCode && r.driverAccessCode.trim().toUpperCase() === codeClean) ||
+      (r.id.toUpperCase() === codeClean)
+    );
+
+    if (!foundRoute) {
+      return null;
+    }
+
+    if (pin && foundRoute.driverPin && foundRoute.driverPin.trim() !== pin.trim()) {
+      return null;
+    }
+
+    const users = this.getUsers();
+    let driverUser = users.find(u => 
+      (foundRoute.driverUserId && u.id === foundRoute.driverUserId) ||
+      (u.role === 'DRIVER' && u.name.toLowerCase() === foundRoute.driverName.toLowerCase()) ||
+      (u.email.toLowerCase().includes(codeClean.toLowerCase().replace(/[^a-z0-9]/g, '')))
+    );
+
+    if (!driverUser) {
+      driverUser = {
+        id: foundRoute.driverUserId || 'usr_drv_' + Date.now(),
+        schoolId: foundRoute.schoolId || 'school_apex',
+        name: foundRoute.driverName,
+        email: `${codeClean.toLowerCase().replace(/[^a-z0-9]/g, '')}@driver.texora.edu`,
+        role: 'DRIVER',
+        phone: foundRoute.driverPhone,
+        assignedClassIds: [],
+        assignedSubjects: [],
+        active: true,
+        createdAt: new Date().toISOString()
+      };
+      users.push(driverUser);
+      setStored(STORAGE_KEYS.USERS, users);
+    }
+
+    this.setCurrentUserId(driverUser.id);
+    this.setCurrentSchoolId(driverUser.schoolId);
+
+    return { user: driverUser, route: foundRoute };
   }
 
   // PART 1: Staff Attendance & Geofence Settings

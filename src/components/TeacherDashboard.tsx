@@ -19,7 +19,8 @@ import {
   MessageSquare,
   X,
   Zap,
-  CheckSquare
+  CheckSquare,
+  Wand2
 } from 'lucide-react';
 import { useAppStore } from '../storage';
 import { Submission } from '../types';
@@ -93,6 +94,13 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
           </div>
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => onNavigate('ai_studio')}
+              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-black flex items-center gap-2 shadow-lg shadow-purple-900/40 transition-all cursor-pointer"
+            >
+              <Wand2 className="h-4 w-4 text-amber-300" /> AI Creative & Video Studio
+            </button>
+
             <button
               onClick={onOpenCreateLessonNote}
               className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-2 shadow-md transition-all cursor-pointer"

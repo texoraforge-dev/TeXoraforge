@@ -31,7 +31,8 @@ import {
   Calculator,
   CreditCard,
   Library,
-  Bus
+  Bus,
+  Wand2
 } from 'lucide-react';
 import { UserRole } from '../types';
 import { useAppStore } from '../storage';
@@ -73,6 +74,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const adminNavItems: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'ai_studio', label: 'AI Creative & Video Studio', icon: Wand2 },
     { id: 'bus_tracking', label: 'Live School Bus Fleet', icon: Bus },
     { id: 'textbook_library', label: 'Textbook Library', icon: Library },
     { id: 'parent_fees', label: 'Student Fees & Payments', icon: CreditCard },
@@ -106,6 +108,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const teacherNavItems: NavItem[] = [
     { id: 'dashboard', label: 'Teacher Dashboard', icon: LayoutDashboard },
+    { id: 'ai_studio', label: 'AI Creative & Video Studio', icon: Wand2 },
     { id: 'bus_tracking', label: 'Live School Bus Fleet', icon: Bus },
     { id: 'textbook_library', label: 'Textbook Library', icon: Library },
     { id: 'staff_attendance', label: 'Staff Sign-In & Sign-Out', icon: MapPin },
@@ -124,6 +127,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const studentNavItems: NavItem[] = [
     { id: 'student_class_chat', label: 'Class Discussion Chat', icon: MessageSquare },
+    { id: 'ai_studio', label: 'AI Creative Studio', icon: Wand2 },
     { id: 'textbook_library', label: 'Textbook Library', icon: Library },
     { id: 'cbt_engine', label: 'CBT Examination Hub', icon: Laptop },
     { id: 'timetable', label: 'Class Timetable', icon: CalendarCheck2 },
@@ -132,11 +136,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const parentNavItems: NavItem[] = [
     { id: 'parent', label: 'Parent Portal Home', icon: ShieldCheck },
+    { id: 'ai_studio', label: 'AI Creative Visuals', icon: Wand2 },
     { id: 'bus_tracking', label: 'Live School Bus Tracking', icon: Bus },
     { id: 'parent_fees', label: 'Child Fees & Payments', icon: CreditCard },
-    { id: 'textbook_library', label: 'Textbook Library', icon: Library },
     { id: 'parent_ai_assistant', label: 'AI Parent & Tutor Assistant', icon: Sparkles },
-    { id: 'cbt_engine', label: 'AI CBT Practice Hub', icon: Laptop },
     { id: 'early_warning', label: 'Child Risk & Remedials', icon: AlertTriangle },
     { id: 'timetable', label: 'Class & Exam Timetables', icon: CalendarCheck2 },
     { id: 'scores', label: 'Terminal Report Cards', icon: FileText },

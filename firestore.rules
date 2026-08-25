@@ -1,0 +1,56 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Schools collection
+    match /schools/{schoolId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // Users and User profiles
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // Students
+    match /students/{studentId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // Classes
+    match /classes/{classId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // Submissions
+    match /submissions/{subId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // AI Generated Media
+    match /ai_media/{mediaId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // Chat messages
+    match /chats/{chatId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // Default catch-all for authenticated users
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

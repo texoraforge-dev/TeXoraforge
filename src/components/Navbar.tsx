@@ -208,6 +208,19 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
           </div>
 
+          {/* Texora AI Voice Assistant Trigger */}
+          <button
+            onClick={() => {
+              const fab = document.getElementById('texora-voice-assistant-fab');
+              if (fab) fab.click();
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-purple-600/15 to-indigo-600/15 hover:from-purple-600/25 hover:to-indigo-600/25 text-purple-700 dark:text-purple-300 border border-purple-300/40 dark:border-purple-700/40 transition-all cursor-pointer shadow-xs"
+            title="Texora AI Voice Assistant - Tap to listen immediately"
+          >
+            <Sparkles className="h-3.5 w-3.5 text-amber-500 animate-pulse" />
+            <span className="hidden sm:inline text-xs font-black">Texora Voice</span>
+          </button>
+
           {/* Theme Toggle */}
           <button
             onClick={() => setDarkMode(!darkMode)}

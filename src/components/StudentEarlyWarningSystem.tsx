@@ -23,10 +23,28 @@ import { StudentRiskProfile, RemedialPackage } from '../types';
 export const StudentEarlyWarningSystem: React.FC = () => {
   const { school, studentRiskProfiles, remedialPackages, actions, students, currentUser } = useAppStore();
   const isStudent = currentUser?.role === 'STUDENT';
+  const isParent = currentUser?.role === 'PARENT';
 
-  // Filter profiles and remedials for student role
+  // Extract linked students for Parent
+  const parentAccessCodes = currentUser?.linkedStudentAccessCodes || [];
+  const linkedStudents = isParent
+    ? students.filter(s =>
+        parentAccessCodes.includes(s.accessCode) ||
+        (currentUser?.email && s.guardianEmail?.toLowerCase() === currentUser.email.toLowerCase()) ||
+        (currentUser?.phone && s.guardianPhone === currentUser.phone)
+      )
+    : [];
+  const linkedStudentIds = linkedStudents.map(s => s.id);
+  const linkedStudentNames = linkedStudents.map(s => s.fullName.toLowerCase());
+
+  // Filter profiles strictly: Students only see their own, Parents only see their linked child(ren)
   const effectiveProfiles = isStudent
     ? studentRiskProfiles.filter(p => p.studentId === currentUser?.id || p.studentName.toLowerCase().includes(currentUser?.name?.toLowerCase() || ''))
+    : isParent
+    ? studentRiskProfiles.filter(p =>
+        linkedStudentIds.includes(p.studentId) ||
+        linkedStudentNames.some(name => p.studentName.toLowerCase().includes(name) || name.includes(p.studentName.toLowerCase()))
+      )
     : studentRiskProfiles;
 
   const [selectedProfile, setSelectedProfile] = useState<StudentRiskProfile | null>(effectiveProfiles[0] || null);
@@ -105,19 +123,29 @@ export const StudentEarlyWarningSystem: React.FC = () => {
           <div>
             <div className="flex items-center gap-2 text-rose-300 text-xs font-bold uppercase tracking-wider mb-2">
               <Brain className="h-4 w-4" />
-              <span>Phases 10 & 11: Early Warning Radar & AI Remedial Learning</span>
+              <span>{isParent ? 'Parental Academic Radar & Remedial Oversight' : isStudent ? 'Personal Academic Support & Remedials' : 'Phases 10 & 11: Early Warning Radar & AI Remedial Learning'}</span>
             </div>
-            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">Student Risk Radar & AI Remedials</h1>
+            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
+              {isParent ? 'Child Risk Radar & AI Remedials' : isStudent ? 'My Academic Radar & Study Remedials' : 'Student Risk Radar & AI Remedials'}
+            </h1>
             <p className="text-slate-300 text-sm mt-1 max-w-2xl">
-              Detect students at risk of academic failure or attendance drop, and generate personalized 1-on-1 AI remedial learning packages automatically.
+              {isParent
+                ? 'Review academic risk triggers, attendance flags, and personalized remedial learning packages specifically for your child.'
+                : isStudent
+                ? 'Review personalized remedial learning guides and step-by-step guidance curated to improve your performance.'
+                : 'Detect students at risk of academic failure or attendance drop, and generate personalized 1-on-1 AI remedial learning packages automatically.'}
             </p>
           </div>
 
           <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-3 rounded-xl border border-white/10">
             <ShieldAlert className="h-8 w-8 text-rose-400 animate-pulse" />
             <div>
-              <p className="text-[10px] font-bold text-slate-300 uppercase">At-Risk Students</p>
-              <p className="text-2xl font-black text-rose-300">{studentRiskProfiles.length} Identified</p>
+              <p className="text-[10px] font-bold text-slate-300 uppercase">
+                {isParent ? 'Child Risk Alerts' : isStudent ? 'My Risk Status' : 'At-Risk Students'}
+              </p>
+              <p className="text-2xl font-black text-rose-300">
+                {effectiveProfiles.length} {isParent || isStudent ? (effectiveProfiles.length === 1 ? 'Active Alert' : 'Active Alerts') : 'Identified'}
+              </p>
             </div>
           </div>
         </div>
@@ -129,7 +157,7 @@ export const StudentEarlyWarningSystem: React.FC = () => {
           <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60">
             <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-rose-500" />
-              <span>Flagged Risk Profiles</span>
+              <span>{isParent ? "Your Child's Risk Status" : isStudent ? "My Academic Standing" : "Flagged Risk Profiles"}</span>
             </h2>
           </div>
 
@@ -160,10 +188,22 @@ export const StudentEarlyWarningSystem: React.FC = () => {
                 );
               })
             ) : (
-              <div className="p-6 text-center text-xs text-slate-400">
-                {isStudent
-                  ? 'No risk flags on your account. Outstanding academic performance!'
-                  : 'No student risk profiles flagged.'}
+              <div className="p-6 text-center text-xs text-slate-500 dark:text-slate-400 space-y-2">
+                <CheckCircle2 className="h-8 w-8 text-emerald-500 mx-auto" />
+                <p className="font-bold text-slate-800 dark:text-slate-200">
+                  {isParent
+                    ? linkedStudents.length > 0
+                      ? `${linkedStudents.map(s => s.fullName).join(', ')} is in Good Academic Standing`
+                      : 'Your child is in Good Academic Standing'
+                    : isStudent
+                    ? 'No risk flags on your account'
+                    : 'No student risk profiles flagged'}
+                </p>
+                <p className="text-[11px] text-slate-400">
+                  {isParent
+                    ? 'Attendance and continuous assessment scores meet or exceed target benchmarks.'
+                    : 'Outstanding academic performance and regular attendance.'}
+                </p>
               </div>
             )}
           </div>
@@ -197,8 +237,36 @@ export const StudentEarlyWarningSystem: React.FC = () => {
                 </div>
               </div>
 
+              {/* Recommended Interventions for Parent / School */}
+              {selectedProfile.recommendedInterventions && selectedProfile.recommendedInterventions.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Recommended Action Steps</p>
+                  <div className="space-y-1">
+                    {selectedProfile.recommendedInterventions.map((intervention, idx) => (
+                      <div key={idx} className="flex items-start gap-2 text-xs text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 p-2.5 rounded-xl border border-indigo-200 dark:border-indigo-900">
+                        <CheckCircle2 className="h-4 w-4 shrink-0 text-indigo-500 mt-0.5" />
+                        <span>{intervention}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Parent Home Support Note */}
+              {isParent && (
+                <div className="p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 rounded-xl space-y-1 text-xs text-amber-900 dark:text-amber-200">
+                  <div className="font-bold flex items-center gap-1.5 text-amber-950 dark:text-amber-100">
+                    <Sparkles className="w-4 h-4 text-amber-500" />
+                    <span>Parent Home Remedial Guidance</span>
+                  </div>
+                  <p className="text-[11px] text-amber-800 dark:text-amber-300">
+                    Encourage {selectedProfile.studentName} to complete the assigned remedial modules below. You can also use the <strong>AI Parent & Tutor Assistant</strong> tab to get step-by-step homework explanations.
+                  </p>
+                </div>
+              )}
+
               {/* AI Remedial Generator (Teachers / Admin only) */}
-              {!isStudent && (
+              {!isStudent && !isParent && (
                 <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-slate-900 dark:to-slate-800 p-5 rounded-2xl border border-indigo-200 dark:border-indigo-800 space-y-3">
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-bold text-indigo-950 dark:text-indigo-200 flex items-center gap-2">
@@ -241,7 +309,7 @@ export const StudentEarlyWarningSystem: React.FC = () => {
               {/* Remedial Packages List */}
               <div className="space-y-3">
                 <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">Assigned Remedial Packages</h3>
-                {remedialPackages.filter(r => r.studentName === selectedProfile.studentName).map(pkg => (
+                {remedialPackages.filter(r => r.studentName === selectedProfile.studentName || r.studentId === selectedProfile.studentId).map(pkg => (
                   <div key={pkg.id} className="p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">{pkg.subject} • {pkg.topic}</span>
@@ -255,7 +323,11 @@ export const StudentEarlyWarningSystem: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="p-8 text-center text-xs text-slate-500">Select an at-risk student from the radar list to view triggers and generate remedial guidance.</div>
+            <div className="p-8 text-center text-xs text-slate-500">
+              {isParent
+                ? 'No active academic risk flagged for your child. All records are currently in good standing.'
+                : 'Select an at-risk student from the radar list to view triggers and generate remedial guidance.'}
+            </div>
           )}
         </div>
       </div>

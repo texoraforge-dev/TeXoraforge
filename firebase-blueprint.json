@@ -1,0 +1,94 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile including role, school, permissions, and UI theme preferences.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user"
+        },
+        "schoolId": {
+          "type": "string",
+          "description": "Identifier of the school this user belongs to"
+        },
+        "name": {
+          "type": "string",
+          "description": "Full name of the user"
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user"
+        },
+        "role": {
+          "type": "string",
+          "description": "User role in the school system",
+          "enum": ["PROPRIETOR", "VICE_PRINCIPAL", "SCHOOL_ADMIN", "TEACHER", "PARENT", "STUDENT", "DRIVER"]
+        },
+        "preferredTheme": {
+          "type": "string",
+          "description": "Preferred UI color theme ('dark' or 'light')",
+          "enum": ["dark", "light"]
+        },
+        "darkMode": {
+          "type": "boolean",
+          "description": "Whether dark mode is enabled for the user"
+        },
+        "avatarUrl": {
+          "type": "string",
+          "description": "Avatar image URL"
+        },
+        "phone": {
+          "type": "string",
+          "description": "Contact phone number"
+        },
+        "active": {
+          "type": "boolean",
+          "description": "Whether the user account is active"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when profile was last updated"
+        }
+      },
+      "required": ["id", "name", "email", "role"]
+    },
+    "School": {
+      "title": "School",
+      "description": "School institutional profile and configuration.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "motto": {
+          "type": "string"
+        },
+        "academicSession": {
+          "type": "string"
+        },
+        "academicTerm": {
+          "type": "string"
+        }
+      },
+      "required": ["id", "name", "code"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles including persistent theme preferences"
+    },
+    "/schools/{schoolId}": {
+      "schema": "School",
+      "description": "School organization profiles"
+    }
+  }
+}

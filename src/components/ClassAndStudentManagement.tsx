@@ -302,7 +302,7 @@ export const ClassAndStudentManagement: React.FC = () => {
               <Users className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
               {currentClass?.name} Student Register ({classStudents.length} Students)
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Class Arm: {currentClass?.arm || 'Standard'} • Capacity: {currentClass?.capacity || 35}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Class Arm: {currentClass?.arm || 'Standard'} • Capacity: Unlimited Students (Current: {classStudents.length})</p>
           </div>
 
           <div className="relative max-w-xs">

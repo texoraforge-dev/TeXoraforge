@@ -57,7 +57,7 @@ export interface SchoolSubscription {
   planTier: SubscriptionPlanTier;
   billingCycle: BillingCycle;
   status: SubscriptionStatus;
-  maxStudents: number;
+  maxStudents: number; // Unlimited student capacity supported
   maxTeachers: number;
   storageGb: number;
   startDate: string;
@@ -107,6 +107,8 @@ export interface User {
   permissions?: AdminPermission[]; // Custom granular permissions for PROPRIETOR, VICE_PRINCIPAL, SCHOOL_ADMIN
   avatarUrl?: string;
   phone?: string;
+  preferredTheme?: 'dark' | 'light'; // Persisted theme preference
+  darkMode?: boolean; // Persisted dark mode boolean state
   // For Teacher accounts:
   employeeId?: string;
   assignedClassIds: string[]; // e.g. ['primary_1', 'jss_2']
@@ -555,8 +557,8 @@ export interface CBTExam {
   passMarkPercent: number; // e.g. 50
   status: 'DRAFT' | 'PUBLISHED' | 'CLOSED';
   
-  // Teacher visibility & Student access controls
-  visibilityMode: 'ALL_CLASS_STUDENTS' | 'SPECIFIC_STUDENTS' | 'HIDDEN_TEACHER_ONLY';
+  // Teacher visibility & Student access controls (Supports Unlimited School-wide and Class-wide Candidates)
+  visibilityMode: 'ALL_SCHOOL_STUDENTS' | 'ALL_CLASS_STUDENTS' | 'SPECIFIC_STUDENTS' | 'HIDDEN_TEACHER_ONLY';
   allowedStudentIds?: string[]; // Specific student IDs allowed to see/take exam
   allowStudentStudyMode?: boolean; // Whether students can view revision/study questions
   showCorrectionsImmediately?: boolean; // Whether students see correct answers immediately upon submitting
@@ -919,4 +921,24 @@ export interface ChatModerationLog {
   reason: string;
   createdAt: string;
 }
+
+export type AIMediaType = 'IMAGE' | 'VIDEO';
+
+export interface GeneratedAIMediaItem {
+  id: string;
+  type: AIMediaType;
+  title: string;
+  prompt: string;
+  url: string;
+  thumbnailUrl?: string;
+  aspectRatio: '1:1' | '16:9' | '9:16' | '4:3' | '3:4';
+  modelUsed: string;
+  mode?: 'generate' | 'edit';
+  sourceImageUrl?: string;
+  createdAt: string;
+  createdByUserId?: string;
+  createdByName?: string;
+  subjectTag?: string;
+}
+
 

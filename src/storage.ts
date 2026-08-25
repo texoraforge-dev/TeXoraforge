@@ -87,6 +87,7 @@ import {
   SUBJECT_OPTIONS_BY_TIER
 } from './mockData';
 import { SupabaseService } from './lib/supabaseService';
+import { FirebaseService } from './lib/firebaseService';
 import { DEFAULT_ROLE_PERMISSIONS } from './lib/permissions';
 import { isSupabaseConfigured, supabase } from './lib/supabase';
 
@@ -594,6 +595,26 @@ export class AppStorage {
     if (isSupabaseConfigured()) {
       SupabaseService.upsertUser(users[idx]).catch(console.error);
     }
+
+    return users[idx];
+  }
+
+  static updateUserTheme(userId: string, darkMode: boolean): User | null {
+    const users = getStored<User[]>(STORAGE_KEYS.USERS, INITIAL_USERS);
+    const idx = users.findIndex(u => u.id === userId);
+    if (idx === -1) return null;
+
+    users[idx] = {
+      ...users[idx],
+      darkMode,
+      preferredTheme: darkMode ? 'dark' : 'light'
+    };
+    setStored(STORAGE_KEYS.USERS, users);
+
+    // Save to Firestore User Profile for cross-session/cross-device persistence
+    FirebaseService.saveUserThemePreference(userId, darkMode).catch(err => {
+      console.warn('Firestore theme save note:', err);
+    });
 
     return users[idx];
   }

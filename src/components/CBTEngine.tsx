@@ -108,12 +108,17 @@ export const CBTEngine: React.FC = () => {
         // 1. Exam must be PUBLISHED (not Draft or Closed)
         if (exam.status !== 'PUBLISHED') return false;
 
-        // 2. Class match
+        // 2. School-wide check (all school students have access)
+        if (exam.visibilityMode === 'ALL_SCHOOL_STUDENTS') {
+          return true;
+        }
+
+        // 3. Class match
         const studentAssignedClasses = currentUser?.assignedClassIds || [];
         const isClassMatch = !exam.classId || studentAssignedClasses.includes(exam.classId) || (currentUser?.className && exam.className === currentUser.className);
-        if (!isClassMatch) return false;
+        if (!isClassMatch && exam.visibilityMode !== 'SPECIFIC_STUDENTS') return false;
 
-        // 3. Visibility mode check
+        // 4. Visibility mode check
         if (exam.visibilityMode === 'HIDDEN_TEACHER_ONLY') {
           return false;
         }
@@ -324,9 +329,12 @@ export const CBTEngine: React.FC = () => {
       {/* Header Banner */}
       <div className="p-6 bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 rounded-3xl text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-500/30 text-purple-200 border border-purple-400/30">
               {isStudent ? 'Student Assessment Portal' : 'Teacher CBT Determination & Authoring Studio'}
+            </span>
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/30 text-emerald-200 border border-emerald-400/30 flex items-center gap-1">
+              <CheckCircle2 className="h-3 w-3 text-emerald-300" /> Unlimited CBT Seating & Student Capacity
             </span>
             <span className="text-xs text-purple-200/80">
               {filteredExams.length} Available CBT Exams
@@ -516,7 +524,11 @@ export const CBTEngine: React.FC = () => {
                       <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-1.5">
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-[10px] font-bold uppercase text-slate-400">Student Visibility Scope:</span>
-                          {exam.visibilityMode === 'ALL_CLASS_STUDENTS' ? (
+                          {exam.visibilityMode === 'ALL_SCHOOL_STUDENTS' ? (
+                            <span className="font-extrabold text-[10px] text-indigo-600 dark:text-indigo-400 flex items-center gap-1 bg-indigo-50 dark:bg-indigo-950 px-2 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800">
+                              <Users className="h-3 w-3" /> Whole School • Unlimited Candidates
+                            </span>
+                          ) : exam.visibilityMode === 'ALL_CLASS_STUDENTS' ? (
                             <span className="font-extrabold text-[10px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                               <Users className="h-3 w-3" /> All {exam.className} Students
                             </span>

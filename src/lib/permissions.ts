@@ -114,15 +114,24 @@ export function canAccessView(user: User | null | undefined, view: string): bool
       'remedials',
       'early_warning',
       'textbook_library',
-      'bus_tracking'
+      'bus_tracking',
+      'ai_studio'
     ];
     return allowedStudentViews.includes(view);
+  }
+
+  if (user.role === 'PARENT') {
+    const forbiddenParentViews = ['textbook_library', 'cbt_engine'];
+    if (forbiddenParentViews.includes(view)) {
+      return false;
+    }
   }
 
   switch (view) {
     case 'dashboard':
     case 'textbook_library':
     case 'bus_tracking':
+    case 'ai_studio':
       return true;
     case 'parent_fees':
       return user.role === 'PARENT' || user.role === 'SCHOOL_ADMIN' || user.role === 'VICE_PRINCIPAL';

@@ -39,9 +39,11 @@ import { StudentAccountsAndChat } from './components/StudentAccountsAndChat';
 import { DigitalTextbookLibrary } from './components/DigitalTextbookLibrary';
 import { DriverTrackingConsole } from './components/DriverTrackingConsole';
 import { SchoolBusLiveTracker } from './components/SchoolBusLiveTracker';
+import { AIMediaStudio } from './components/AIMediaStudio';
 import { LessonNoteModal } from './components/modals/LessonNoteModal';
 import { UploadPdfModal } from './components/modals/UploadPdfModal';
 import { WeeklyDiaryModal } from './components/modals/WeeklyDiaryModal';
+import { FirebaseService } from './lib/firebaseService';
 import { Submission } from './types';
 
 export default function App() {
@@ -64,10 +66,28 @@ export default function App() {
     refreshState 
   } = useAppStore();
 
-  const [darkMode, setDarkMode] = useState<boolean>(true);
+  // Initialize theme from local storage or default to dark
+  const [darkMode, setDarkMode] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('texora_theme_preference');
+      if (saved === 'dark') return true;
+      if (saved === 'light') return false;
+    } catch {
+      // ignore
+    }
+    return true;
+  });
   const [currentView, setCurrentView] = useState<string>('dashboard');
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isOnline, setIsOnline] = useState<boolean>(typeof navigator !== 'undefined' ? navigator.onLine : true);
+
+  // Modal controls
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isLessonNoteModalOpen, setIsLessonNoteModalOpen] = useState(false);
+  const [isWeeklyDiaryModalOpen, setIsWeeklyDiaryModalOpen] = useState(false);
+  const [isUploadPdfModalOpen, setIsUploadPdfModalOpen] = useState(false);
+  const [submissionToEdit, setSubmissionToEdit] = useState<Submission | null>(null);
+  const [selectedSubmissionToReview, setSelectedSubmissionToReview] = useState<Submission | null>(null);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -82,22 +102,62 @@ export default function App() {
     };
   }, []);
 
-  // Modal controls
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isLessonNoteModalOpen, setIsLessonNoteModalOpen] = useState(false);
-  const [isWeeklyDiaryModalOpen, setIsWeeklyDiaryModalOpen] = useState(false);
-  const [isUploadPdfModalOpen, setIsUploadPdfModalOpen] = useState(false);
-  const [submissionToEdit, setSubmissionToEdit] = useState<Submission | null>(null);
-  const [selectedSubmissionToReview, setSelectedSubmissionToReview] = useState<Submission | null>(null);
-
-  // Sync dark mode class on document element
+  // Sync dark mode class on document element & save locally
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
+      try {
+        localStorage.setItem('texora_theme_preference', 'dark');
+      } catch {
+        // ignore
+      }
     } else {
       document.documentElement.classList.remove('dark');
+      try {
+        localStorage.setItem('texora_theme_preference', 'light');
+      } catch {
+        // ignore
+      }
     }
   }, [darkMode]);
+
+  // Sync theme with User Profile from Firestore on login or switch
+  useEffect(() => {
+    if (!currentUser?.id) return;
+
+    // 1. If user model in state already has preference, adopt it
+    if (typeof currentUser.darkMode === 'boolean') {
+      setDarkMode(currentUser.darkMode);
+    } else if (currentUser.preferredTheme === 'dark') {
+      setDarkMode(true);
+    } else if (currentUser.preferredTheme === 'light') {
+      setDarkMode(false);
+    }
+
+    // 2. Fetch from Firestore document directly
+    FirebaseService.getUserThemePreference(currentUser.id).then((remoteTheme) => {
+      if (typeof remoteTheme === 'boolean') {
+        setDarkMode(remoteTheme);
+      }
+    }).catch(console.warn);
+
+    // 3. Real-time subscription to user theme changes in Firestore
+    const unsubscribe = FirebaseService.listenToUserThemePreference(currentUser.id, (isDark) => {
+      setDarkMode(isDark);
+    });
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [currentUser?.id]);
+
+  // Handler for user toggling dark mode
+  const handleToggleDarkMode = (val: boolean) => {
+    setDarkMode(val);
+    if (currentUser?.id) {
+      actions.updateUserTheme(currentUser.id, val);
+    }
+  };
 
   // Handle review click from dashboard or global search
   const handleSelectSubmissionFromSearch = (submission: Submission) => {
@@ -122,7 +182,7 @@ export default function App() {
         <>
           <Navbar
             darkMode={darkMode}
-            setDarkMode={setDarkMode}
+            setDarkMode={handleToggleDarkMode}
             onOpenNotifications={() => setIsNotificationsOpen(true)}
             onNavigate={(v) => setCurrentView(v)}
             onSelectSubmission={handleSelectSubmissionFromSearch}
@@ -171,6 +231,9 @@ export default function App() {
                     onNavigate={(v) => setCurrentView(v)}
                     onReviewSubmission={handleSelectSubmissionFromSearch}
                   />
+                )}
+                {currentView === 'ai_studio' && (
+                  <AIMediaStudio onBack={() => setCurrentView('dashboard')} />
                 )}
                 {currentView === 'bus_tracking' && <SchoolBusLiveTracker />}
                 {currentView === 'staff_attendance' && (
@@ -254,6 +317,10 @@ export default function App() {
                   <DigitalTextbookLibrary initialRole="TEACHER" onNavigate={(v) => setCurrentView(v)} />
                 )}
 
+                {currentView === 'ai_studio' && (
+                  <AIMediaStudio onBack={() => setCurrentView('dashboard')} />
+                )}
+
                 {currentView === 'parent_fees' && (
                   <ParentPortal initialTab="FEES_AND_PAYMENTS" onNavigate={(v) => setCurrentView(v)} />
                 )}
@@ -326,8 +393,8 @@ export default function App() {
             {/* Parent Views */}
             {currentUser.role === 'PARENT' && (
               <>
-                {currentView === 'textbook_library' ? (
-                  <DigitalTextbookLibrary initialRole="PARENT" onNavigate={(v) => setCurrentView(v)} />
+                {currentView === 'ai_studio' ? (
+                  <AIMediaStudio onBack={() => setCurrentView('parent')} />
                 ) : currentView === 'bus_tracking' ? (
                   <SchoolBusLiveTracker />
                 ) : currentView === 'parent_fees' ? (
@@ -338,8 +405,6 @@ export default function App() {
                   <TeacherParentChat />
                 ) : currentView === 'timetable' ? (
                   <TimetableManagement onNavigate={(v) => setCurrentView(v)} />
-                ) : currentView === 'cbt_engine' ? (
-                  <CBTEngine />
                 ) : currentView === 'early_warning' ? (
                   <StudentEarlyWarningSystem />
                 ) : currentView === 'document_vault' ? (
@@ -359,6 +424,8 @@ export default function App() {
               <>
                 {currentView === 'textbook_library' ? (
                   <DigitalTextbookLibrary initialRole="STUDENT" onNavigate={(v) => setCurrentView(v)} />
+                ) : currentView === 'ai_studio' ? (
+                  <AIMediaStudio onBack={() => setCurrentView('student_class_chat')} />
                 ) : currentView === 'cbt_engine' ? (
                   <CBTEngine />
                 ) : currentView === 'timetable' ? (

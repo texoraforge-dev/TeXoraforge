@@ -45,9 +45,9 @@ export const INITIAL_SCHOOLS: School[] = [
       planTier: 'PRO',
       billingCycle: 'ANNUAL',
       status: 'ACTIVE',
-      maxStudents: 1000,
-      maxTeachers: 100,
-      storageGb: 50,
+      maxStudents: 999999, // Unlimited Student Enrollment & CBT Sitting Capacity
+      maxTeachers: 500,
+      storageGb: 500,
       startDate: '2025-09-01T08:00:00.000Z',
       renewsAt: '2026-09-01T08:00:00.000Z',
       amountPaid: 1350,
@@ -66,7 +66,7 @@ export const INITIAL_SCHOOLS: School[] = [
           date: '2025-09-01T08:00:00.000Z',
           amount: 1350,
           currency: 'USD',
-          description: 'TeXora Pro Excellence Plan - Annual Subscription (1,000 Students & 100 Teachers)',
+          description: 'TeXora Pro Excellence Plan - Unlimited Students & CBT Examination Candidates',
           status: 'PAID',
           paymentMethod: 'Visa ending in 4242'
         },
@@ -76,7 +76,7 @@ export const INITIAL_SCHOOLS: School[] = [
           date: '2024-09-01T08:00:00.000Z',
           amount: 450,
           currency: 'USD',
-          description: 'TeXora Growth Standard Plan - Annual Subscription (250 Students & 25 Teachers)',
+          description: 'TeXora Growth Standard Plan - Annual Subscription (Unlimited Students & CBT Candidates)',
           status: 'PAID',
           paymentMethod: 'Mastercard ending in 8812'
         }
@@ -106,9 +106,9 @@ export const INITIAL_SCHOOLS: School[] = [
       planTier: 'GROWTH',
       billingCycle: 'MONTHLY',
       status: 'ACTIVE',
-      maxStudents: 250,
-      maxTeachers: 25,
-      storageGb: 15,
+      maxStudents: 999999, // Unlimited student capacity
+      maxTeachers: 200,
+      storageGb: 200,
       startDate: '2026-01-01T08:00:00.000Z',
       renewsAt: '2026-09-01T08:00:00.000Z',
       amountPaid: 49,

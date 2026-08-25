@@ -71,7 +71,7 @@ export const CBTTeacherAuthoringModal: React.FC<CBTTeacherAuthoringModalProps> =
 
   // Student Visibility & Access Controls
   const [status, setStatus] = useState<'DRAFT' | 'PUBLISHED' | 'CLOSED'>(initialExam?.status || 'PUBLISHED');
-  const [visibilityMode, setVisibilityMode] = useState<'ALL_CLASS_STUDENTS' | 'SPECIFIC_STUDENTS' | 'HIDDEN_TEACHER_ONLY'>(
+  const [visibilityMode, setVisibilityMode] = useState<'ALL_SCHOOL_STUDENTS' | 'ALL_CLASS_STUDENTS' | 'SPECIFIC_STUDENTS' | 'HIDDEN_TEACHER_ONLY'>(
     initialExam?.visibilityMode || 'ALL_CLASS_STUDENTS'
   );
   const [allowedStudentIds, setAllowedStudentIds] = useState<string[]>(initialExam?.allowedStudentIds || []);
@@ -917,58 +917,105 @@ export const CBTTeacherAuthoringModal: React.FC<CBTTeacherAuthoringModalProps> =
 
               {/* Student Audience Selector */}
               <div className="p-5 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
-                <h3 className="text-sm font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                  <Users className="h-4 w-4 text-purple-600" />
-                  <span>2. Target Student Audience & Visibility Scope</span>
-                </h3>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <h3 className="text-sm font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                    <Users className="h-4 w-4 text-purple-600" />
+                    <span>2. Target Student Audience & Visibility Scope</span>
+                  </h3>
+                  <span className="px-3 py-1 rounded-full text-[11px] font-black tracking-wide bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1.5 self-start sm:self-auto">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                    Unlimited Student Candidates Supported
+                  </span>
+                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <label
+                    onClick={() => setVisibilityMode('ALL_SCHOOL_STUDENTS')}
+                    className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
+                      visibilityMode === 'ALL_SCHOOL_STUDENTS'
+                        ? 'border-purple-600 bg-purple-50/70 dark:bg-purple-950/40 ring-2 ring-purple-500/20'
+                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-slate-300'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-black text-purple-700 dark:text-purple-300">
+                          Whole School (All Classes)
+                        </span>
+                        <span className="text-[10px] font-black uppercase px-1.5 py-0.5 rounded-sm bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300">
+                          Unlimited
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">
+                        All enrolled students across all {classes.length} classes and arms can sit simultaneously.
+                      </p>
+                    </div>
+                    <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 mt-2 block">
+                      {students.length} Total Registered Students
+                    </span>
+                  </label>
+
                   <label
                     onClick={() => setVisibilityMode('ALL_CLASS_STUDENTS')}
                     className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
                       visibilityMode === 'ALL_CLASS_STUDENTS'
-                        ? 'border-purple-600 bg-purple-50/70 dark:bg-purple-950/40'
+                        ? 'border-purple-600 bg-purple-50/70 dark:bg-purple-950/40 ring-2 ring-purple-500/20'
                         : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-slate-300'
                     }`}
                   >
-                    <span className="text-xs font-black text-purple-700 dark:text-purple-300">
-                      Entire Class ({currentClassObj?.name})
+                    <div>
+                      <span className="text-xs font-black text-purple-700 dark:text-purple-300">
+                        Entire Class ({currentClassObj?.name})
+                      </span>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">
+                        All students currently in {currentClassObj?.name} will have live exam access.
+                      </p>
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 mt-2 block">
+                      {classStudents.length} Students in Arm
                     </span>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2">
-                      All {classStudents.length} students enrolled in {currentClassObj?.name} will have access.
-                    </p>
                   </label>
 
                   <label
                     onClick={() => setVisibilityMode('SPECIFIC_STUDENTS')}
                     className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
                       visibilityMode === 'SPECIFIC_STUDENTS'
-                        ? 'border-purple-600 bg-purple-50/70 dark:bg-purple-950/40'
+                        ? 'border-purple-600 bg-purple-50/70 dark:bg-purple-950/40 ring-2 ring-purple-500/20'
                         : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-slate-300'
                     }`}
                   >
-                    <span className="text-xs font-black text-purple-700 dark:text-purple-300">
-                      Selective Students Only
+                    <div>
+                      <span className="text-xs font-black text-purple-700 dark:text-purple-300">
+                        Selective Candidates
+                      </span>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">
+                        Handpick specific candidates (e.g. Remedials, Make-up exams, Scholarship).
+                      </p>
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 mt-2 block">
+                      {allowedStudentIds.length} Selected
                     </span>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2">
-                      Restrict to specific students (e.g. Remedials, Makeup Exam, Early Warning).
-                    </p>
                   </label>
 
                   <label
                     onClick={() => setVisibilityMode('HIDDEN_TEACHER_ONLY')}
                     className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
                       visibilityMode === 'HIDDEN_TEACHER_ONLY'
-                        ? 'border-purple-600 bg-purple-50/70 dark:bg-purple-950/40'
+                        ? 'border-purple-600 bg-purple-50/70 dark:bg-purple-950/40 ring-2 ring-purple-500/20'
                         : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-slate-300'
                     }`}
                   >
-                    <span className="text-xs font-black text-purple-700 dark:text-purple-300">
-                      Teacher Only (Hidden)
+                    <div>
+                      <span className="text-xs font-black text-purple-700 dark:text-purple-300">
+                        Teacher Only (Hidden)
+                      </span>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">
+                        Strictly confidential in teacher vault while preparing questions.
+                      </p>
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 mt-2 block">
+                      Internal Draft
                     </span>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2">
-                      Only visible to you and school administrators in the question bank.
-                    </p>
                   </label>
                 </div>
 

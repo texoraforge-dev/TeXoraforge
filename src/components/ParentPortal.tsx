@@ -43,7 +43,6 @@ import {
 import { useAppStore } from '../storage';
 import { Student, StudentReportCard, PaymentTransaction, SchoolBankAccountDetails } from '../types';
 import { generateReportCardPDF, generatePromotionCertificatePDF } from '../lib/pdfGenerator';
-import { DigitalTextbookLibrary } from './DigitalTextbookLibrary';
 import {
   BarChart,
   Bar,
@@ -105,7 +104,7 @@ export function ParentPortal({ initialTab, onNavigate }: ParentPortalProps) {
   const totalFamilyPaid = familyFinancials.reduce((acc, f) => acc + f.paidAmount, 0);
   const totalFamilyBalance = Math.max(0, totalFamilyFees - totalFamilyPaid);
 
-  const [activeTab, setActiveTab] = useState<'FEES_AND_PAYMENTS' | 'AI_ASSISTANT' | 'OVERVIEW' | 'REPORT_CARD' | 'SCORES' | 'HOMEWORK' | 'TIMETABLE' | 'TEXTBOOKS'>(
+  const [activeTab, setActiveTab] = useState<'FEES_AND_PAYMENTS' | 'AI_ASSISTANT' | 'OVERVIEW' | 'REPORT_CARD' | 'SCORES' | 'HOMEWORK' | 'TIMETABLE'>(
     (initialTab as any) || 'FEES_AND_PAYMENTS'
   );
 
@@ -445,7 +444,6 @@ export function ParentPortal({ initialTab, onNavigate }: ParentPortalProps) {
           <div className="flex space-x-2 border-b border-slate-200 dark:border-slate-800 overflow-x-auto pb-1">
             {[
               { id: 'FEES_AND_PAYMENTS', label: 'Fees & Payments Tracker', icon: CreditCard },
-              { id: 'TEXTBOOKS', label: 'Digital Textbooks Library', icon: BookOpen },
               { id: 'AI_ASSISTANT', label: 'AI Parent & Tutor Assistant', icon: Sparkles },
               { id: 'OVERVIEW', label: 'Overview & Charts', icon: TrendingUp },
               { id: 'REPORT_CARD', label: 'Terminal Report Card', icon: Award },
@@ -861,14 +859,6 @@ export function ParentPortal({ initialTab, onNavigate }: ParentPortalProps) {
             </div>
           )}
 
-          {/* Tab: Digital Textbooks Library */}
-          {activeTab === 'TEXTBOOKS' && (
-            <div className="space-y-4">
-              <DigitalTextbookLibrary initialRole="PARENT" />
-            </div>
-          )}
-
-
           {/* Tab 1: Overview & Analytics */}
           {activeTab === 'OVERVIEW' && (
             <div className="space-y-6">
@@ -1109,19 +1099,7 @@ export function ParentPortal({ initialTab, onNavigate }: ParentPortalProps) {
                 </div>
 
                 {/* Quick Feature Launchers */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                  <button
-                    onClick={() => onNavigate && onNavigate('cbt_engine')}
-                    className="p-3.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-indigo-500/30 text-left transition-all hover:scale-[1.01] cursor-pointer group"
-                  >
-                    <div className="flex items-center justify-between text-indigo-300 mb-1">
-                      <Laptop className="w-5 h-5" />
-                      <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                    <div className="font-bold text-xs text-white">AI CBT Practice Hub</div>
-                    <div className="text-[10px] text-slate-300">Practice timed CBT exams with {activeStudent?.fullName || 'your child'}</div>
-                  </button>
-
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                   <button
                     onClick={() => onNavigate && onNavigate('early_warning')}
                     className="p-3.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-amber-500/30 text-left transition-all hover:scale-[1.01] cursor-pointer group"
@@ -1131,7 +1109,7 @@ export function ParentPortal({ initialTab, onNavigate }: ParentPortalProps) {
                       <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                     <div className="font-bold text-xs text-white">Child Risk & Remedials</div>
-                    <div className="text-[10px] text-slate-300">View personalized AI remedial packages & weaknesses</div>
+                    <div className="text-[10px] text-slate-300">View personalized AI remedial packages & weaknesses for {activeStudent?.fullName || 'your child'}</div>
                   </button>
 
                   <button

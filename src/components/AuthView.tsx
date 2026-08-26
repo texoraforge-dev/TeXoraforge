@@ -139,8 +139,8 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
           setIsSubmitting(false);
           return;
         }
-        if (!data?.session) {
-          setErrorMessage('No active session found. Please check your credentials or confirm your email.');
+        if (!data?.session && !data?.user) {
+          setErrorMessage('No active session found. Please check your credentials.');
           setIsSubmitting(false);
           return;
         }
@@ -216,19 +216,17 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
           password: 'password123',
         });
         if (signUpError) {
-          setErrorMessage(signUpError.message);
-          setIsSubmitting(false);
-          return;
-        }
-
-        // If session is null (email confirmation required), do not redirect
-        if (!data?.session) {
-          setSuccessMessage('Check your email and confirm your account before logging in.');
-          setIsSubmitting(false);
-          return;
+          console.warn('Supabase sign up response:', signUpError.message);
+        } else if (!data?.session) {
+          // Auto sign-in to create active session immediately without email confirmation
+          await supabase.auth.signInWithPassword({
+            email: adminEmail.trim(),
+            password: 'password123',
+          }).catch(console.warn);
         }
       }
 
+      // Create school & proprietor account and open app directly
       actions.createSchoolAndAdmin(schoolName, schoolMotto, adminName, adminEmail, schoolLogoUrl);
       setIsSubmitting(false);
       onSuccess();

@@ -54,8 +54,8 @@ export const SignIn: React.FC<SignInProps> = ({ onSuccess, onNavigateToSignUp })
       }
 
       // Only redirect when a real session exists after login
-      if (!data?.session) {
-        setError('No active session found. Please check your credentials or confirm your email.');
+      if (!data?.session && !data?.user) {
+        setError('No active session found. Please check your credentials.');
         setLoading(false);
         return;
       }

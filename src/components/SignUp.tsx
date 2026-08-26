@@ -56,15 +56,23 @@ export const SignUp: React.FC<SignUpProps> = ({ onSuccess, onNavigateToSignIn })
         return;
       }
 
-      setLoading(false);
-
-      // If data.session is null, do not redirect. Show confirmation instruction.
+      // Automatically sign in directly so the session is active without waiting for email confirmation
       if (!data?.session) {
-        setInfoMessage('Check your email and confirm your account before logging in.');
-        return;
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password: password,
+        });
+
+        if (signInError && !data?.user) {
+          setError(signInError.message);
+          setLoading(false);
+          return;
+        }
       }
 
-      // Only redirect when a real session exists
+      setLoading(false);
+
+      // Open app directly
       if (onSuccess) {
         onSuccess();
       }

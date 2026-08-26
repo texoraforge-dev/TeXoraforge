@@ -66,59 +66,25 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
   const [adminEmail, setAdminEmail] = useState('');
   const [schoolLogoUrl, setSchoolLogoUrl] = useState('');
 
-  // Firebase Google Sign In Handler
+  // Supabase Google Sign In Handler
   const handleGoogleSignIn = async () => {
     setErrorMessage('');
     setSuccessMessage('');
     setIsGoogleLoading(true);
 
     try {
-      const { user: firebaseUser, error } = await FirebaseService.signInWithGoogle();
-      if (error || !firebaseUser) {
-        throw error || new Error('Google Sign-In was cancelled or failed.');
-      }
-
-      const email = firebaseUser.email || '';
-      const name = firebaseUser.displayName || 'Google User';
-
-      // Check if user already exists
-      let matchedUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-
-      if (!matchedUser) {
-        // Automatically create or link as a teacher/educator in current school
-        const currentSchool = actions.getCurrentSchool() || actions.getSchools()[0];
-        const newTeacher = actions.createUser({
-          schoolId: currentSchool.id,
-          name: name,
-          email: email,
-          role: 'TEACHER',
-          phone: firebaseUser.phoneNumber || '+234 800 111 2222',
-          assignedClassIds: [],
-          assignedSubjects: ['General Studies'],
-          permissions: [],
-        });
-        matchedUser = newTeacher;
-      }
-
-      // Sync user profile to Firestore
-      await FirebaseService.syncUserProfile({
-        id: matchedUser.id,
-        name: matchedUser.name,
-        email: matchedUser.email,
-        role: matchedUser.role,
-        schoolId: matchedUser.schoolId,
-        active: true
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: typeof window !== 'undefined' ? `${window.location.origin}/` : undefined,
+        },
       });
 
-      actions.setCurrentSchoolId(matchedUser.schoolId);
-      actions.setCurrentUserId(matchedUser.id);
-      setIsGoogleLoading(false);
-      setSuccessMessage(`Welcome, ${name}! Signed in with Google via Firebase Auth.`);
-      setTimeout(() => {
-        onSuccess();
-      }, 400);
+      if (error) {
+        throw error;
+      }
     } catch (err: any) {
-      console.error('Firebase Auth Error:', err);
+      console.error('Supabase Google OAuth Error:', err);
       setErrorMessage(err?.message || 'Google Sign-In failed.');
       setIsGoogleLoading(false);
     }
@@ -697,7 +663,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                   />
                 </svg>
-                <span>{isGoogleLoading ? 'Connecting Google Account...' : 'Continue with Google (Firebase)'}</span>
+                <span>{isGoogleLoading ? 'Connecting Google Account...' : 'Continue with Google'}</span>
               </button>
             </form>
           ) : tab === 'PARENT_CODE' ? (

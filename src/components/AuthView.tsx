@@ -156,6 +156,11 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
           setIsSubmitting(false);
           return;
         }
+        if (!data?.session) {
+          setErrorMessage('No active session found. Please check your credentials or confirm your email.');
+          setIsSubmitting(false);
+          return;
+        }
       }
 
       const user = users.find(u => u.email.toLowerCase() === loginEmail.trim().toLowerCase());
@@ -221,6 +226,13 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
         });
         if (signUpError) {
           setErrorMessage(signUpError.message);
+          setIsSubmitting(false);
+          return;
+        }
+
+        // If session is null (email confirmation required), do not redirect
+        if (!data?.session) {
+          setSuccessMessage('Check your email and confirm your account before logging in.');
           setIsSubmitting(false);
           return;
         }

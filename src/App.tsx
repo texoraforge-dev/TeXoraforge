@@ -44,6 +44,7 @@ import { LessonNoteModal } from './components/modals/LessonNoteModal';
 import { UploadPdfModal } from './components/modals/UploadPdfModal';
 import { WeeklyDiaryModal } from './components/modals/WeeklyDiaryModal';
 import { FirebaseService } from './lib/firebaseService';
+import { supabase, isSupabaseConfigured } from './lib/supabase';
 import { Submission } from './types';
 
 export default function App() {
@@ -150,6 +151,59 @@ export default function App() {
       if (unsubscribe) unsubscribe();
     };
   }, [currentUser?.id]);
+
+  // Protect private pages with supabase.auth.getSession()
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return;
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const pathname = typeof window !== 'undefined' ? window.location.pathname : '/';
+      const isAuthRoute = pathname === '/login' || pathname === '/signup';
+
+      if (!session) {
+        // If no session exists, redirect to /login
+        if (!isAuthRoute && typeof window !== 'undefined') {
+          window.history.replaceState({}, '', '/login');
+        }
+      } else {
+        // Session exists: redirect to home if on auth pages
+        if (session.user?.email) {
+          const matchedUser = users.find(u => u.email.toLowerCase() === session.user.email?.toLowerCase());
+          if (matchedUser && (!currentUser || currentUser.id !== matchedUser.id)) {
+            actions.setCurrentUserId(matchedUser.id);
+          }
+        }
+        if (isAuthRoute && typeof window !== 'undefined') {
+          window.history.replaceState({}, '', '/');
+        }
+      }
+    }).catch(console.warn);
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      const pathname = typeof window !== 'undefined' ? window.location.pathname : '/';
+      const isAuthRoute = pathname === '/login' || pathname === '/signup';
+
+      if (!session) {
+        if (!isAuthRoute && typeof window !== 'undefined') {
+          window.history.replaceState({}, '', '/login');
+        }
+      } else {
+        if (session.user?.email) {
+          const matchedUser = users.find(u => u.email.toLowerCase() === session.user.email?.toLowerCase());
+          if (matchedUser && (!currentUser || currentUser.id !== matchedUser.id)) {
+            actions.setCurrentUserId(matchedUser.id);
+          }
+        }
+        if (isAuthRoute && typeof window !== 'undefined') {
+          window.history.replaceState({}, '', '/');
+        }
+      }
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, [users, currentUser?.id]);
 
   // Handler for user toggling dark mode
   const handleToggleDarkMode = (val: boolean) => {

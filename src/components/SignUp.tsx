@@ -11,13 +11,13 @@ export const SignUp: React.FC<SignUpProps> = ({ onSuccess, onNavigateToSignIn })
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setSuccess(null);
+    setInfoMessage(null);
     setLoading(true);
 
     try {
@@ -33,18 +33,21 @@ export const SignUp: React.FC<SignUpProps> = ({ onSuccess, onNavigateToSignIn })
       }
 
       setLoading(false);
-      setSuccess('Account created successfully! Redirecting...');
 
+      // If data.session is null, do not redirect. Show confirmation instruction.
+      if (!data?.session) {
+        setInfoMessage('Check your email and confirm your account before logging in.');
+        return;
+      }
+
+      // Only redirect when a real session exists
       if (onSuccess) {
         onSuccess();
       }
 
-      // Redirect to Home page
-      setTimeout(() => {
-        if (typeof window !== 'undefined') {
-          window.location.href = '/';
-        }
-      }, 500);
+      if (typeof window !== 'undefined') {
+        window.location.href = '/';
+      }
     } catch (err: any) {
       setError(err?.message || 'An unexpected error occurred during sign up.');
       setLoading(false);
@@ -106,11 +109,11 @@ export const SignUp: React.FC<SignUpProps> = ({ onSuccess, onNavigateToSignIn })
           </div>
         )}
 
-        {/* Success message */}
-        {success && (
-          <div className="p-3 rounded-xl bg-emerald-950/60 border border-emerald-800/80 text-emerald-300 text-xs flex items-start gap-2">
-            <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-            <span>{success}</span>
+        {/* Success / Verification notice */}
+        {infoMessage && (
+          <div className="p-3 rounded-xl bg-amber-950/60 border border-amber-800/80 text-amber-300 text-xs flex items-start gap-2">
+            <CheckCircle2 className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+            <span>{infoMessage}</span>
           </div>
         )}
       </form>

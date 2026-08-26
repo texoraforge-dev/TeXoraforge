@@ -145,7 +145,11 @@ function getStored<T>(key: string, fallback: T): T {
 function setStored<T>(key: string, value: T): void {
   try {
     localStorage.setItem(key, JSON.stringify(value));
-    window.dispatchEvent(new Event('texora_storage_change'));
+    if (typeof window !== 'undefined') {
+      setTimeout(() => {
+        window.dispatchEvent(new Event('texora_storage_change'));
+      }, 0);
+    }
   } catch (err) {
     console.error(`Failed to set localStorage key "${key}"`, err);
   }
@@ -154,104 +158,52 @@ function setStored<T>(key: string, value: T): void {
 export class AppStorage {
   // Initialization
   static initDefaults() {
-    if (!localStorage.getItem(STORAGE_KEYS.SCHOOLS)) {
-      setStored(STORAGE_KEYS.SCHOOLS, INITIAL_SCHOOLS);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.CLASSES)) {
-      setStored(STORAGE_KEYS.CLASSES, INITIAL_CLASSES);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
-      setStored(STORAGE_KEYS.USERS, INITIAL_USERS);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.STUDENTS)) {
-      setStored(STORAGE_KEYS.STUDENTS, INITIAL_STUDENTS);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.SUBMISSIONS)) {
-      setStored(STORAGE_KEYS.SUBMISSIONS, INITIAL_SUBMISSIONS);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.ATTENDANCE)) {
-      setStored(STORAGE_KEYS.ATTENDANCE, INITIAL_ATTENDANCE);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS)) {
-      setStored(STORAGE_KEYS.NOTIFICATIONS, INITIAL_NOTIFICATIONS);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.SCORE_SHEETS)) {
-      setStored(STORAGE_KEYS.SCORE_SHEETS, INITIAL_SCORE_SHEETS);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.HOMEWORK)) {
-      setStored(STORAGE_KEYS.HOMEWORK, INITIAL_HOMEWORK);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.CLASS_TIMETABLES)) {
-      setStored(STORAGE_KEYS.CLASS_TIMETABLES, INITIAL_CLASS_TIMETABLES);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.EXAM_TIMETABLES)) {
-      setStored(STORAGE_KEYS.EXAM_TIMETABLES, INITIAL_EXAM_TIMETABLES);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.AUDIT_LOGS)) {
-      setStored(STORAGE_KEYS.AUDIT_LOGS, INITIAL_AUDIT_LOGS);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.CHAT_ROOMS)) {
-      setStored(STORAGE_KEYS.CHAT_ROOMS, INITIAL_CHAT_ROOMS);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.CHAT_MESSAGES)) {
-      setStored(STORAGE_KEYS.CHAT_MESSAGES, INITIAL_CHAT_MESSAGES);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.CURRICULA)) {
-      setStored(STORAGE_KEYS.CURRICULA, INITIAL_CURRICULA);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.CBT_EXAMS)) {
-      setStored(STORAGE_KEYS.CBT_EXAMS, INITIAL_CBT_EXAMS);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.CBT_ATTEMPTS)) {
-      setStored(STORAGE_KEYS.CBT_ATTEMPTS, INITIAL_CBT_ATTEMPTS);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.STUDENT_RISK_PROFILES)) {
-      setStored(STORAGE_KEYS.STUDENT_RISK_PROFILES, INITIAL_STUDENT_RISK_PROFILES);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.REMEDIAL_PACKAGES)) {
-      setStored(STORAGE_KEYS.REMEDIAL_PACKAGES, INITIAL_REMEDIAL_PACKAGES);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.SCHOOL_DOCUMENTS)) {
-      setStored(STORAGE_KEYS.SCHOOL_DOCUMENTS, INITIAL_DOCUMENTS);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.FINANCIAL_RECORDS)) {
-      setStored(STORAGE_KEYS.FINANCIAL_RECORDS, INITIAL_FINANCIALS);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.SCHOOL_EVENTS)) {
-      setStored(STORAGE_KEYS.SCHOOL_EVENTS, INITIAL_EVENTS);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.TRANSPORT_ROUTES)) {
-      setStored(STORAGE_KEYS.TRANSPORT_ROUTES, INITIAL_TRANSPORT_ROUTES);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.ATTENDANCE_SETTINGS)) {
-      setStored(STORAGE_KEYS.ATTENDANCE_SETTINGS, INITIAL_ATTENDANCE_SETTINGS);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.STAFF_ATTENDANCE)) {
-      setStored(STORAGE_KEYS.STAFF_ATTENDANCE, INITIAL_STAFF_ATTENDANCE);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.SALARY_PROFILES)) {
-      setStored(STORAGE_KEYS.SALARY_PROFILES, INITIAL_SALARY_PROFILES);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.DEDUCTION_RULES)) {
-      setStored(STORAGE_KEYS.DEDUCTION_RULES, INITIAL_DEDUCTION_RULES);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.PAYROLL_RECORDS)) {
-      setStored(STORAGE_KEYS.PAYROLL_RECORDS, INITIAL_PAYROLL_RECORDS);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.STUDENT_CREDENTIALS)) {
-      setStored(STORAGE_KEYS.STUDENT_CREDENTIALS, INITIAL_STUDENT_CREDENTIALS);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.CLASS_CHAT_MESSAGES)) {
-      setStored(STORAGE_KEYS.CLASS_CHAT_MESSAGES, INITIAL_CLASS_CHAT_MESSAGES);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.CHAT_MODERATION_LOGS)) {
-      setStored(STORAGE_KEYS.CHAT_MODERATION_LOGS, INITIAL_CHAT_MODERATION_LOGS);
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.CURRENT_SCHOOL_ID)) {
-      setStored(STORAGE_KEYS.CURRENT_SCHOOL_ID, 'school_apex');
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.CURRENT_USER_ID)) {
-      setStored(STORAGE_KEYS.CURRENT_USER_ID, 'usr_proprietor1'); // Default to Proprietor
+    let initializedAny = false;
+    const initKey = (key: string, val: any) => {
+      if (!localStorage.getItem(key)) {
+        localStorage.setItem(key, JSON.stringify(val));
+        initializedAny = true;
+      }
+    };
+
+    initKey(STORAGE_KEYS.SCHOOLS, INITIAL_SCHOOLS);
+    initKey(STORAGE_KEYS.CLASSES, INITIAL_CLASSES);
+    initKey(STORAGE_KEYS.USERS, INITIAL_USERS);
+    initKey(STORAGE_KEYS.STUDENTS, INITIAL_STUDENTS);
+    initKey(STORAGE_KEYS.SUBMISSIONS, INITIAL_SUBMISSIONS);
+    initKey(STORAGE_KEYS.ATTENDANCE, INITIAL_ATTENDANCE);
+    initKey(STORAGE_KEYS.NOTIFICATIONS, INITIAL_NOTIFICATIONS);
+    initKey(STORAGE_KEYS.SCORE_SHEETS, INITIAL_SCORE_SHEETS);
+    initKey(STORAGE_KEYS.HOMEWORK, INITIAL_HOMEWORK);
+    initKey(STORAGE_KEYS.CLASS_TIMETABLES, INITIAL_CLASS_TIMETABLES);
+    initKey(STORAGE_KEYS.EXAM_TIMETABLES, INITIAL_EXAM_TIMETABLES);
+    initKey(STORAGE_KEYS.AUDIT_LOGS, INITIAL_AUDIT_LOGS);
+    initKey(STORAGE_KEYS.CHAT_ROOMS, INITIAL_CHAT_ROOMS);
+    initKey(STORAGE_KEYS.CHAT_MESSAGES, INITIAL_CHAT_MESSAGES);
+    initKey(STORAGE_KEYS.CURRICULA, INITIAL_CURRICULA);
+    initKey(STORAGE_KEYS.CBT_EXAMS, INITIAL_CBT_EXAMS);
+    initKey(STORAGE_KEYS.CBT_ATTEMPTS, INITIAL_CBT_ATTEMPTS);
+    initKey(STORAGE_KEYS.STUDENT_RISK_PROFILES, INITIAL_STUDENT_RISK_PROFILES);
+    initKey(STORAGE_KEYS.REMEDIAL_PACKAGES, INITIAL_REMEDIAL_PACKAGES);
+    initKey(STORAGE_KEYS.SCHOOL_DOCUMENTS, INITIAL_DOCUMENTS);
+    initKey(STORAGE_KEYS.FINANCIAL_RECORDS, INITIAL_FINANCIALS);
+    initKey(STORAGE_KEYS.SCHOOL_EVENTS, INITIAL_EVENTS);
+    initKey(STORAGE_KEYS.TRANSPORT_ROUTES, INITIAL_TRANSPORT_ROUTES);
+    initKey(STORAGE_KEYS.ATTENDANCE_SETTINGS, INITIAL_ATTENDANCE_SETTINGS);
+    initKey(STORAGE_KEYS.STAFF_ATTENDANCE, INITIAL_STAFF_ATTENDANCE);
+    initKey(STORAGE_KEYS.SALARY_PROFILES, INITIAL_SALARY_PROFILES);
+    initKey(STORAGE_KEYS.DEDUCTION_RULES, INITIAL_DEDUCTION_RULES);
+    initKey(STORAGE_KEYS.PAYROLL_RECORDS, INITIAL_PAYROLL_RECORDS);
+    initKey(STORAGE_KEYS.STUDENT_CREDENTIALS, INITIAL_STUDENT_CREDENTIALS);
+    initKey(STORAGE_KEYS.CLASS_CHAT_MESSAGES, INITIAL_CLASS_CHAT_MESSAGES);
+    initKey(STORAGE_KEYS.CHAT_MODERATION_LOGS, INITIAL_CHAT_MODERATION_LOGS);
+    initKey(STORAGE_KEYS.CURRENT_SCHOOL_ID, 'school_apex');
+    initKey(STORAGE_KEYS.CURRENT_USER_ID, 'usr_proprietor1');
+
+    if (initializedAny && typeof window !== 'undefined') {
+      setTimeout(() => {
+        window.dispatchEvent(new Event('texora_storage_change'));
+      }, 0);
     }
 
     if (isSupabaseConfigured()) {
@@ -270,7 +222,11 @@ export class AppStorage {
   static resetToDemo() {
     localStorage.clear();
     this.initDefaults();
-    window.dispatchEvent(new Event('texora_storage_change'));
+    if (typeof window !== 'undefined') {
+      setTimeout(() => {
+        window.dispatchEvent(new Event('texora_storage_change'));
+      }, 0);
+    }
   }
 
   // Getters

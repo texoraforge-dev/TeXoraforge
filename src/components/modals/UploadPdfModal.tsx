@@ -9,9 +9,12 @@ import {
   Upload,
   FileCheck2,
   AlertCircle,
-  FileText
+  FileText,
+  Loader2
 } from 'lucide-react';
 import { useAppStore } from '../../storage';
+import { uploadAppFile } from '../../lib/supabaseStorage';
+import { isSupabaseConfigured } from '../../lib/supabase';
 
 interface UploadPdfModalProps {
   isOpen: boolean;
@@ -35,6 +38,7 @@ export const UploadPdfModal: React.FC<UploadPdfModalProps> = ({ isOpen, onClose 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileDataUrl, setFileDataUrl] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
 
   if (!isOpen || !currentUser || !school) return null;
 
@@ -63,54 +67,84 @@ export const UploadPdfModal: React.FC<UploadPdfModalProps> = ({ isOpen, onClose 
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedFile || !title) {
       setErrorMsg('Please choose a PDF file and title.');
       return;
     }
 
-    const targetClassObj = classes.find(c => c.id === classId);
+    setIsUploading(true);
+    setErrorMsg('');
 
-    actions.createSubmission({
-      schoolId: school.id,
-      teacherId: currentUser.id,
-      teacherName: currentUser.name,
-      classId,
-      className: targetClassObj?.name || 'Class',
-      subject,
-      type: 'LESSON_NOTE',
-      title: title + ' (PDF Attachment)',
-      pdfAttachment: {
-        id: 'file_' + Date.now(),
-        fileName: selectedFile.name,
-        fileSize: (selectedFile.size / 1024).toFixed(1) + ' KB',
-        fileType: selectedFile.type,
-        dataUrl: fileDataUrl
-      },
-      lessonNoteContent: {
-        weekNumber: 1,
-        durationMinutes: 80,
-        topic: title,
-        subTopic: 'Attached PDF Document',
-        behavioralObjectives: ['Review attached PDF document.'],
-        instructionalMaterials: ['Uploaded PDF Note'],
-        introduction: 'PDF lesson note uploaded directly by teacher.',
-        coreContentSteps: [
-          {
-            stepNumber: 1,
-            title: 'Attached PDF Material',
-            teacherActivity: 'Refer to uploaded PDF document.',
-            studentActivity: 'Study PDF document.'
-          }
-        ],
-        summary: 'PDF note attachment.',
-        evaluationQuestions: ['See attached PDF.'],
-        assignment: 'See attached PDF.'
+    try {
+      let storagePath = '';
+      let activeUrl = fileDataUrl;
+
+      // Upload to Supabase Storage bucket "app-files" under ${auth.uid()}/submissions/...
+      if (isSupabaseConfigured()) {
+        const uploadRes = await uploadAppFile({
+          featureName: 'submissions',
+          itemId: classId || 'general',
+          file: selectedFile,
+          customFileName: selectedFile.name
+        });
+
+        if (uploadRes.error) {
+          console.warn('Supabase storage upload failed, using local buffer fallback:', uploadRes.error);
+        } else {
+          storagePath = uploadRes.filePath;
+          activeUrl = uploadRes.signedUrl;
+        }
       }
-    });
 
-    onClose();
+      const targetClassObj = classes.find(c => c.id === classId);
+
+      actions.createSubmission({
+        schoolId: school.id,
+        teacherId: currentUser.id,
+        teacherName: currentUser.name,
+        classId,
+        className: targetClassObj?.name || 'Class',
+        subject,
+        type: 'LESSON_NOTE',
+        title: title + ' (PDF Attachment)',
+        pdfAttachment: {
+          id: storagePath || ('file_' + Date.now()),
+          fileName: selectedFile.name,
+          fileSize: (selectedFile.size / 1024).toFixed(1) + ' KB',
+          fileType: selectedFile.type,
+          dataUrl: activeUrl
+        },
+        lessonNoteContent: {
+          weekNumber: 1,
+          durationMinutes: 80,
+          topic: title,
+          subTopic: 'Attached PDF Document',
+          behavioralObjectives: ['Review attached PDF document.'],
+          instructionalMaterials: ['Uploaded PDF Note'],
+          introduction: 'PDF lesson note uploaded directly by teacher.',
+          coreContentSteps: [
+            {
+              stepNumber: 1,
+              title: 'Attached PDF Material',
+              teacherActivity: 'Refer to uploaded PDF document.',
+              studentActivity: 'Study PDF document.'
+            }
+          ],
+          summary: 'PDF note attachment.',
+          evaluationQuestions: ['See attached PDF.'],
+          assignment: 'See attached PDF.'
+        }
+      });
+
+      setIsUploading(false);
+      onClose();
+    } catch (err: any) {
+      console.error('Failed to submit PDF:', err);
+      setErrorMsg(err?.message || 'Failed to upload PDF note.');
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -218,10 +252,11 @@ export const UploadPdfModal: React.FC<UploadPdfModalProps> = ({ isOpen, onClose 
             </button>
             <button
               type="submit"
-              disabled={!selectedFile}
-              className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold shadow-md cursor-pointer"
+              disabled={!selectedFile || isUploading}
+              className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold shadow-md cursor-pointer flex items-center gap-2"
             >
-              Upload & Submit PDF
+              {isUploading && <Loader2 className="h-4 w-4 animate-spin text-white" />}
+              <span>{isUploading ? 'Uploading to Storage...' : 'Upload & Submit PDF'}</span>
             </button>
           </div>
 

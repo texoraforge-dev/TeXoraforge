@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Users,
   GraduationCap,
@@ -23,10 +23,12 @@ import {
   Wand2
 } from 'lucide-react';
 import { useAppStore } from '../storage';
-import { Submission } from '../types';
+import { Submission, User } from '../types';
 import { SubmissionsTrendChart } from './SubmissionsTrendChart';
 import { SubjectPerformanceChart } from './SubjectPerformanceChart';
 import { downloadAdminReportCSV } from '../lib/reportExporter';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { SupabaseService } from '../lib/supabaseService';
 
 interface AdminDashboardProps {
   onNavigate: (view: string, extraId?: string) => void;
@@ -37,7 +39,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onNavigate,
   onReviewSubmission
 }) => {
-  const { school, users, classes, students, submissions, attendance, currentUser } = useAppStore();
+  const { school, users, classes, students, submissions, attendance, currentUser, actions } = useAppStore();
+  const [authUser, setAuthUser] = useState<any>(null);
+
+  // Fetch current authenticated user via supabase.auth.getUser()
+  useEffect(() => {
+    if (isSupabaseConfigured()) {
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (user) {
+          setAuthUser(user);
+        }
+      }).catch(console.warn);
+    }
+  }, []);
 
   const isProprietor = currentUser?.role === 'PROPRIETOR';
   const isVP = currentUser?.role === 'VICE_PRINCIPAL';
@@ -49,11 +63,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const revisionCount = submissions.filter(s => s.status === 'REVISION_REQUESTED').length;
 
   // Calculate today or latest average attendance %
-  let latestAttendanceRate = 95;
+  let latestAttendanceRate = 0;
   if (attendance.length > 0) {
-    const latest = attendance[0];
-    const presentCount = latest.records.filter(r => r.status === 'PRESENT' || r.status === 'LATE').length;
-    latestAttendanceRate = Math.round((presentCount / (latest.records.length || 1)) * 100);
+    let totalRecords = 0;
+    let totalPresent = 0;
+    attendance.forEach(att => {
+      att.records.forEach(r => {
+        totalRecords++;
+        if (r.status === 'PRESENT' || r.status === 'LATE') {
+          totalPresent++;
+        }
+      });
+    });
+    latestAttendanceRate = totalRecords > 0 ? Math.round((totalPresent / totalRecords) * 100) : 0;
   }
 
   // Handle downloading report CSV

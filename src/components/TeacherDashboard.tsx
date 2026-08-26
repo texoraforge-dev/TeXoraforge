@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   FileText,
   Upload,
@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { useAppStore } from '../storage';
 import { Submission } from '../types';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 interface TeacherDashboardProps {
   onNavigate: (view: string) => void;
@@ -42,6 +43,15 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
 }) => {
   const { currentUser, classes, submissions } = useAppStore();
   const [isQuickMenuOpen, setIsQuickMenuOpen] = useState(false);
+  const [authUser, setAuthUser] = useState<any>(null);
+
+  useEffect(() => {
+    if (isSupabaseConfigured()) {
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (user) setAuthUser(user);
+      }).catch(console.warn);
+    }
+  }, []);
 
   if (!currentUser || currentUser.role !== 'TEACHER') {
     return <div className="p-8 text-center text-slate-500">Access Restricted to Teacher Accounts</div>;

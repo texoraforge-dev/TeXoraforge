@@ -46,7 +46,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   onToggleMobileMenu
 }) => {
   const { school, currentUser, users, notifications, actions } = useAppStore();
-  const [showDemoMenu, setShowDemoMenu] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isOnline, setIsOnline] = useState<boolean>(typeof navigator !== 'undefined' ? navigator.onLine : true);
 
@@ -76,13 +75,6 @@ export const Navbar: React.FC<NavbarProps> = ({
       (unreadRejections > 0 ? ` • ${unreadRejections} Rejection/Correction${unreadRejections > 1 ? 's' : ''}` : '') +
       (unreadSubmissions > 0 ? ` • ${unreadSubmissions} Submission${unreadSubmissions > 1 ? 's' : ''}` : '')
     : 'Notifications';
-
-  const handleSwitchUser = (userId: string) => {
-    actions.setCurrentUserId(userId);
-    setShowDemoMenu(false);
-    setShowUserMenu(false);
-    onNavigate('dashboard');
-  };
 
   const handleLogout = () => {
     SupabaseService.signOut().catch(console.error);
@@ -123,68 +115,6 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Right Action Bar */}
         <div className="flex items-center gap-2 sm:gap-3">
-
-          {/* Quick Demo Role Switcher Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setShowDemoMenu(!showDemoMenu)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/50 text-amber-800 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60 transition-all shadow-xs cursor-pointer"
-              title="Quickly switch roles for evaluation"
-            >
-              <Sparkles className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
-              <span className="hidden sm:inline font-semibold">Demo Role Switcher</span>
-              <span className="sm:hidden font-semibold">Switch Role</span>
-              <ChevronDown className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
-            </button>
-
-            {showDemoMenu && (
-              <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-2 z-50 animate-in fade-in zoom-in-95 duration-100">
-                <div className="px-3 py-1.5 border-b border-slate-100 dark:border-slate-700">
-                  <p className="text-xs font-bold text-slate-900 dark:text-white">Switch Role Demo Preset</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Test Proprietor, VP, Admin, Teacher & Parent</p>
-                </div>
-                <div className="py-1 max-h-80 overflow-y-auto">
-                  {users.map(u => {
-                    const badge = getRoleBadgeInfo(u.role);
-                    return (
-                      <button
-                        key={u.id}
-                        onClick={() => handleSwitchUser(u.id)}
-                        className={`w-full px-3 py-2 text-left flex items-center gap-2.5 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer ${
-                          currentUser?.id === u.id ? 'bg-indigo-50/70 dark:bg-indigo-950/40' : ''
-                        }`}
-                      >
-                        <img
-                          src={u.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80'}
-                          alt={u.name}
-                          className="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-slate-700 shrink-0"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-1">
-                            <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{u.name}</p>
-                            <span className={`text-[9px] px-1.5 py-0.2 rounded font-extrabold uppercase shrink-0 border ${badge.bgClass} ${badge.textClass} ${badge.borderClass}`}>
-                              {badge.label.split(' ')[0]}
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                            {u.email}
-                          </p>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-                <div className="px-3 pt-2 pb-1 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center">
-                  <button
-                    onClick={() => actions.resetToDemo()}
-                    className="text-[11px] text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 flex items-center gap-1 cursor-pointer"
-                  >
-                    <RefreshCw className="h-3 w-3" /> Reset Demo Data
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
 
           {/* Offline / Online Mode Badge */}
           <div

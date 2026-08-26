@@ -63,6 +63,16 @@ export class SupabaseService {
     return data.session;
   }
 
+  static async getAuthUser() {
+    if (!isSupabaseConfigured()) return null;
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error) {
+      console.warn('supabase.auth.getUser() error:', error);
+      return null;
+    }
+    return user;
+  }
+
   // ------------------------------------------------------------------
   // SCHOOLS
   // ------------------------------------------------------------------
@@ -201,6 +211,7 @@ export class SupabaseService {
       gender: s.gender as any,
       guardianName: s.guardian_name,
       guardianPhone: s.guardian_phone,
+      photoUrl: s.photo_url || undefined,
       accessCode: s.access_code || `PAR-2026-${s.id.slice(-4)}`,
       active: s.active ?? true
     }));
@@ -217,6 +228,7 @@ export class SupabaseService {
       gender: student.gender,
       guardian_name: student.guardianName,
       guardian_phone: student.guardianPhone,
+      photo_url: student.photoUrl,
       active: student.active
     });
     return !error;

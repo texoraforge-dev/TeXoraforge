@@ -5,11 +5,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { X, UserPlus, Upload, Camera, FileText, Key, CheckCircle2, RefreshCw, BookOpen, Check, Plus } from 'lucide-react';
+import { X, UserPlus, Upload, Camera, FileText, Key, CheckCircle2, RefreshCw, BookOpen, Check, Plus, Loader2 } from 'lucide-react';
 import { Student, SchoolClass, School } from '../../types';
 import { useAppStore } from '../../storage';
 import { DEFAULT_SCHOOL_SUBJECTS } from '../../mockData';
 import { generateAdmissionLetterPDF } from '../../lib/pdfGenerator';
+import { uploadAppFile } from '../../lib/supabaseStorage';
+import { isSupabaseConfigured } from '../../lib/supabase';
 
 interface AdmitStudentModalProps {
   isOpen: boolean;
@@ -128,14 +130,38 @@ export function AdmitStudentModal({
     setAccessCode(`PAR-${yr}-${codeSuffix}`);
   };
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [isPhotoUploading, setIsPhotoUploading] = useState(false);
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhotoUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    // Show immediate preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPhotoUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    // Upload to Supabase Storage
+    if (isSupabaseConfigured()) {
+      setIsPhotoUploading(true);
+      try {
+        const uploadRes = await uploadAppFile({
+          featureName: 'students',
+          itemId: existingStudent?.id || admissionNo || 'new_student',
+          file,
+          customFileName: `photo_${Date.now()}.${file.name.split('.').pop() || 'jpg'}`
+        });
+
+        if (!uploadRes.error && uploadRes.signedUrl) {
+          setPhotoUrl(uploadRes.signedUrl);
+        }
+      } catch (err) {
+        console.warn('Storage upload error for student photo:', err);
+      } finally {
+        setIsPhotoUploading(false);
+      }
     }
   };
 
@@ -246,7 +272,12 @@ export function AdmitStudentModal({
             {/* Passport Photo */}
             <div className="flex flex-col items-center justify-center space-y-2">
               <div className="relative w-24 h-28 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center group">
-                {photoUrl ? (
+                {isPhotoUploading ? (
+                  <div className="flex flex-col items-center justify-center p-2 text-center">
+                    <Loader2 className="w-6 h-6 text-indigo-500 animate-spin mb-1" />
+                    <span className="text-[9px] text-indigo-400 font-bold">Uploading...</span>
+                  </div>
+                ) : photoUrl ? (
                   <img src={photoUrl} alt="Passport Preview" className="w-full h-full object-cover" />
                 ) : (
                   <div className="text-center p-2">

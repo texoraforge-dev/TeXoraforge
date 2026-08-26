@@ -37,6 +37,8 @@ import {
 import { useAppStore } from '../storage';
 import { GeneratedAIMediaItem, AIMediaType } from '../types';
 import { FirebaseService } from '../lib/firebaseService';
+import { uploadAppFile } from '../lib/supabaseStorage';
+import { isSupabaseConfigured } from '../lib/supabase';
 
 interface AIMediaStudioProps {
   onBack?: () => void;
@@ -220,7 +222,7 @@ export const AIMediaStudio: React.FC<AIMediaStudioProps> = ({ onBack, onInsertIn
   }, [mediaHistory]);
 
   // Handle Edit Image Upload
-  const handleEditImageUpload = (file: File) => {
+  const handleEditImageUpload = async (file: File) => {
     if (!file.type.startsWith('image/')) {
       setImageError('Please select a valid image file (PNG, JPEG, WebP).');
       return;
@@ -234,10 +236,23 @@ export const AIMediaStudio: React.FC<AIMediaStudioProps> = ({ onBack, onInsertIn
       }
     };
     reader.readAsDataURL(file);
+
+    if (isSupabaseConfigured()) {
+      try {
+        await uploadAppFile({
+          featureName: 'media',
+          itemId: 'edit_inputs',
+          file,
+          customFileName: `edit_src_${Date.now()}.${file.name.split('.').pop() || 'png'}`
+        });
+      } catch (err) {
+        console.warn('Media upload to Supabase storage:', err);
+      }
+    }
   };
 
   // Handle Video Image Upload
-  const handleVideoImageUpload = (file: File) => {
+  const handleVideoImageUpload = async (file: File) => {
     if (!file.type.startsWith('image/')) {
       setVideoError('Please upload a valid image file (PNG, JPEG, WebP).');
       return;
@@ -252,6 +267,19 @@ export const AIMediaStudio: React.FC<AIMediaStudioProps> = ({ onBack, onInsertIn
       }
     };
     reader.readAsDataURL(file);
+
+    if (isSupabaseConfigured()) {
+      try {
+        await uploadAppFile({
+          featureName: 'media',
+          itemId: 'video_inputs',
+          file,
+          customFileName: `video_src_${Date.now()}.${file.name.split('.').pop() || 'png'}`
+        });
+      } catch (err) {
+        console.warn('Video source upload to Supabase storage:', err);
+      }
+    }
   };
 
   // Execute Gemini 3.1 Flash Image Generation / Edit

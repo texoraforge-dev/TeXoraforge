@@ -168,7 +168,7 @@ export class AppStorage {
 
     initKey(STORAGE_KEYS.SCHOOLS, INITIAL_SCHOOLS);
     initKey(STORAGE_KEYS.CLASSES, INITIAL_CLASSES);
-    initKey(STORAGE_KEYS.USERS, INITIAL_USERS);
+    initKey(STORAGE_KEYS.USERS, []);
     initKey(STORAGE_KEYS.STUDENTS, INITIAL_STUDENTS);
     initKey(STORAGE_KEYS.SUBMISSIONS, INITIAL_SUBMISSIONS);
     initKey(STORAGE_KEYS.ATTENDANCE, INITIAL_ATTENDANCE);
@@ -198,7 +198,7 @@ export class AppStorage {
     initKey(STORAGE_KEYS.CLASS_CHAT_MESSAGES, INITIAL_CLASS_CHAT_MESSAGES);
     initKey(STORAGE_KEYS.CHAT_MODERATION_LOGS, INITIAL_CHAT_MODERATION_LOGS);
     initKey(STORAGE_KEYS.CURRENT_SCHOOL_ID, 'school_apex');
-    initKey(STORAGE_KEYS.CURRENT_USER_ID, 'usr_proprietor1');
+    initKey(STORAGE_KEYS.CURRENT_USER_ID, null);
 
     if (initializedAny && typeof window !== 'undefined') {
       setTimeout(() => {
@@ -286,15 +286,15 @@ export class AppStorage {
   }
 
   static getUsers(schoolId?: string): User[] {
-    const users = getStored<User[]>(STORAGE_KEYS.USERS, INITIAL_USERS);
+    const users = getStored<User[]>(STORAGE_KEYS.USERS, []);
     if (!schoolId) return users;
     return users.filter(u => u.schoolId === schoolId);
   }
 
   static getCurrentUser(): User | null {
-    const currentUserId = getStored<string | null>(STORAGE_KEYS.CURRENT_USER_ID, 'usr_proprietor1');
+    const currentUserId = getStored<string | null>(STORAGE_KEYS.CURRENT_USER_ID, null);
     if (!currentUserId) return null;
-    const users = getStored<User[]>(STORAGE_KEYS.USERS, INITIAL_USERS);
+    const users = getStored<User[]>(STORAGE_KEYS.USERS, []);
     return users.find(u => u.id === currentUserId) || null;
   }
 
@@ -3009,8 +3009,22 @@ export function useAppStore() {
 
     window.addEventListener('texora_storage_change', handleStorageChange);
 
-    // If Supabase is configured, fetch live remote data into local state cache
+    // If Supabase is configured, fetch live remote data into local state cache and authenticate
     if (isSupabaseConfigured()) {
+      // Fetch currently authenticated user using supabase.auth.getUser()
+      supabase.auth.getUser().then(async ({ data: { user }, error }) => {
+        if (user && !error && user.email) {
+          const dbUsers = await SupabaseService.getUsers();
+          const matchedUser = dbUsers.find(u => u.email.toLowerCase() === user.email?.toLowerCase());
+          if (matchedUser) {
+            AppStorage.setCurrentUserId(matchedUser.id);
+            setVersion(v => v + 1);
+          }
+        }
+      }).catch(err => {
+        console.warn('supabase.auth.getUser error in useAppStore:', err);
+      });
+
       Promise.all([
         SupabaseService.getSchools(),
         SupabaseService.getUsers(),
@@ -3035,11 +3049,20 @@ export function useAppStore() {
 
       // Listen for auth state changes if Supabase Auth is active
       const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-        if (session?.user?.email) {
+        if (event === 'SIGNED_OUT') {
+          AppStorage.setCurrentUserId(null);
+          setVersion(v => v + 1);
+          return;
+        }
+
+        // Fetch verified user using supabase.auth.getUser()
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.email) {
           const users = AppStorage.getUsers();
-          const matchedUser = users.find(u => u.email.toLowerCase() === session.user.email?.toLowerCase());
+          const matchedUser = users.find(u => u.email.toLowerCase() === user.email?.toLowerCase());
           if (matchedUser) {
             AppStorage.setCurrentUserId(matchedUser.id);
+            setVersion(v => v + 1);
           }
         }
       });

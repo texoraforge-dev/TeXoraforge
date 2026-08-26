@@ -31,6 +31,7 @@ import { supabase } from '../supabaseClient';
 import { SupabaseService } from '../lib/supabaseService';
 import { isSupabaseConfigured } from '../lib/supabase';
 import { FirebaseService } from '../lib/firebaseService';
+import { uploadAppFile } from '../lib/supabaseStorage';
 
 interface AuthViewProps {
   onSuccess: () => void;
@@ -41,18 +42,18 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
   const [tab, setTab] = useState<'STUDENT_CODE' | 'LOGIN' | 'PARENT_CODE' | 'DRIVER_CODE' | 'REGISTER_SCHOOL'>('STUDENT_CODE');
   
   // Login form state
-  const [loginEmail, setLoginEmail] = useState('admin@apexhorizon.edu');
-  const [loginPassword, setLoginPassword] = useState('password123');
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
   const [loginRole, setLoginRole] = useState<UserRole>('SCHOOL_ADMIN');
-  const [parentAccessCodeInput, setParentAccessCodeInput] = useState('PAR-2026-1049');
+  const [parentAccessCodeInput, setParentAccessCodeInput] = useState('');
   
   // Student portal login state
-  const [studentCodeInput, setStudentCodeInput] = useState('TXR-P5-00482');
-  const [studentPinInput, setStudentPinInput] = useState('1234');
+  const [studentCodeInput, setStudentCodeInput] = useState('');
+  const [studentPinInput, setStudentPinInput] = useState('');
 
   // Driver portal login state
-  const [driverAccessCodeInput, setDriverAccessCodeInput] = useState('DRV-8492-BUS');
-  const [driverPinInput, setDriverPinInput] = useState('1234');
+  const [driverAccessCodeInput, setDriverAccessCodeInput] = useState('');
+  const [driverPinInput, setDriverPinInput] = useState('');
 
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -90,7 +91,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
     }
   };
 
-  const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
@@ -102,6 +103,22 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
         setSchoolLogoUrl(reader.result as string);
       };
       reader.readAsDataURL(file);
+
+      if (isSupabaseConfigured()) {
+        try {
+          const uploadRes = await uploadAppFile({
+            featureName: 'logos',
+            itemId: 'register_logo',
+            file,
+            customFileName: `school_logo_${Date.now()}.${file.name.split('.').pop() || 'png'}`
+          });
+          if (!uploadRes.error && uploadRes.signedUrl) {
+            setSchoolLogoUrl(uploadRes.signedUrl);
+          }
+        } catch (err) {
+          console.warn('Storage upload error for school registration logo:', err);
+        }
+      }
     }
   };
 
@@ -129,9 +146,17 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
         }
       }
 
-      const user = users.find(u => u.email.toLowerCase() === loginEmail.trim().toLowerCase());
+      let user = users.find(u => u.email.toLowerCase() === loginEmail.trim().toLowerCase());
+      if (!user && isSupabaseConfigured()) {
+        const dbUsers = await SupabaseService.getUsers();
+        user = dbUsers.find(u => u.email.toLowerCase() === loginEmail.trim().toLowerCase());
+        if (user) {
+          actions.saveUser(user);
+        }
+      }
+
       if (!user) {
-        setErrorMessage(`No profile found for email "${loginEmail}". Check spelling or select a demo preset.`);
+        setErrorMessage(`No profile found for email "${loginEmail}". Please check your credentials or register an account.`);
         setIsSubmitting(false);
         return;
       }
@@ -247,15 +272,6 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
       onSuccess();
     } else {
       setErrorMessage('Invalid Driver Access Code or PIN. Please check your credential card from the School Proprietor.');
-    }
-  };
-
-  const handleQuickDemo = (userId: string) => {
-    const user = users.find(u => u.id === userId);
-    if (user) {
-      actions.setCurrentSchoolId(user.schoolId);
-      actions.setCurrentUserId(user.id);
-      onSuccess();
     }
   };
 
@@ -803,74 +819,6 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
               </button>
             </form>
           )}
-
-          {/* Preset Demo Quick Logins */}
-          <div className="pt-4 border-t border-slate-700/80">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
-              <Sparkles className="h-3.5 w-3.5 text-amber-400" /> Instant Demo Presets (1-Click)
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-6 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickDemo('usr_proprietor1')}
-                className="p-2 rounded-xl bg-amber-950/40 border border-amber-800/60 hover:bg-amber-900/50 text-left transition-colors cursor-pointer"
-              >
-                <p className="text-xs font-bold text-amber-200 truncate">Dr. Pendelton</p>
-                <p className="text-[10px] text-amber-400 font-semibold">Proprietor</p>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickDemo('usr_vp1')}
-                className="p-2 rounded-xl bg-blue-950/40 border border-blue-800/60 hover:bg-blue-900/50 text-left transition-colors cursor-pointer"
-              >
-                <p className="text-xs font-bold text-blue-200 truncate">Mrs. Folorunsho</p>
-                <p className="text-[10px] text-blue-400 font-semibold">Vice Principal</p>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickDemo('usr_admin1')}
-                className="p-2 rounded-xl bg-purple-950/40 border border-purple-800/60 hover:bg-purple-900/50 text-left transition-colors cursor-pointer"
-              >
-                <p className="text-xs font-bold text-purple-200 truncate">Dr. Vance</p>
-                <p className="text-[10px] text-purple-400 font-semibold">School Admin</p>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickDemo('usr_t1')}
-                className="p-2 rounded-xl bg-emerald-950/40 border border-emerald-800/60 hover:bg-emerald-900/50 text-left transition-colors cursor-pointer"
-              >
-                <p className="text-xs font-bold text-emerald-200 truncate">Mr. Okon</p>
-                <p className="text-[10px] text-emerald-400 font-semibold">Teacher</p>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  const std = actions.loginAsStudentWithCode('TXR-P5-00482', '1234');
-                  if (std) onSuccess();
-                }}
-                className="p-2 rounded-xl bg-indigo-950/40 border border-indigo-800/60 hover:bg-indigo-900/50 text-left transition-colors cursor-pointer"
-              >
-                <p className="text-xs font-bold text-indigo-200 truncate">Adebayo T.</p>
-                <p className="text-[10px] text-indigo-400 font-semibold">Student</p>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  const drv = actions.loginAsDriverWithCode('DRV-8492-BUS', '1234');
-                  if (drv) onSuccess();
-                }}
-                className="p-2 rounded-xl bg-amber-950/50 border border-amber-500/80 hover:bg-amber-900/60 text-left transition-colors cursor-pointer"
-              >
-                <p className="text-xs font-bold text-amber-200 truncate">Mr. Samuel I.</p>
-                <p className="text-[10px] text-amber-400 font-semibold">Bus Driver</p>
-              </button>
-            </div>
-          </div>
 
         </div>
       </div>

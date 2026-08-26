@@ -152,23 +152,23 @@ export default function App() {
     };
   }, [currentUser?.id]);
 
-  // Protect private pages with supabase.auth.getSession()
+  // Protect private pages and fetch current authenticated user with supabase.auth.getUser()
   useEffect(() => {
     if (!isSupabaseConfigured()) return;
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getUser().then(({ data: { user }, error }) => {
       const pathname = typeof window !== 'undefined' ? window.location.pathname : '/';
       const isAuthRoute = pathname === '/login' || pathname === '/signup';
 
-      if (!session) {
-        // If no session exists, redirect to /login
+      if (error || !user) {
+        // If no user exists, redirect to /login
         if (!isAuthRoute && typeof window !== 'undefined') {
           window.history.replaceState({}, '', '/login');
         }
       } else {
-        // Session exists: redirect to home if on auth pages
-        if (session.user?.email) {
-          const matchedUser = users.find(u => u.email.toLowerCase() === session.user.email?.toLowerCase());
+        // User exists: redirect to home if on auth pages
+        if (user.email) {
+          const matchedUser = users.find(u => u.email.toLowerCase() === user.email?.toLowerCase());
           if (matchedUser && (!currentUser || currentUser.id !== matchedUser.id)) {
             actions.setCurrentUserId(matchedUser.id);
           }
@@ -179,17 +179,27 @@ export default function App() {
       }
     }).catch(console.warn);
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event) => {
       const pathname = typeof window !== 'undefined' ? window.location.pathname : '/';
       const isAuthRoute = pathname === '/login' || pathname === '/signup';
 
-      if (!session) {
+      if (event === 'SIGNED_OUT') {
+        actions.setCurrentUserId(null);
+        if (!isAuthRoute && typeof window !== 'undefined') {
+          window.history.replaceState({}, '', '/login');
+        }
+        return;
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
         if (!isAuthRoute && typeof window !== 'undefined') {
           window.history.replaceState({}, '', '/login');
         }
       } else {
-        if (session.user?.email) {
-          const matchedUser = users.find(u => u.email.toLowerCase() === session.user.email?.toLowerCase());
+        if (user.email) {
+          const matchedUser = users.find(u => u.email.toLowerCase() === user.email?.toLowerCase());
           if (matchedUser && (!currentUser || currentUser.id !== matchedUser.id)) {
             actions.setCurrentUserId(matchedUser.id);
           }

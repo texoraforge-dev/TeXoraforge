@@ -15,16 +15,32 @@ import {
   Download,
   Search,
   Lock,
-  UserCheck
+  UserCheck,
+  Upload,
+  Trash2,
+  Loader2,
+  ExternalLink
 } from 'lucide-react';
 import { useAppStore } from '../storage';
 import { SchoolDocument, FinancialRecord, SchoolEvent, TransportRoute } from '../types';
+import { uploadAppFile, getFileSignedUrl, deleteAppFile } from '../lib/supabaseStorage';
+import { isSupabaseConfigured } from '../lib/supabase';
 
 export const DocumentVaultView: React.FC = () => {
   const { school, schoolDocuments, financialRecords, schoolEvents, transportRoutes, actions, currentUser } = useAppStore();
   const [activeTab, setActiveTab] = useState<'DOCUMENTS' | 'FINANCE' | 'EVENTS' | 'TRANSPORT'>('DOCUMENTS');
 
   const isAdmin = currentUser?.role === 'PROPRIETOR' || currentUser?.role === 'VICE_PRINCIPAL' || currentUser?.role === 'SCHOOL_ADMIN';
+
+  // Document Upload Form State
+  const [docTitle, setDocTitle] = useState<string>('');
+  const [docCategory, setDocCategory] = useState<SchoolDocument['category']>('ACADEMIC');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  // Finance Filter State
+  const [financeSearch, setFinanceSearch] = useState<string>('');
 
   // Secure Guard: General School Vault & school-wide fee ledgers are strictly restricted to administrative staff and NOT teachers, parents, or students
   if (!isAdmin) {
@@ -50,32 +66,87 @@ export const DocumentVaultView: React.FC = () => {
     );
   }
 
-  // Document Upload Form State
-  const [docTitle, setDocTitle] = useState<string>('');
-  const [docCategory, setDocCategory] = useState<SchoolDocument['category']>('ACADEMIC');
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      if (!docTitle) {
+        setDocTitle(file.name.replace(/\.[^/.]+$/, ''));
+      }
+    }
+  };
 
-  // Finance Filter State
-  const [financeSearch, setFinanceSearch] = useState<string>('');
-
-  const handleAddDocument = (e: React.FormEvent) => {
+  const handleAddDocument = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!docTitle) return;
 
-    const newDoc: SchoolDocument = {
-      id: `doc_${Date.now()}`,
-      schoolId: school?.id || 'school_apex',
-      title: docTitle,
-      category: docCategory,
-      fileName: `${docTitle.replace(/\s+/g, '_')}.pdf`,
-      fileSize: '1.2 MB',
-      uploadedByName: currentUser?.name || 'School Admin',
-      uploadedByRole: currentUser?.role || 'SCHOOL_ADMIN',
-      accessRoles: ['PROPRIETOR', 'VICE_PRINCIPAL', 'SCHOOL_ADMIN', 'TEACHER'],
-      createdAt: new Date().toISOString()
-    };
+    setIsUploading(true);
+    setErrorMsg('');
 
-    actions.saveSchoolDocument(newDoc);
-    setDocTitle('');
+    try {
+      let fileUrl = '';
+      let fileName = selectedFile ? selectedFile.name : `${docTitle.replace(/\s+/g, '_')}.pdf`;
+      let fileSize = selectedFile ? `${(selectedFile.size / (1024 * 1024)).toFixed(2)} MB` : '1.2 MB';
+
+      if (selectedFile && isSupabaseConfigured()) {
+        const uploadRes = await uploadAppFile({
+          featureName: 'documents',
+          itemId: school?.id || 'school_vault',
+          file: selectedFile,
+          customFileName: selectedFile.name
+        });
+
+        if (uploadRes.error) {
+          console.warn('Storage upload error:', uploadRes.error);
+        } else {
+          fileUrl = uploadRes.signedUrl;
+        }
+      }
+
+      const newDoc: SchoolDocument = {
+        id: `doc_${Date.now()}`,
+        schoolId: school?.id || 'school_apex',
+        title: docTitle,
+        category: docCategory,
+        fileName,
+        fileSize,
+        fileUrl: fileUrl || undefined,
+        uploadedByName: currentUser?.name || 'School Admin',
+        uploadedByRole: currentUser?.role || 'SCHOOL_ADMIN',
+        accessRoles: ['PROPRIETOR', 'VICE_PRINCIPAL', 'SCHOOL_ADMIN', 'TEACHER'],
+        createdAt: new Date().toISOString()
+      };
+
+      actions.saveSchoolDocument(newDoc);
+      setDocTitle('');
+      setSelectedFile(null);
+      setIsUploading(false);
+    } catch (err: any) {
+      console.error('Error uploading document to vault:', err);
+      setErrorMsg(err?.message || 'Failed to upload document.');
+      setIsUploading(false);
+    }
+  };
+
+  const handleDeleteDocument = async (doc: SchoolDocument) => {
+    if (confirm(`Are you sure you want to delete "${doc.title}"?`)) {
+      if (doc.fileUrl && isSupabaseConfigured()) {
+        await deleteAppFile(doc.fileUrl);
+      }
+      // Remove from state
+      const updated = schoolDocuments.filter(d => d.id !== doc.id);
+      localStorage.setItem('texora_school_documents_v1', JSON.stringify(updated));
+      window.location.reload();
+    }
+  };
+
+  const handleDownloadOrView = async (doc: SchoolDocument) => {
+    if (doc.fileUrl) {
+      const url = await getFileSignedUrl(doc.fileUrl);
+      window.open(url, '_blank');
+    } else {
+      alert(`Document: ${doc.title} (${doc.fileName})\nUploaded to School Vault.`);
+    }
   };
 
   const handleUpdatePayment = (recordId: string, status: FinancialRecord['status']) => {
@@ -156,7 +227,14 @@ export const DocumentVaultView: React.FC = () => {
               <span>Upload Document to Secure School Vault</span>
             </h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {errorMsg && (
+              <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-800 text-rose-300 text-xs flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-rose-400 shrink-0" />
+                <span>{errorMsg}</span>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
               <input
                 type="text"
                 value={docTitle}
@@ -176,11 +254,25 @@ export const DocumentVaultView: React.FC = () => {
                 <option value="EXAM_PAPER">Examination Question Papers</option>
               </select>
 
+              <label className="flex items-center justify-center gap-1.5 px-3 py-2 border border-dashed border-slate-300 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer hover:border-indigo-500 truncate">
+                <Upload className="h-4 w-4 text-indigo-500 shrink-0" />
+                <span className="truncate">{selectedFile ? selectedFile.name : 'Choose File...'}</span>
+                <input type="file" onChange={handleFileChange} className="hidden" />
+              </label>
+
               <button
                 type="submit"
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-5 py-2 rounded-xl shadow cursor-pointer transition-all"
+                disabled={!docTitle || isUploading}
+                className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold text-xs px-5 py-2 rounded-xl shadow cursor-pointer transition-all flex items-center justify-center gap-2"
               >
-                Upload Document
+                {isUploading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin text-white" />
+                    <span>Uploading...</span>
+                  </>
+                ) : (
+                  <span>Upload Document</span>
+                )}
               </button>
             </div>
           </form>
@@ -198,9 +290,22 @@ export const DocumentVaultView: React.FC = () => {
                   <p className="text-[10px] text-slate-400">Uploaded by: {doc.uploadedByName}</p>
                 </div>
 
-                <button className="p-2.5 bg-slate-100 dark:bg-slate-700 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 rounded-xl text-slate-600 dark:text-slate-300 hover:text-indigo-600 transition-all cursor-pointer">
-                  <Download className="h-4 w-4" />
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => handleDownloadOrView(doc)}
+                    title="Download / View Document"
+                    className="p-2.5 bg-slate-100 dark:bg-slate-700 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 rounded-xl text-slate-600 dark:text-slate-300 hover:text-indigo-600 transition-all cursor-pointer"
+                  >
+                    <Download className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteDocument(doc)}
+                    title="Delete Document"
+                    className="p-2.5 bg-slate-100 dark:bg-slate-700 hover:bg-rose-50 dark:hover:bg-rose-950/60 rounded-xl text-slate-600 dark:text-slate-300 hover:text-rose-500 transition-all cursor-pointer"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>

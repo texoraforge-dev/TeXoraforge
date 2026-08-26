@@ -32,11 +32,14 @@ import {
   GraduationCap,
   Users,
   Layers,
-  CheckSquare
+  CheckSquare,
+  Loader2
 } from 'lucide-react';
 import { useAppStore } from '../storage';
 import { DEFAULT_SCHOOL_SUBJECTS, SUBJECT_OPTIONS_BY_TIER } from '../mockData';
 import { Logo, COMPANY_LOGO_DATA_URI } from './Logo';
+import { uploadAppFile } from '../lib/supabaseStorage';
+import { isSupabaseConfigured } from '../lib/supabase';
 
 export const SchoolSettings: React.FC = () => {
   const { school, submissions, attendance, users, classes, students, actions } = useAppStore();
@@ -51,7 +54,9 @@ export const SchoolSettings: React.FC = () => {
   const [academicTerm, setAcademicTerm] = useState<'First Term' | 'Second Term' | 'Third Term'>(school?.academicTerm || 'First Term');
   const [savedGeneral, setSavedGeneral] = useState(false);
 
-  const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [isLogoUploading, setIsLogoUploading] = useState(false);
+
+  const handleLogoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
@@ -63,6 +68,26 @@ export const SchoolSettings: React.FC = () => {
         setLogoUrl(reader.result as string);
       };
       reader.readAsDataURL(file);
+
+      if (isSupabaseConfigured()) {
+        setIsLogoUploading(true);
+        try {
+          const uploadRes = await uploadAppFile({
+            featureName: 'logos',
+            itemId: school?.id || 'school_logo',
+            file,
+            customFileName: `crest_${Date.now()}.${file.name.split('.').pop() || 'png'}`
+          });
+
+          if (!uploadRes.error && uploadRes.signedUrl) {
+            setLogoUrl(uploadRes.signedUrl);
+          }
+        } catch (err) {
+          console.warn('Failed to upload school logo to Supabase storage:', err);
+        } finally {
+          setIsLogoUploading(false);
+        }
+      }
     }
   };
 
@@ -402,8 +427,8 @@ export const SchoolSettings: React.FC = () => {
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">Replaces current logo on exam questions, report cards & identity cards (Max 5MB)</p>
                 </div>
                 <label className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shrink-0">
-                  <Upload className="h-4 w-4" />
-                  <span>Choose File</span>
+                  {isLogoUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                  <span>{isLogoUploading ? 'Uploading...' : 'Choose File'}</span>
                   <input
                     type="file"
                     accept="image/*"
@@ -441,15 +466,7 @@ export const SchoolSettings: React.FC = () => {
               </div>
             </div>
 
-            <div className="pt-4 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center">
-              <button
-                type="button"
-                onClick={() => actions.resetToDemo()}
-                className="text-xs font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 flex items-center gap-1.5 cursor-pointer"
-              >
-                <RefreshCw className="h-3.5 w-3.5" /> Reset Demo Data to Default
-              </button>
-
+            <div className="pt-4 border-t border-slate-200 dark:border-slate-700 flex justify-end items-center">
               <button
                 type="submit"
                 className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow-md flex items-center gap-2 cursor-pointer"

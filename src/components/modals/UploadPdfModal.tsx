@@ -28,12 +28,12 @@ export const UploadPdfModal: React.FC<UploadPdfModalProps> = ({ isOpen, onClose 
     ? classes.filter(c => currentUser.assignedClassIds.includes(c.id))
     : classes;
 
-  const availableSubjects = currentUser && currentUser.role === 'TEACHER' && currentUser.assignedSubjects.length > 0
+  const availableSubjects = currentUser && currentUser.role === 'TEACHER' && currentUser.assignedSubjects && currentUser.assignedSubjects.length > 0
     ? currentUser.assignedSubjects
-    : ['Mathematics', 'English Language', 'Physics', 'Chemistry', 'Biology'];
+    : (school?.subjects && school.subjects.length > 0 ? school.subjects : ['Mathematics', 'English Language', 'Physics', 'Chemistry', 'Biology']);
 
   const [classId, setClassId] = useState(availableClasses[0]?.id || '');
-  const [subject, setSubject] = useState(availableSubjects[0] || '');
+  const [subject, setSubject] = useState(availableSubjects?.[0] || 'Mathematics');
   const [title, setTitle] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileDataUrl, setFileDataUrl] = useState<string>('');

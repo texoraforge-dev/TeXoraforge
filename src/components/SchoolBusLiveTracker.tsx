@@ -67,10 +67,10 @@ export const SchoolBusLiveTracker: React.FC<SchoolBusLiveTrackerProps> = ({ onBa
   const isProprietorOrAdmin = currentUser?.role === 'SCHOOL_ADMIN';
 
   // Active selected route
-  const activeRoute = transportRoutes.find(r => r.id === selectedRouteId) || transportRoutes[0];
+  const activeRoute = transportRoutes.find(r => r.id === selectedRouteId) || transportRoutes[0] || null;
 
   useEffect(() => {
-    if (!selectedRouteId && transportRoutes.length > 0) {
+    if (!selectedRouteId && transportRoutes.length > 0 && transportRoutes[0]) {
       setSelectedRouteId(transportRoutes[0].id);
     }
   }, [transportRoutes, selectedRouteId]);
@@ -151,8 +151,8 @@ export const SchoolBusLiveTracker: React.FC<SchoolBusLiveTrackerProps> = ({ onBa
 
   const stops = activeRoute?.stops || [];
   const currentStopIdx = activeRoute?.currentLocation?.currentStopIndex || 0;
-  const currentStop = stops[currentStopIdx] || stops[0];
-  const nextStop = stops[currentStopIdx + 1] || null;
+  const currentStop = stops[currentStopIdx] || stops[0] || null;
+  const nextStop = (stops && stops.length > currentStopIdx + 1) ? stops[currentStopIdx + 1] : null;
 
   return (
     <div className="space-y-6">
@@ -472,7 +472,7 @@ export const SchoolBusLiveTracker: React.FC<SchoolBusLiveTrackerProps> = ({ onBa
 
               <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-slate-950 border border-slate-800">
                 <div className="h-12 w-12 rounded-xl bg-indigo-600/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400 font-black text-base">
-                  {activeRoute.driverName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                  {activeRoute?.driverName ? activeRoute.driverName.split(/\s+/).filter(Boolean).map(n => n[0]).join('').slice(0, 2) : 'DR'}
                 </div>
                 <div className="flex-1 min-w-0">
                   <h4 className="text-sm font-bold text-white truncate">{activeRoute.driverName}</h4>

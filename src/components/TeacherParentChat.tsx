@@ -44,9 +44,10 @@ export const TeacherParentChat: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const isProprietor = currentUser?.role === 'PROPRIETOR';
+  const isPrincipal = currentUser?.role === 'PRINCIPAL';
   const isTeacher = currentUser?.role === 'TEACHER';
   const isParent = currentUser?.role === 'PARENT';
-  const isAdmin = currentUser?.role === 'SCHOOL_ADMIN' || currentUser?.role === 'VICE_PRINCIPAL';
+  const isAdmin = currentUser?.role === 'SCHOOL_ADMIN' || currentUser?.role === 'VICE_PRINCIPAL' || isPrincipal;
 
   // Available students for new chat depending on role
   const selectableStudents = useMemo(() => {
@@ -112,7 +113,7 @@ export const TeacherParentChat: React.FC = () => {
 
   // Set default selected room on load if none selected
   useEffect(() => {
-    if (!selectedRoomId && accessibleRooms.length > 0) {
+    if (!selectedRoomId && accessibleRooms.length > 0 && accessibleRooms[0]?.id) {
       setSelectedRoomId(accessibleRooms[0].id);
     }
   }, [accessibleRooms, selectedRoomId]);
@@ -648,10 +649,10 @@ export const TeacherParentChat: React.FC = () => {
                       .filter(u => u.role === 'TEACHER')
                       .map(t => {
                         const selectedStd = students.find(s => s.id === newChatStudentId);
-                        const isClassTeacher = selectedStd && t.assignedClassIds.includes(selectedStd.classId);
+                        const isClassTeacher = selectedStd && t.assignedClassIds?.includes(selectedStd.classId);
                         return (
                           <option key={t.id} value={t.id}>
-                            {t.name} {isClassTeacher ? '★ Class Teacher' : ''} ({t.assignedSubjects.slice(0, 2).join(', ')})
+                            {t.name} {isClassTeacher ? '★ Class Teacher' : ''} ({(t.assignedSubjects || []).slice(0, 2).join(', ') || 'Teacher'})
                           </option>
                         );
                       })}

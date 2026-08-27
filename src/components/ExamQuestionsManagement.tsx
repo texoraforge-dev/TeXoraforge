@@ -36,7 +36,8 @@ export const ExamQuestionsManagement: React.FC = () => {
 
   const isTeacher = currentUser?.role === 'TEACHER';
   const isProprietor = currentUser?.role === 'PROPRIETOR';
-  const isAdmin = currentUser?.role === 'SCHOOL_ADMIN' || currentUser?.role === 'VICE_PRINCIPAL';
+  const isPrincipal = currentUser?.role === 'PRINCIPAL';
+  const isAdmin = currentUser?.role === 'SCHOOL_ADMIN' || currentUser?.role === 'VICE_PRINCIPAL' || isPrincipal;
 
   // Filters
   const [selectedTeacherId, setSelectedTeacherId] = useState<string>('ALL');

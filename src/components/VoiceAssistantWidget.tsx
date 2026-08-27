@@ -126,11 +126,13 @@ export const VoiceAssistantWidget: React.FC = () => {
         let currentInterim = '';
         let finalTrans = '';
 
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            finalTrans += event.results[i][0].transcript;
+        for (let i = event.resultIndex || 0; i < (event.results?.length || 0); ++i) {
+          const res = event.results?.[i];
+          if (!res) continue;
+          if (res.isFinal) {
+            finalTrans += res[0]?.transcript || '';
           } else {
-            currentInterim += event.results[i][0].transcript;
+            currentInterim += res[0]?.transcript || '';
           }
         }
 

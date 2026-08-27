@@ -49,7 +49,7 @@ export const ClassAndStudentManagement: React.FC = () => {
   const [guardianPhone, setGuardianPhone] = useState('');
 
   const tierClasses = classes.filter(c => c.category === activeTier);
-  const currentClass = classes.find(c => c.id === selectedClassId) || tierClasses[0] || classes[0];
+  const currentClass = classes.find(c => c.id === selectedClassId) || tierClasses[0] || classes[0] || null;
   const currentClassSubjects = currentClass ? actions.getClassSubjects(currentClass.id) : [];
 
   const classStudents = students.filter(s => s.classId === currentClass?.id);

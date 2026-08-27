@@ -29,17 +29,17 @@ export const WeeklyDiaryModal: React.FC<WeeklyDiaryModalProps> = ({
 }) => {
   const { school, currentUser, classes, actions } = useAppStore();
 
-  const availableClasses = currentUser && currentUser.role === 'TEACHER' && currentUser.assignedClassIds.length > 0
+  const availableClasses = currentUser && currentUser.role === 'TEACHER' && currentUser.assignedClassIds && currentUser.assignedClassIds.length > 0
     ? classes.filter(c => currentUser.assignedClassIds.includes(c.id))
     : classes;
 
-  const availableSubjects = currentUser && currentUser.role === 'TEACHER' && currentUser.assignedSubjects.length > 0
+  const availableSubjects = currentUser && currentUser.role === 'TEACHER' && currentUser.assignedSubjects && currentUser.assignedSubjects.length > 0
     ? currentUser.assignedSubjects
     : (school?.id ? actions.getSchoolSubjects(school.id) : ['Mathematics', 'English Language', 'Physics', 'Chemistry', 'Biology', 'Basic Science & Tech', 'Literature in English', 'Civic Education']);
 
   // Form State: ONLY Subject, Topic, Date + Class selection
   const [classId, setClassId] = useState(existingSubmission?.classId || availableClasses[0]?.id || '');
-  const [subject, setSubject] = useState(existingSubmission?.weeklyDiaryContent?.subject || existingSubmission?.subject || availableSubjects[0] || '');
+  const [subject, setSubject] = useState(existingSubmission?.weeklyDiaryContent?.subject || existingSubmission?.subject || availableSubjects?.[0] || 'Mathematics');
   const [topic, setTopic] = useState(existingSubmission?.weeklyDiaryContent?.topic || existingSubmission?.title || '');
   const [date, setDate] = useState(
     existingSubmission?.weeklyDiaryContent?.date ||
@@ -52,7 +52,7 @@ export const WeeklyDiaryModal: React.FC<WeeklyDiaryModalProps> = ({
   useEffect(() => {
     if (existingSubmission) {
       setClassId(existingSubmission.classId);
-      setSubject(existingSubmission.weeklyDiaryContent?.subject || existingSubmission.subject || availableSubjects[0]);
+      setSubject(existingSubmission.weeklyDiaryContent?.subject || existingSubmission.subject || availableSubjects?.[0] || 'Mathematics');
       setTopic(existingSubmission.weeklyDiaryContent?.topic || existingSubmission.title || '');
       setDate(
         existingSubmission.weeklyDiaryContent?.date ||
@@ -61,7 +61,7 @@ export const WeeklyDiaryModal: React.FC<WeeklyDiaryModalProps> = ({
       );
     } else {
       if (availableClasses[0]?.id) setClassId(availableClasses[0].id);
-      if (availableSubjects[0]) setSubject(availableSubjects[0]);
+      if (availableSubjects?.[0]) setSubject(availableSubjects[0]);
       setTopic('');
       setDate(new Date().toISOString().split('T')[0]);
     }

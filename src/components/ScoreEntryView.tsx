@@ -27,7 +27,7 @@ import { generateReportCardPDF } from '../lib/pdfGenerator';
 export function ScoreEntryView() {
   const { currentUser, classes, students, scoreSheets, school, actions } = useAppStore();
 
-  const isAdmin = currentUser?.role === 'SCHOOL_ADMIN';
+  const isAdmin = currentUser?.role === 'SCHOOL_ADMIN' || currentUser?.role === 'PROPRIETOR' || currentUser?.role === 'PRINCIPAL' || currentUser?.role === 'VICE_PRINCIPAL';
   const isTeacher = currentUser?.role === 'TEACHER';
 
   // State selection
@@ -35,16 +35,16 @@ export function ScoreEntryView() {
     isAdmin || (currentUser?.assignedClassIds || []).includes(c.id)
   );
 
-  const [selectedClassId, setSelectedClassId] = useState<string>(teacherClasses[0]?.id || 'cls_ss3');
+  const [selectedClassId, setSelectedClassId] = useState<string>(teacherClasses[0]?.id || classes[0]?.id || 'cls_ss3');
 
   const selectedClass = classes.find(c => c.id === selectedClassId) || teacherClasses[0] || classes[0];
   const classSubjects = selectedClass ? actions.getClassSubjects(selectedClass.id) : [];
 
-  const availableSubjectsForSelection = isTeacher && currentUser?.assignedSubjects?.length
+  const availableSubjectsForSelection = isTeacher && currentUser?.assignedSubjects && currentUser.assignedSubjects.length > 0
     ? currentUser.assignedSubjects
-    : (classSubjects.length > 0 ? classSubjects : (school?.subjects || ['Mathematics', 'English Language']));
+    : (classSubjects.length > 0 ? classSubjects : (school?.subjects && school.subjects.length > 0 ? school.subjects : ['Mathematics', 'English Language']));
 
-  const [selectedSubject, setSelectedSubject] = useState<string>(availableSubjectsForSelection[0] || 'Mathematics');
+  const [selectedSubject, setSelectedSubject] = useState<string>(availableSubjectsForSelection?.[0] || 'Mathematics');
   const [adminComment, setAdminComment] = useState<string>('');
 
   // Current Working Score Sheet

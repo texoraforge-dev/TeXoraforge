@@ -1443,13 +1443,21 @@ export const INITIAL_CURRICULA: CurriculumSubject[] = [
     subject: 'Mathematics',
     academicSession: '2025/2026',
     academicTerm: 'First Term',
+    curriculumStandard: 'NERDC / National Primary Standard',
+    description: 'First Term Scheme of Work covering Advanced Numeracy, Fractions, Plane Geometry, and Real-world Data Handling.',
+    assignedTeacherId: 'usr_t1',
+    assignedTeacherName: 'Mr. David Okon',
+    assignedDate: '2025-09-08',
+    uploadedFileName: 'Primary_5_Math_Syllabus_2025.pdf',
+    uploadedFileSize: '1.8 MB',
+    uploadedAt: '2025-09-08T10:30:00.000Z',
     progressPercent: 60,
     topics: [
-      { id: 'ct_1', weekNumber: 1, topic: 'Number System & Place Value', subtopics: ['Millions', 'Expanded Form'], learningObjectives: ['Read and write 7-digit numbers'], activities: ['Number chart exercises'], assessmentMethod: 'Class Quiz', status: 'COMPLETED', actualTaughtDate: '2025-09-15' },
-      { id: 'ct_2', weekNumber: 2, topic: 'Fractions & Mixed Numbers', subtopics: ['Addition & Subtraction of Fractions'], learningObjectives: ['Solve improper fractions'], activities: ['Fraction board games'], assessmentMethod: 'Homework', status: 'COMPLETED', actualTaughtDate: '2025-09-22' },
-      { id: 'ct_3', weekNumber: 3, topic: 'Decimals & Percentages', subtopics: ['Conversion of Decimals to %'], learningObjectives: ['Convert decimals to percentages'], activities: ['Real life shop prices exercise'], assessmentMethod: 'Mid Term Test', status: 'COMPLETED', actualTaughtDate: '2025-09-29' },
-      { id: 'ct_4', weekNumber: 4, topic: 'Plane Geometry & Angles', subtopics: ['Angles on a straight line', 'Triangles'], learningObjectives: ['Measure angles with protractor'], activities: ['Angle drawing worksheet'], assessmentMethod: 'Assignment', status: 'BEHIND', actualTaughtDate: undefined },
-      { id: 'ct_5', weekNumber: 5, topic: 'Data Handling & Bar Charts', subtopics: ['Mode, Median, Mean'], learningObjectives: ['Plot frequency tables'], activities: ['Class survey chart drawing'], assessmentMethod: 'Group Project', status: 'NOT_STARTED' }
+      { id: 'ct_1', weekNumber: 1, topic: 'Number System & Place Value', subtopics: ['Millions', 'Expanded Form'], learningObjectives: ['Read and write 7-digit numbers', 'Express numbers in powers of 10'], activities: ['Number chart exercises', 'Place value block demo'], assessmentMethod: 'Class Quiz', status: 'COMPLETED', actualTaughtDate: '2025-09-15', resources: ['New General Math Bk 5, p. 12-25', 'Place Value Chart'], teacherNotes: 'Students demonstrated 95% mastery on millions notation.' },
+      { id: 'ct_2', weekNumber: 2, topic: 'Fractions & Mixed Numbers', subtopics: ['Addition & Subtraction of Fractions', 'Equivalent Fractions'], learningObjectives: ['Solve improper fractions', 'Simplify fractions to lowest terms'], activities: ['Fraction board games', 'Visual pizza slices model'], assessmentMethod: 'Homework', status: 'COMPLETED', actualTaughtDate: '2025-09-22', resources: ['Fraction Wall Chart', 'Worksheet 2A'], teacherNotes: 'Reinforced common denominator finding.' },
+      { id: 'ct_3', weekNumber: 3, topic: 'Decimals & Percentages', subtopics: ['Conversion of Decimals to %', 'Recurring Decimals'], learningObjectives: ['Convert decimals to percentages', 'Calculate discount percentages'], activities: ['Real life shop prices exercise', 'Supermarket bill calculation'], assessmentMethod: 'Mid Term Test', status: 'COMPLETED', actualTaughtDate: '2025-09-29', resources: ['Mock Store Price Tags', 'Calculator worksheet'] },
+      { id: 'ct_4', weekNumber: 4, topic: 'Plane Geometry & Angles', subtopics: ['Angles on a straight line', 'Triangles & Quadrilaterals'], learningObjectives: ['Measure angles with protractor', 'Calculate interior angles sum'], activities: ['Angle drawing worksheet', 'Protractor hands-on measuring'], assessmentMethod: 'Assignment', status: 'BEHIND', actualTaughtDate: undefined, resources: ['Mathematical Set', 'Geometry Workbook'] },
+      { id: 'ct_5', weekNumber: 5, topic: 'Data Handling & Bar Charts', subtopics: ['Mode, Median, Mean', 'Frequency Distribution'], learningObjectives: ['Plot frequency tables', 'Interpret bar graphs and histograms'], activities: ['Class survey chart drawing', 'Weather data collection'], assessmentMethod: 'Group Project', status: 'NOT_STARTED', resources: ['Grid Graph paper', 'Class statistics tally sheet'] }
     ]
   },
   {
@@ -1460,12 +1468,44 @@ export const INITIAL_CURRICULA: CurriculumSubject[] = [
     subject: 'Physics',
     academicSession: '2025/2026',
     academicTerm: 'First Term',
-    progressPercent: 80,
+    curriculumStandard: 'WAEC / NECO / Cambridge IGCSE',
+    description: 'Senior Secondary 3 Physics Syllabus covering Classical Electromagnetism, Quantum Phenomena, and Nuclear Physics.',
+    assignedTeacherId: 'usr_t1',
+    assignedTeacherName: 'Mr. David Okon',
+    assignedDate: '2025-09-05',
+    uploadedFileName: 'WAEC_SS3_Physics_Syllabus.pdf',
+    uploadedFileSize: '2.4 MB',
+    uploadedAt: '2025-09-05T08:15:00.000Z',
+    progressPercent: 75,
     topics: [
-      { id: 'ct_p1', weekNumber: 1, topic: 'Electromagnetic Induction', subtopics: ['Faraday Law', 'Lenz Law'], learningObjectives: ['Explain magnetic flux linkage'], activities: ['Coil and magnet lab setup'], assessmentMethod: 'Lab Quiz', status: 'COMPLETED', actualTaughtDate: '2025-09-14' },
-      { id: 'ct_p2', weekNumber: 2, topic: 'Alternating Current Circuits', subtopics: ['Peak value', 'R.M.S value', 'Resonance'], learningObjectives: ['Calculate inductive reactance'], activities: ['Oscilloscope demo'], assessmentMethod: 'Test', status: 'COMPLETED', actualTaughtDate: '2025-09-21' },
-      { id: 'ct_p3', weekNumber: 3, topic: 'Atomic & Nuclear Physics', subtopics: ['Radioactivity', 'Half life'], learningObjectives: ['Solve radioactive decay equations'], activities: ['Decay simulation'], assessmentMethod: 'CBT Exam', status: 'COMPLETED', actualTaughtDate: '2025-09-28' },
-      { id: 'ct_p4', weekNumber: 4, topic: 'Photoelectric Effect & Quantum Physics', subtopics: ['Work function', 'Planck Constant'], learningObjectives: ['Understand Einstein Photoelectric Equation'], activities: ['Problem solving workshop'], assessmentMethod: 'Assignment', status: 'IN_PROGRESS' }
+      { id: 'ct_p1', weekNumber: 1, topic: 'Electromagnetic Induction', subtopics: ['Faraday Law', 'Lenz Law', 'Mutual & Self Induction'], learningObjectives: ['Explain magnetic flux linkage', 'State and verify Lenz Law experimentally'], activities: ['Coil and magnet lab setup', 'Galvanometer deflection demo'], assessmentMethod: 'Lab Quiz', status: 'COMPLETED', actualTaughtDate: '2025-09-14', resources: ['PN Okeke Senior Physics p. 180-195', 'Laboratory Induction Apparatus'] },
+      { id: 'ct_p2', weekNumber: 2, topic: 'Alternating Current Circuits', subtopics: ['Peak value', 'R.M.S value', 'Resonance in RLC circuits'], learningObjectives: ['Calculate inductive reactance', 'Determine resonant frequency'], activities: ['Oscilloscope waveform demo', 'Circuit simulation software'], assessmentMethod: 'Test', status: 'COMPLETED', actualTaughtDate: '2025-09-21', resources: ['RLC Meter', 'PhET Circuit Simulator'] },
+      { id: 'ct_p3', weekNumber: 3, topic: 'Atomic & Nuclear Physics', subtopics: ['Radioactivity', 'Half life', 'Nuclear Fission & Fusion'], learningObjectives: ['Solve radioactive decay equations', 'Explain carbon dating principles'], activities: ['Decay simulation software', 'Cloud chamber video demonstration'], assessmentMethod: 'CBT Exam', status: 'COMPLETED', actualTaughtDate: '2025-09-28', resources: ['Nuclear Chart of Nuclides', 'WAEC Past Questions 2018-2024'] },
+      { id: 'ct_p4', weekNumber: 4, topic: 'Photoelectric Effect & Quantum Physics', subtopics: ['Work function', 'Planck Constant', 'Wave-Particle Duality'], learningObjectives: ['Understand Einstein Photoelectric Equation', 'Calculate threshold frequency'], activities: ['Problem solving workshop', 'Photocell experiment analysis'], assessmentMethod: 'Assignment', status: 'IN_PROGRESS', resources: ['Quantum Mechanics Primer', 'Photocell Apparatus'] }
+    ]
+  },
+  {
+    id: 'cur_ss2_eng',
+    schoolId: 'school_apex',
+    classId: 'cls_ss2',
+    className: 'SS 2',
+    subject: 'English Language',
+    academicSession: '2025/2026',
+    academicTerm: 'First Term',
+    curriculumStandard: 'NERDC / WAEC SSCE Standards',
+    description: 'Senior Secondary 2 Scheme of Work for Oral English, Lexis & Structure, Formal Essay Writing, and Comprehension.',
+    assignedTeacherId: 'usr_t2',
+    assignedTeacherName: 'Mrs. Funke Adeyemi',
+    assignedDate: '2025-09-09',
+    uploadedFileName: 'SS2_English_Curriculum_Term1.docx',
+    uploadedFileSize: '920 KB',
+    uploadedAt: '2025-09-09T14:20:00.000Z',
+    progressPercent: 50,
+    topics: [
+      { id: 'ct_e1', weekNumber: 1, topic: 'Oral English: Vowel Contrasts & Diphthongs', subtopics: ['Monophthongs vs Diphthongs', 'Minimal Pairs'], learningObjectives: ['Distinguish phonetic symbols', 'Transcribe high frequency words'], activities: ['Audio listening and pronunciation drill', 'Class phonetic debate'], assessmentMethod: 'Oral Assessment', status: 'COMPLETED', actualTaughtDate: '2025-09-16' },
+      { id: 'ct_e2', weekNumber: 2, topic: 'Grammar: Nominal & Adverbial Clauses', subtopics: ['Syntactic Functions of Clauses', 'Sentence Complements'], learningObjectives: ['Identify dependent clauses in texts', 'Construct complex sentence structures'], activities: ['Sentence analysis on whiteboard', 'Peer editing exercises'], assessmentMethod: 'Class Test', status: 'COMPLETED', actualTaughtDate: '2025-09-23' },
+      { id: 'ct_e3', weekNumber: 3, topic: 'Continuous Writing: Formal & Argumentative Essays', subtopics: ['Debate format', 'Thesis statement formulation'], learningObjectives: ['Write a 450-word persuasive speech', 'Organize paragraph cohesion with transition markers'], activities: ['Mock parliamentary debate', 'Essay outlining workshop'], assessmentMethod: 'Take-home Essay', status: 'IN_PROGRESS' },
+      { id: 'ct_e4', weekNumber: 4, topic: 'Summary & Comprehension Techniques', subtopics: ['Topic sentence extraction', 'Paraphrasing strategies'], learningObjectives: ['Summarize 5 paragraphs into 2 concise sentences', 'Eliminate extraneous modifiers'], activities: ['Speed reading exercise', 'WAEC past comprehension analysis'], assessmentMethod: 'Timed Summary Quiz', status: 'NOT_STARTED' }
     ]
   }
 ];

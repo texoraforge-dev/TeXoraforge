@@ -189,7 +189,7 @@ export const SubjectPerformanceChart: React.FC<SubjectPerformanceChartProps> = (
 
   // Custom Chart Tooltip
   const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
+    if (active && payload && payload.length && payload[0]?.payload) {
       const data: SubjectStat = payload[0].payload;
       return (
         <div className="bg-slate-900/95 text-white p-3.5 rounded-xl border border-slate-700 shadow-2xl text-xs space-y-2 backdrop-blur-md max-w-xs">

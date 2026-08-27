@@ -49,6 +49,25 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, AdminPermission[]> = {
     'STAFF_ATTENDANCE_MANAGEMENT',
     'STUDENT_CHAT_MODERATION'
   ],
+  PRINCIPAL: [
+    'ADMISSIONS',
+    'STUDENT_MANAGEMENT',
+    'STUDENT_RECORDS',
+    'GUARDIAN_MANAGEMENT',
+    'CLASS_ASSIGNMENT',
+    'STUDENT_PROMOTION',
+    'LESSON_NOTE_REVIEW',
+    'LESSON_PLAN_REVIEW',
+    'WEEKLY_DIARY_REVIEW',
+    'EXAM_ADMINISTRATION',
+    'ACADEMIC_REVIEW',
+    'USER_ROLE_MANAGEMENT',
+    'SYSTEM_SETTINGS',
+    'AUDIT_LOG_VIEW',
+    'PAYROLL_MANAGEMENT',
+    'STAFF_ATTENDANCE_MANAGEMENT',
+    'STUDENT_CHAT_MODERATION'
+  ],
   VICE_PRINCIPAL: [
     'ADMISSIONS',
     'STUDENT_MANAGEMENT',
@@ -134,24 +153,24 @@ export function canAccessView(user: User | null | undefined, view: string): bool
     case 'ai_studio':
       return true;
     case 'parent_fees':
-      return user.role === 'PARENT' || user.role === 'SCHOOL_ADMIN' || user.role === 'VICE_PRINCIPAL';
+      return user.role === 'PARENT' || user.role === 'SCHOOL_ADMIN' || user.role === 'VICE_PRINCIPAL' || user.role === 'PRINCIPAL';
     case 'staff_attendance':
-      return user.role === 'TEACHER' || user.role === 'SCHOOL_ADMIN' || user.role === 'VICE_PRINCIPAL' || hasPermission(user, 'STAFF_ATTENDANCE_MANAGEMENT');
+      return user.role === 'TEACHER' || user.role === 'SCHOOL_ADMIN' || user.role === 'VICE_PRINCIPAL' || user.role === 'PRINCIPAL' || hasPermission(user, 'STAFF_ATTENDANCE_MANAGEMENT');
     case 'payroll':
-      return user.role === 'SCHOOL_ADMIN' || user.role === 'VICE_PRINCIPAL' || hasPermission(user, 'PAYROLL_MANAGEMENT');
+      return user.role === 'SCHOOL_ADMIN' || user.role === 'VICE_PRINCIPAL' || user.role === 'PRINCIPAL' || hasPermission(user, 'PAYROLL_MANAGEMENT');
     case 'student_accounts':
-      return user.role === 'TEACHER' || user.role === 'SCHOOL_ADMIN' || user.role === 'VICE_PRINCIPAL' || hasPermission(user, 'STUDENT_MANAGEMENT');
+      return user.role === 'TEACHER' || user.role === 'SCHOOL_ADMIN' || user.role === 'VICE_PRINCIPAL' || user.role === 'PRINCIPAL' || hasPermission(user, 'STUDENT_MANAGEMENT');
     case 'student_class_chat':
-      return user.role === 'TEACHER' || user.role === 'SCHOOL_ADMIN' || user.role === 'VICE_PRINCIPAL';
+      return user.role === 'TEACHER' || user.role === 'SCHOOL_ADMIN' || user.role === 'VICE_PRINCIPAL' || user.role === 'PRINCIPAL';
     case 'chat_oversight':
-      return user.role === 'SCHOOL_ADMIN' || user.role === 'VICE_PRINCIPAL' || hasPermission(user, 'STUDENT_CHAT_MODERATION');
+      return user.role === 'SCHOOL_ADMIN' || user.role === 'VICE_PRINCIPAL' || user.role === 'PRINCIPAL' || hasPermission(user, 'STUDENT_CHAT_MODERATION');
     case 'school_students':
     case 'students':
       return hasPermission(user, 'ADMISSIONS') || hasPermission(user, 'STUDENT_RECORDS');
     case 'teachers':
-      return user.role === 'SCHOOL_ADMIN' || hasPermission(user, 'USER_ROLE_MANAGEMENT');
+      return user.role === 'SCHOOL_ADMIN' || user.role === 'PRINCIPAL' || hasPermission(user, 'USER_ROLE_MANAGEMENT');
     case 'classes':
-      return hasPermission(user, 'CLASS_ASSIGNMENT') || hasPermission(user, 'STUDENT_MANAGEMENT') || user.role === 'SCHOOL_ADMIN';
+      return hasPermission(user, 'CLASS_ASSIGNMENT') || hasPermission(user, 'STUDENT_MANAGEMENT') || user.role === 'SCHOOL_ADMIN' || user.role === 'PRINCIPAL';
     case 'timetable':
       return true; // Timetables visible to staff/teachers/students/parents
     case 'scores':
@@ -159,17 +178,18 @@ export function canAccessView(user: User | null | undefined, view: string): bool
     case 'submissions':
       return hasPermission(user, 'LESSON_NOTE_REVIEW') || hasPermission(user, 'LESSON_PLAN_REVIEW');
     case 'exam_questions':
-      return user.role === 'TEACHER' || user.role === 'SCHOOL_ADMIN' || user.role === 'VICE_PRINCIPAL' || hasPermission(user, 'EXAM_ADMINISTRATION');
+      return user.role === 'TEACHER' || user.role === 'SCHOOL_ADMIN' || user.role === 'VICE_PRINCIPAL' || user.role === 'PRINCIPAL' || hasPermission(user, 'EXAM_ADMINISTRATION');
     case 'attendance':
       return true;
     case 'document_vault':
-      return user.role === 'VICE_PRINCIPAL' || user.role === 'SCHOOL_ADMIN';
+      return user.role === 'VICE_PRINCIPAL' || user.role === 'SCHOOL_ADMIN' || user.role === 'PRINCIPAL';
     case 'settings':
       return hasPermission(user, 'SYSTEM_SETTINGS');
     case 'audit_logs':
       return hasPermission(user, 'AUDIT_LOG_VIEW');
+    case 'accounts':
     case 'user_permissions':
-      return hasPermission(user, 'USER_ROLE_MANAGEMENT');
+      return user.role === 'PRINCIPAL' || user.role === 'SCHOOL_ADMIN' || user.role === 'VICE_PRINCIPAL' || hasPermission(user, 'USER_ROLE_MANAGEMENT');
     default:
       return true;
   }
@@ -186,6 +206,13 @@ export function getRoleBadgeInfo(role: UserRole): { label: string; bgClass: stri
         bgClass: 'bg-amber-100 dark:bg-amber-950/70',
         textClass: 'text-amber-800 dark:text-amber-300',
         borderClass: 'border-amber-300 dark:border-amber-800'
+      };
+    case 'PRINCIPAL':
+      return {
+        label: 'Principal',
+        bgClass: 'bg-teal-100 dark:bg-teal-950/70',
+        textClass: 'text-teal-800 dark:text-teal-300',
+        borderClass: 'border-teal-300 dark:border-teal-800'
       };
     case 'VICE_PRINCIPAL':
       return {

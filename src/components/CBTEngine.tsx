@@ -52,7 +52,7 @@ export const CBTEngine: React.FC = () => {
 
   const isStudent = currentUser?.role === 'STUDENT';
   const isTeacher = currentUser?.role === 'TEACHER';
-  const isAdmin = currentUser?.role === 'SCHOOL_ADMIN' || currentUser?.role === 'VICE_PRINCIPAL' || currentUser?.role === 'PROPRIETOR';
+  const isAdmin = currentUser?.role === 'SCHOOL_ADMIN' || currentUser?.role === 'VICE_PRINCIPAL' || currentUser?.role === 'PRINCIPAL' || currentUser?.role === 'PROPRIETOR';
   const isTeacherOrAdmin = isTeacher || isAdmin;
 
   // Available appointed classes for current user

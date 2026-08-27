@@ -1332,7 +1332,7 @@ export const AIMediaStudio: React.FC<AIMediaStudioProps> = ({ onBack, onInsertIn
                   </div>
 
                   <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
-                    <span>Model: <code className="font-mono text-indigo-600 dark:text-indigo-400">{item.modelUsed.split('-')[0]}</code></span>
+                    <span>Model: <code className="font-mono text-indigo-600 dark:text-indigo-400">{item.modelUsed ? item.modelUsed.split('-')[0] : 'Gemini'}</code></span>
                     <div className="flex items-center gap-1">
                       <a
                         href={item.url}

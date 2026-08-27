@@ -81,8 +81,8 @@ export const StudentPromotionModal: React.FC<StudentPromotionModalProps> = ({
     // Auto-detect next class in array
     const curIdx = classes.findIndex(c => c.id === currentClsId);
     let nextClsId = '';
-    if (curIdx !== -1 && curIdx + 1 < classes.length) {
-      nextClsId = classes[curIdx + 1].id;
+    if (curIdx !== -1 && curIdx + 1 < classes.length && classes[curIdx + 1]) {
+      nextClsId = classes[curIdx + 1]?.id || currentClsId;
     } else {
       nextClsId = currentClsId;
     }
@@ -91,7 +91,7 @@ export const StudentPromotionModal: React.FC<StudentPromotionModalProps> = ({
     // Default target session
     if (school?.academicSession) {
       const parts = school.academicSession.split('/');
-      if (parts.length === 2 && !isNaN(parseInt(parts[0]))) {
+      if (parts.length === 2 && parts[0] && parts[1] && !isNaN(parseInt(parts[0])) && !isNaN(parseInt(parts[1]))) {
         const nextStart = parseInt(parts[0]) + 1;
         const nextEnd = parseInt(parts[1]) + 1;
         setTargetSession(`${nextStart}/${nextEnd}`);

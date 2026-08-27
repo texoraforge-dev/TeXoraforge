@@ -24,7 +24,7 @@ import { generateAttendancePDF } from '../lib/pdfGenerator';
 
 export const AttendanceView: React.FC = () => {
   const { school, currentUser, classes, students, attendance, actions } = useAppStore();
-  const isAdmin = currentUser?.role === 'SCHOOL_ADMIN';
+  const isAdmin = currentUser?.role === 'SCHOOL_ADMIN' || currentUser?.role === 'PROPRIETOR' || currentUser?.role === 'PRINCIPAL' || currentUser?.role === 'VICE_PRINCIPAL';
 
   const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
 
@@ -40,7 +40,7 @@ export const AttendanceView: React.FC = () => {
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   // Student Attendance Items state for active class & date
-  const activeClass = classes.find(c => c.id === selectedClassId) || availableClasses[0];
+  const activeClass = classes.find(c => c.id === selectedClassId) || availableClasses[0] || classes[0] || null;
   const classStudents = students.filter(s => s.classId === activeClass?.id);
 
   // Check if existing record exists for this date and class

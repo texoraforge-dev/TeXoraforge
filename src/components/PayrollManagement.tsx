@@ -198,7 +198,7 @@ export const PayrollManagement: React.FC<PayrollManagementProps> = ({
     if (onRefresh) onRefresh();
   };
 
-  const currentActivePayroll = selectedPayroll || payrollRecords[0];
+  const currentActivePayroll = selectedPayroll || payrollRecords[0] || null;
 
   return (
     <div className="space-y-6">

@@ -65,7 +65,9 @@ export const StudentAccountsAndChat: React.FC<StudentAccountsAndChatProps> = ({
   const pinnedAnnouncements = activeClassMessages.filter(m => m.isAnnouncement && !m.hidden);
 
   // Student credential status for current user if student
-  const studentCredentialRecord = studentCredentials.find(c => c.studentId === currentUser?.id || c.studentCode === currentUser?.email?.split('@')[0].toUpperCase());
+  const studentCredentialRecord = studentCredentials.find(
+    c => c.studentId === currentUser?.id || (currentUser?.email && c.studentCode === currentUser.email.split('@')[0]?.toUpperCase())
+  );
 
   // Handle send message
   const handleSendMessage = (e: React.FormEvent) => {

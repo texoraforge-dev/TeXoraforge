@@ -20,7 +20,8 @@ import {
   Sparkles,
   Download,
   CreditCard,
-  Wand2
+  Wand2,
+  UserPlus
 } from 'lucide-react';
 import { useAppStore } from '../storage';
 import { Submission, User } from '../types';
@@ -54,6 +55,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   }, []);
 
   const isProprietor = currentUser?.role === 'PROPRIETOR';
+  const isPrincipal = currentUser?.role === 'PRINCIPAL';
   const isVP = currentUser?.role === 'VICE_PRINCIPAL';
   const isAdmin = currentUser?.role === 'SCHOOL_ADMIN';
 
@@ -135,10 +137,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </button>
             {isProprietor && (
               <button
-                onClick={() => onNavigate('user_permissions')}
+                onClick={() => onNavigate('accounts')}
                 className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold flex items-center gap-2 shadow-md transition-all cursor-pointer"
               >
-                <Sparkles className="h-4 w-4" /> Manage User Roles
+                <UserPlus className="h-4 w-4" /> Manage & Provision Accounts
               </button>
             )}
             <button
@@ -361,11 +363,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{t.name}</p>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                    {t.assignedSubjects.slice(0, 2).join(', ')}
+                    {(t.assignedSubjects || []).slice(0, 2).join(', ') || 'General Educator'}
                   </p>
                 </div>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-semibold">
-                  {t.assignedClassIds.length} Classes
+                  {t.assignedClassIds?.length || 0} Classes
                 </span>
               </div>
             ))}

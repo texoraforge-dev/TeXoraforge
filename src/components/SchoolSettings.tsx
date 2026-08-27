@@ -103,7 +103,7 @@ export const SchoolSettings: React.FC = () => {
   const [selectedClassForSubjects, setSelectedClassForSubjects] = useState<string>(classes[0]?.id || 'cls_ss3');
   const [newClassSubjectInput, setNewClassSubjectInput] = useState('');
 
-  const targetClassObj = classes.find(c => c.id === selectedClassForSubjects) || classes[0];
+  const targetClassObj = classes.find(c => c.id === selectedClassForSubjects) || classes[0] || null;
   const targetClassSubjects = targetClassObj ? actions.getClassSubjects(targetClassObj.id) : [];
   const targetClassStudents = students.filter(s => s.classId === targetClassObj?.id);
 

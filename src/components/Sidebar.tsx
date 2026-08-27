@@ -67,13 +67,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const roleBadge = getRoleBadgeInfo(effectiveUser.role);
 
   const isProprietor = effectiveUser.role === 'PROPRIETOR';
+  const isPrincipal = effectiveUser.role === 'PRINCIPAL';
   const isVP = effectiveUser.role === 'VICE_PRINCIPAL';
-  const isAdmin = effectiveUser.role === 'SCHOOL_ADMIN' || isProprietor || isVP;
+  const isAdmin = effectiveUser.role === 'SCHOOL_ADMIN' || isProprietor || isVP || isPrincipal;
   const isParent = effectiveUser.role === 'PARENT';
   const isStudent = effectiveUser.role === 'STUDENT';
 
   const adminNavItems: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'accounts', label: 'Accounts', icon: Users },
     { id: 'ai_studio', label: 'AI Creative & Video Studio', icon: Wand2 },
     { id: 'bus_tracking', label: 'Live School Bus Fleet', icon: Bus },
     { id: 'textbook_library', label: 'Textbook Library', icon: Library },

@@ -226,7 +226,7 @@ export default function App() {
   // Handle review click from dashboard or global search
   const handleSelectSubmissionFromSearch = (submission: Submission) => {
     setSelectedSubmissionToReview(submission);
-    if (currentUser?.role === 'SCHOOL_ADMIN') {
+    if (currentUser?.role === 'SCHOOL_ADMIN' || currentUser?.role === 'PROPRIETOR' || currentUser?.role === 'PRINCIPAL' || currentUser?.role === 'VICE_PRINCIPAL') {
       setCurrentView('submissions');
     } else {
       setCurrentView('teacher_submissions');
@@ -287,8 +287,8 @@ export default function App() {
               </div>
             )}
             
-            {/* Admin / Executive / VP Views */}
-            {(currentUser.role === 'PROPRIETOR' || currentUser.role === 'VICE_PRINCIPAL' || currentUser.role === 'SCHOOL_ADMIN') && (
+            {/* Admin / Executive / Principal / VP Views */}
+            {(currentUser.role === 'PROPRIETOR' || currentUser.role === 'PRINCIPAL' || currentUser.role === 'VICE_PRINCIPAL' || currentUser.role === 'SCHOOL_ADMIN') && (
               <>
                 {currentView === 'dashboard' && (
                   <AdminDashboard
@@ -355,7 +355,9 @@ export default function App() {
                 )}
                 {(currentView === 'direct_chat' || currentView === 'chat') && <TeacherParentChat />}
                 {currentView === 'timetable' && <TimetableManagement onNavigate={(v) => setCurrentView(v)} />}
-                {currentView === 'user_permissions' && <PermissionManagement onNavigate={(v) => setCurrentView(v)} />}
+                {(currentView === 'accounts' || currentView === 'user_permissions') && (
+                  <PermissionManagement onNavigate={(v) => setCurrentView(v)} />
+                )}
                 {currentView === 'audit_logs' && <AuditLogView />}
                 {currentView === 'settings' && <SchoolSettings />}
                 {currentView === 'textbook_library' && <DigitalTextbookLibrary initialRole={currentUser.role} onNavigate={(v) => setCurrentView(v)} />}
@@ -522,7 +524,7 @@ export default function App() {
         isOpen={isNotificationsOpen}
         onClose={() => setIsNotificationsOpen(false)}
         onSelectNotification={(linkId) => {
-          if (currentUser?.role === 'SCHOOL_ADMIN') {
+          if (currentUser?.role === 'SCHOOL_ADMIN' || currentUser?.role === 'PROPRIETOR' || currentUser?.role === 'PRINCIPAL' || currentUser?.role === 'VICE_PRINCIPAL') {
             setCurrentView('submissions');
           } else {
             setCurrentView('teacher_submissions');

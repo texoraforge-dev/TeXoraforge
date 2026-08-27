@@ -38,11 +38,14 @@ import {
   UploadCloud,
   Check,
   X,
-  Users
+  Users,
+  Camera,
+  Upload
 } from 'lucide-react';
 import { useAppStore } from '../storage';
 import { Student, StudentReportCard, PaymentTransaction, SchoolBankAccountDetails } from '../types';
 import { generateReportCardPDF, generatePromotionCertificatePDF } from '../lib/pdfGenerator';
+import { ImageUploadBox } from './ImageUploadBox';
 import {
   BarChart,
   Bar,
@@ -85,7 +88,7 @@ export function ParentPortal({ initialTab, onNavigate }: ParentPortalProps) {
     linkedStudents[0]?.id || students[0]?.id || ''
   );
 
-  const activeStudent = students.find(s => s.id === selectedStudentId) || linkedStudents[0] || students[0];
+  const activeStudent = students.find(s => s.id === selectedStudentId) || linkedStudents[0] || students[0] || null;
   const activeClass = classes.find(c => c.id === activeStudent?.classId);
 
   // Compute live report card for active student
@@ -104,9 +107,27 @@ export function ParentPortal({ initialTab, onNavigate }: ParentPortalProps) {
   const totalFamilyPaid = familyFinancials.reduce((acc, f) => acc + f.paidAmount, 0);
   const totalFamilyBalance = Math.max(0, totalFamilyFees - totalFamilyPaid);
 
-  const [activeTab, setActiveTab] = useState<'FEES_AND_PAYMENTS' | 'AI_ASSISTANT' | 'OVERVIEW' | 'REPORT_CARD' | 'SCORES' | 'HOMEWORK' | 'TIMETABLE'>(
+  const [activeTab, setActiveTab] = useState<'FEES_AND_PAYMENTS' | 'AI_ASSISTANT' | 'OVERVIEW' | 'REPORT_CARD' | 'SCORES' | 'HOMEWORK' | 'TIMETABLE' | 'PARENT_PHOTO'>(
     (initialTab as any) || 'FEES_AND_PAYMENTS'
   );
+
+  // Photo Management State for Parent (Self-Service)
+  const [showParentPhotoModal, setShowParentPhotoModal] = useState(false);
+  const [parentPhotoUrl, setParentPhotoUrl] = useState<string>(currentUser?.avatarUrl || '');
+  const [photoFeedback, setPhotoFeedback] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const handleOpenParentPhoto = () => {
+    setParentPhotoUrl(currentUser?.avatarUrl || '');
+    setShowParentPhotoModal(true);
+  };
+
+  const handleSaveParentPhoto = () => {
+    if (!currentUser) return;
+    actions.updateUserProfilePicture(currentUser.id, parentPhotoUrl, currentUser);
+    setShowParentPhotoModal(false);
+    setPhotoFeedback({ message: 'Your parent profile picture has been updated successfully!', type: 'success' });
+    setTimeout(() => setPhotoFeedback(null), 4000);
+  };
 
   // Payment Submission Modal State
   const [isSubmitPaymentModalOpen, setIsSubmitPaymentModalOpen] = useState(false);
@@ -282,24 +303,69 @@ export function ParentPortal({ initialTab, onNavigate }: ParentPortalProps) {
 
   return (
     <div className="space-y-6">
+      {/* Photo Update Feedback Notice */}
+      {photoFeedback && (
+        <div className={`p-4 rounded-2xl flex items-center justify-between text-xs font-bold shadow-md transition-all ${
+          photoFeedback.type === 'success'
+            ? 'bg-emerald-500 text-white'
+            : 'bg-rose-500 text-white'
+        }`}>
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4" />
+            <span>{photoFeedback.message}</span>
+          </div>
+          <button onClick={() => setPhotoFeedback(null)} className="p-1 hover:bg-white/20 rounded-lg">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
       {/* Top Welcome Banner */}
       <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-2xl p-6 shadow-xl border border-indigo-500/20 relative overflow-hidden">
         <div className="absolute -right-8 -bottom-8 opacity-10">
           <ShieldCheck className="w-64 h-64 text-indigo-400" />
         </div>
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-bold text-xs border border-emerald-500/30">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>OFFICIAL PARENT PORTAL (READ ONLY)</span>
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              Welcome, {currentUser?.name || 'Parent / Guardian'}
-            </h2>
-            <p className="text-sm text-indigo-200 max-w-xl">
-              Monitor your child’s live academic continuous assessments, report cards, attendance records, homework assignments, and teacher notes in real-time.
-            </p>
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="flex items-start gap-4">
+            {/* Parent Profile Avatar with quick update */}
+            <div className="relative group shrink-0">
+              <img
+                src={currentUser?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'}
+                alt={currentUser?.name || 'Parent'}
+                className="w-16 h-16 rounded-2xl object-cover border-2 border-indigo-400/40 shadow-lg group-hover:opacity-85 transition-opacity"
+              />
+              <button
+                type="button"
+                onClick={handleOpenParentPhoto}
+                className="absolute -bottom-1.5 -right-1.5 p-1.5 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-md cursor-pointer transition-transform hover:scale-110"
+                title="Upload / Change Parent Picture"
+              >
+                <Camera className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            <div className="space-y-1.5">
+              <span className="inline-flex items-center space-x-1.5 px-3 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold text-[11px] border border-emerald-500/30">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>OFFICIAL PARENT PORTAL</span>
+              </span>
+              <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight">
+                Welcome, {currentUser?.name || 'Parent / Guardian'}
+              </h2>
+              <p className="text-xs text-indigo-200 max-w-lg leading-relaxed">
+                Monitor live continuous assessments, terminal report cards, CBT results, homework, and fees for your child.
+              </p>
+              <div className="pt-1">
+                <button
+                  type="button"
+                  onClick={handleOpenParentPhoto}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-indigo-200 hover:text-white text-[11px] font-bold border border-white/15 transition-colors cursor-pointer"
+                >
+                  <Camera className="w-3 h-3 text-indigo-300" /> Upload / Change My Picture
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Child Selector & Link Form */}
@@ -370,12 +436,17 @@ export function ParentPortal({ initialTab, onNavigate }: ParentPortalProps) {
               </div>
 
               <div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white">{activeStudent.fullName}</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white">{activeStudent.fullName}</h3>
+                  <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[10px] font-bold border border-slate-200 dark:border-slate-700">
+                    Official Record
+                  </span>
+                </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   Admission No: <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{activeStudent.admissionNo}</span>
                   {' • '} Class: <span className="font-bold text-indigo-600 dark:text-indigo-400">{activeClass?.name} {activeClass?.arm}</span>
                 </p>
-                <div className="flex items-center space-x-2 mt-2 text-xs text-slate-600 dark:text-slate-400">
+                <div className="flex flex-wrap items-center gap-2 mt-2 text-xs text-slate-600 dark:text-slate-400">
                   <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold">
                     {activeStudent.gender}
                   </span>
@@ -422,8 +493,8 @@ export function ParentPortal({ initialTab, onNavigate }: ParentPortalProps) {
                   {activeStudent.fullName} is Enrolled in {activeClass?.name} {activeClass?.arm ? `(${activeClass.arm})` : ''}
                 </h4>
                 <p className="text-xs text-slate-300 mt-0.5">
-                  {activeStudent.promotionHistory && activeStudent.promotionHistory.length > 0
-                    ? `Transition Record: Promoted from ${activeStudent.promotionHistory[0].fromClassName} to ${activeStudent.promotionHistory[0].toClassName} (${activeStudent.promotionHistory[0].academicSession})`
+                  {activeStudent.promotionHistory && activeStudent.promotionHistory.length > 0 && activeStudent.promotionHistory[0]
+                    ? `Transition Record: Promoted from ${activeStudent.promotionHistory[0].fromClassName || 'Previous Class'} to ${activeStudent.promotionHistory[0].toClassName || 'Current Class'} (${activeStudent.promotionHistory[0].academicSession || 'Session'})`
                     : `Active academic status verified for session ${school?.academicSession || '2025/2026'}.`}
                 </p>
               </div>
@@ -444,6 +515,7 @@ export function ParentPortal({ initialTab, onNavigate }: ParentPortalProps) {
           <div className="flex space-x-2 border-b border-slate-200 dark:border-slate-800 overflow-x-auto pb-1">
             {[
               { id: 'FEES_AND_PAYMENTS', label: 'Fees & Payments Tracker', icon: CreditCard },
+              { id: 'PARENT_PHOTO', label: 'My Profile Picture', icon: Camera },
               { id: 'AI_ASSISTANT', label: 'AI Parent & Tutor Assistant', icon: Sparkles },
               { id: 'OVERVIEW', label: 'Overview & Charts', icon: TrendingUp },
               { id: 'REPORT_CARD', label: 'Terminal Report Card', icon: Award },
@@ -854,6 +926,119 @@ export function ParentPortal({ initialTab, onNavigate }: ParentPortalProps) {
                       )}
                     </tbody>
                   </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Tab: Self-Service Parent Profile Photo Management */}
+          {activeTab === 'PARENT_PHOTO' && (
+            <div className="space-y-6">
+              {/* Header Intro Card */}
+              <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
+                    <Camera className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                      Parent / Guardian Profile Picture Management
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Upload and manage your personal parent profile photograph. Note: Student passport photos are strictly managed and verified by the school administration for report cards and exams.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* 1. Parent Profile Photo Card (Editable Self-Service) */}
+                <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
+                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                      <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                        My Parent Profile Picture
+                      </h4>
+                    </div>
+                    <span className="text-[11px] font-bold text-slate-400">
+                      {currentUser?.name}
+                    </span>
+                  </div>
+
+                  <ImageUploadBox
+                    value={parentPhotoUrl}
+                    onChange={setParentPhotoUrl}
+                    rolePreset="PARENT"
+                    label="Parent / Guardian Photograph"
+                    helperText="Upload your clear portrait snapshot or choose from curated parent avatars."
+                  />
+
+                  <div className="pt-2 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={handleSaveParentPhoto}
+                      className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md shadow-emerald-600/20 flex items-center gap-2 transition-all cursor-pointer"
+                    >
+                      <CheckCircle2 className="w-4 h-4" /> Save Parent Picture
+                    </button>
+                  </div>
+                </div>
+
+                {/* 2. Student Passport Photo Card (Official Read-Only School Record) */}
+                <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
+                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
+                      <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                        Child Official School Passport
+                      </h4>
+                    </div>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                      Read-Only Record
+                    </span>
+                  </div>
+
+                  {activeStudent ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60">
+                        <img
+                          src={activeStudent.photoUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'}
+                          alt={activeStudent.fullName}
+                          className="w-24 h-24 rounded-2xl object-cover border-2 border-indigo-500/40 shadow-md shrink-0"
+                        />
+                        <div className="space-y-1">
+                          <h5 className="text-base font-extrabold text-slate-900 dark:text-white">
+                            {activeStudent.fullName}
+                          </h5>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            Admission No: <strong className="font-mono text-slate-800 dark:text-slate-200">{activeStudent.admissionNo}</strong>
+                          </p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            Class: <strong className="text-indigo-600 dark:text-indigo-400">{activeClass?.name} {activeClass?.arm}</strong>
+                          </p>
+                          <div className="pt-1">
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md">
+                              <CheckCircle2 className="w-3 h-3" /> School Verified Passport
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-slate-700 dark:text-slate-300 text-xs leading-relaxed space-y-1">
+                        <div className="font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+                          <ShieldCheck className="w-4 h-4" /> Official Security Policy
+                        </div>
+                        <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                          Student passport photographs are officially captured, verified, and locked by the school administration for report cards, academic transcripts, and national CBT exams. If your child requires a photo replacement, please contact the school administration office.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-6 text-center text-xs text-slate-400">
+                      No linked student selected. Link a child using their Parent Access Code above.
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -1581,6 +1766,60 @@ export function ParentPortal({ initialTab, onNavigate }: ParentPortalProps) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal 3: Update Parent Photo Modal */}
+      {showParentPhotoModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-5 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="flex items-center space-x-2.5">
+                <div className="p-2.5 rounded-2xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+                  <Camera className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-slate-900 dark:text-white text-base">
+                    Upload Parent Picture
+                  </h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    {currentUser?.name || 'Parent Profile'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowParentPhotoModal(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <ImageUploadBox
+              value={parentPhotoUrl}
+              onChange={setParentPhotoUrl}
+              rolePreset="PARENT"
+              label="Parent Headshot / Picture"
+              helperText="Upload a clear headshot photo or pick from preset portraits."
+            />
+
+            <div className="flex justify-end space-x-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setShowParentPhotoModal(false)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveParentPhoto}
+                className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow-md shadow-emerald-600/20 flex items-center gap-2 cursor-pointer transition-all"
+              >
+                <CheckCircle2 className="w-4 h-4" /> Save Picture
+              </button>
+            </div>
           </div>
         </div>
       )}

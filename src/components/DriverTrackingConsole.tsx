@@ -38,9 +38,9 @@ export const DriverTrackingConsole: React.FC<DriverTrackingConsoleProps> = ({ on
   // Find the route assigned to this driver
   const myRoute = transportRoutes.find(r => 
     (currentUser?.id && r.driverUserId === currentUser.id) ||
-    (currentUser?.name && r.driverName.toLowerCase() === currentUser.name.toLowerCase()) ||
-    (r.driverAccessCode && currentUser?.email.includes(r.driverAccessCode.toLowerCase().replace(/[^a-z0-9]/g, '')))
-  ) || transportRoutes[0];
+    (currentUser?.name && r.driverName?.toLowerCase() === currentUser.name.toLowerCase()) ||
+    (r.driverAccessCode && currentUser?.email && currentUser.email.includes(r.driverAccessCode.toLowerCase().replace(/[^a-z0-9]/g, '')))
+  ) || transportRoutes[0] || null;
 
   const [isTracking, setIsTracking] = useState<boolean>(myRoute?.isTrackingActive ?? false);
   const [tripType, setTripType] = useState<TransportRoute['tripStatus']>(
@@ -171,8 +171,8 @@ export const DriverTrackingConsole: React.FC<DriverTrackingConsoleProps> = ({ on
   };
 
   const stops = myRoute?.stops || [];
-  const currentStop = stops[currentStopIdx] || stops[0];
-  const nextStop = stops[currentStopIdx + 1] || null;
+  const currentStop = stops[currentStopIdx] || stops[0] || null;
+  const nextStop = (stops && stops.length > currentStopIdx + 1) ? stops[currentStopIdx + 1] : null;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">

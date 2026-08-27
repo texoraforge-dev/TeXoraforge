@@ -170,7 +170,7 @@ export const CBTTeacherAuthoringModal: React.FC<CBTTeacherAuthoringModalProps> =
     }
 
     const newQuestion: ExamQuestion = {
-      id: editingQuestionIndex !== null ? questions[editingQuestionIndex].id : `cq_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`,
+      id: editingQuestionIndex !== null && questions[editingQuestionIndex] ? questions[editingQuestionIndex].id : `cq_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`,
       type: qType,
       questionText: qText.trim(),
       options: formattedOptions,

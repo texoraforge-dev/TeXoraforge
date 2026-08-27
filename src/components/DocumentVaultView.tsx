@@ -30,7 +30,7 @@ export const DocumentVaultView: React.FC = () => {
   const { school, schoolDocuments, financialRecords, schoolEvents, transportRoutes, actions, currentUser } = useAppStore();
   const [activeTab, setActiveTab] = useState<'DOCUMENTS' | 'FINANCE' | 'EVENTS' | 'TRANSPORT'>('DOCUMENTS');
 
-  const isAdmin = currentUser?.role === 'PROPRIETOR' || currentUser?.role === 'VICE_PRINCIPAL' || currentUser?.role === 'SCHOOL_ADMIN';
+  const isAdmin = currentUser?.role === 'PROPRIETOR' || currentUser?.role === 'PRINCIPAL' || currentUser?.role === 'VICE_PRINCIPAL' || currentUser?.role === 'SCHOOL_ADMIN';
 
   // Document Upload Form State
   const [docTitle, setDocTitle] = useState<string>('');
@@ -113,7 +113,7 @@ export const DocumentVaultView: React.FC = () => {
         fileUrl: fileUrl || undefined,
         uploadedByName: currentUser?.name || 'School Admin',
         uploadedByRole: currentUser?.role || 'SCHOOL_ADMIN',
-        accessRoles: ['PROPRIETOR', 'VICE_PRINCIPAL', 'SCHOOL_ADMIN', 'TEACHER'],
+        accessRoles: ['PROPRIETOR', 'PRINCIPAL', 'VICE_PRINCIPAL', 'SCHOOL_ADMIN', 'TEACHER'],
         createdAt: new Date().toISOString()
       };
 

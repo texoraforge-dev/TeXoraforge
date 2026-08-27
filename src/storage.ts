@@ -522,6 +522,58 @@ export class AppStorage {
     return users[idx];
   }
 
+  static updateUser(userId: string, updates: Partial<User>, actor?: User): User | null {
+    const users = getStored<User[]>(STORAGE_KEYS.USERS, INITIAL_USERS);
+    const idx = users.findIndex(u => u.id === userId);
+    if (idx === -1) return null;
+
+    users[idx] = {
+      ...users[idx],
+      ...updates
+    };
+    setStored(STORAGE_KEYS.USERS, users);
+
+    // If updating a driver, also update route photo if avatarUrl changed
+    if (updates.avatarUrl && users[idx].role === 'DRIVER') {
+      const routes = getStored<TransportRoute[]>(STORAGE_KEYS.TRANSPORT_ROUTES, INITIAL_TRANSPORT_ROUTES);
+      const rIdx = routes.findIndex(r => r.driverUserId === userId || (r.driverName && r.driverName.toLowerCase() === users[idx].name.toLowerCase()));
+      if (rIdx !== -1) {
+        routes[rIdx] = {
+          ...routes[rIdx],
+          driverPhotoUrl: updates.avatarUrl
+        };
+        setStored(STORAGE_KEYS.TRANSPORT_ROUTES, routes);
+      }
+    }
+
+    const actorUser = actor || this.getCurrentUser();
+    if (actorUser) {
+      this.addAuditLog({
+        schoolId: users[idx].schoolId,
+        userId: actorUser.id,
+        userName: actorUser.name,
+        userRole: actorUser.role,
+        action: 'Updated User Profile',
+        module: 'USER_MANAGEMENT',
+        details: `Updated profile details for ${users[idx].name} (${users[idx].role}).`
+      });
+    }
+
+    if (isSupabaseConfigured()) {
+      SupabaseService.upsertUser(users[idx]).catch(console.error);
+    }
+
+    return users[idx];
+  }
+
+  static updateUserProfilePicture(userId: string, avatarUrl: string, actor?: User): User | null {
+    return this.updateUser(userId, { avatarUrl }, actor);
+  }
+
+  static updateStudentPhoto(studentId: string, photoUrl: string): Student | null {
+    return this.updateStudent(studentId, { photoUrl });
+  }
+
   static toggleUserActive(userId: string, actor?: User): User | null {
     const users = getStored<User[]>(STORAGE_KEYS.USERS, INITIAL_USERS);
     const idx = users.findIndex(u => u.id === userId);
@@ -1779,15 +1831,129 @@ export class AppStorage {
     return sId ? list.filter(c => c.schoolId === sId) : list;
   }
 
-  static saveCurriculum(curriculum: CurriculumSubject): void {
+  static saveCurriculum(curriculum: CurriculumSubject, actor?: User): CurriculumSubject {
     const list = getStored<CurriculumSubject[]>(STORAGE_KEYS.CURRICULA, INITIAL_CURRICULA);
+    const actorUser = actor || this.getCurrentUser();
+    
+    // Auto-calculate progress percentage based on completed topics
+    const totalTopics = curriculum.topics?.length || 0;
+    const completedTopics = (curriculum.topics || []).filter(t => t.status === 'COMPLETED').length;
+    const progressPercent = totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
+
+    const enrichedCurriculum: CurriculumSubject = {
+      ...curriculum,
+      progressPercent,
+      lastModifiedBy: actorUser?.name || curriculum.lastModifiedBy || 'Administrator',
+      lastModifiedDate: new Date().toISOString()
+    };
+
     const idx = list.findIndex(c => c.id === curriculum.id);
-    if (idx !== -1) {
-      list[idx] = curriculum;
+    const isNew = idx === -1;
+    if (!isNew) {
+      list[idx] = enrichedCurriculum;
     } else {
-      list.unshift(curriculum);
+      list.unshift(enrichedCurriculum);
     }
     setStored(STORAGE_KEYS.CURRICULA, list);
+
+    // Audit log & notification
+    if (actorUser) {
+      this.addAuditLog({
+        schoolId: enrichedCurriculum.schoolId,
+        userId: actorUser.id,
+        userName: actorUser.name,
+        userRole: actorUser.role,
+        action: isNew ? 'Created Curriculum Scheme' : 'Updated Curriculum Scheme',
+        module: 'ACADEMIC',
+        details: `${actorUser.name} (${actorUser.role.replace('_', ' ')}) ${isNew ? 'created' : 'modified'} curriculum scheme for ${enrichedCurriculum.className} - ${enrichedCurriculum.subject} (${totalTopics} topics).`
+      });
+
+      // If assigned to a teacher, send notification to teacher
+      if (enrichedCurriculum.assignedTeacherId && enrichedCurriculum.assignedTeacherId !== actorUser.id) {
+        this.sendNotification({
+          schoolId: enrichedCurriculum.schoolId,
+          recipientUserId: enrichedCurriculum.assignedTeacherId,
+          senderName: actorUser.name,
+          type: 'SYSTEM',
+          title: 'Curriculum Scheme Assigned / Updated',
+          message: `The curriculum scheme for ${enrichedCurriculum.className} - ${enrichedCurriculum.subject} has been assigned to you by ${actorUser.name}.`,
+          linkId: enrichedCurriculum.id
+        });
+      }
+    }
+
+    return enrichedCurriculum;
+  }
+
+  static deleteCurriculum(curriculumId: string, actor?: User): boolean {
+    const list = getStored<CurriculumSubject[]>(STORAGE_KEYS.CURRICULA, INITIAL_CURRICULA);
+    const target = list.find(c => c.id === curriculumId);
+    if (!target) return false;
+
+    const updated = list.filter(c => c.id !== curriculumId);
+    setStored(STORAGE_KEYS.CURRICULA, updated);
+
+    const actorUser = actor || this.getCurrentUser();
+    if (actorUser) {
+      this.addAuditLog({
+        schoolId: target.schoolId,
+        userId: actorUser.id,
+        userName: actorUser.name,
+        userRole: actorUser.role,
+        action: 'Deleted Curriculum Scheme',
+        module: 'ACADEMIC',
+        details: `${actorUser.name} deleted curriculum scheme for ${target.className} - ${target.subject}.`
+      });
+    }
+
+    return true;
+  }
+
+  static assignCurriculumTeacher(curriculumId: string, teacherId: string, teacherName: string, actor?: User): CurriculumSubject | null {
+    const list = getStored<CurriculumSubject[]>(STORAGE_KEYS.CURRICULA, INITIAL_CURRICULA);
+    const idx = list.findIndex(c => c.id === curriculumId);
+    if (idx === -1) return null;
+
+    const actorUser = actor || this.getCurrentUser();
+    const updated: CurriculumSubject = {
+      ...list[idx],
+      assignedTeacherId: teacherId || undefined,
+      assignedTeacherName: teacherName || undefined,
+      assignedDate: teacherId ? new Date().toISOString() : undefined,
+      lastModifiedBy: actorUser?.name || 'Administrator',
+      lastModifiedDate: new Date().toISOString()
+    };
+
+    list[idx] = updated;
+    setStored(STORAGE_KEYS.CURRICULA, list);
+
+    if (actorUser) {
+      this.addAuditLog({
+        schoolId: updated.schoolId,
+        userId: actorUser.id,
+        userName: actorUser.name,
+        userRole: actorUser.role,
+        action: 'Assigned Curriculum to Staff',
+        module: 'ACADEMIC',
+        details: teacherId 
+          ? `${actorUser.name} assigned ${updated.className} ${updated.subject} curriculum to ${teacherName}.`
+          : `${actorUser.name} unassigned staff from ${updated.className} ${updated.subject} curriculum.`
+      });
+
+      if (teacherId && teacherId !== actorUser.id) {
+        this.sendNotification({
+          schoolId: updated.schoolId,
+          recipientUserId: teacherId,
+          senderName: actorUser.name,
+          type: 'SYSTEM',
+          title: 'Curriculum Scheme of Work Assigned',
+          message: `${actorUser.name} (${actorUser.role.replace('_', ' ')}) has assigned you the ${updated.className} - ${updated.subject} Scheme of Work.`,
+          linkId: updated.id
+        });
+      }
+    }
+
+    return updated;
   }
 
   // --- CBT Methods ---
@@ -2371,6 +2537,7 @@ export class AppStorage {
     vehicleModel?: string;
     driverName: string;
     driverPhone: string;
+    driverPhotoUrl?: string;
     pickupLocations: string[];
     stops?: TransportStop[];
     assignedStudentIds: string[];
@@ -2382,6 +2549,7 @@ export class AppStorage {
     const schoolId = data.schoolId || this.getCurrentSchool()?.id || 'school_apex';
     const driverAccessCode = (data.driverAccessCode && data.driverAccessCode.trim()) || `DRV-${Math.floor(1000 + Math.random() * 9000)}-BUS`;
     const driverUserId = 'usr_drv_' + Date.now();
+    const photoUrl = data.driverPhotoUrl || 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80';
 
     const initialStops: TransportStop[] = data.stops && data.stops.length > 0
       ? data.stops
@@ -2405,7 +2573,7 @@ export class AppStorage {
       driverUserId,
       driverAccessCode,
       driverPin: data.driverPin || '1234',
-      driverPhotoUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80',
+      driverPhotoUrl: photoUrl,
       capacity: data.capacity || 25,
       assignedStudentIds: data.assignedStudentIds || [],
       pickupLocations: data.pickupLocations,
@@ -2433,6 +2601,7 @@ export class AppStorage {
       email: `${driverAccessCode.toLowerCase().replace(/[^a-z0-9]/g, '')}@driver.texora.edu`,
       role: 'DRIVER',
       phone: data.driverPhone,
+      avatarUrl: photoUrl,
       assignedClassIds: [],
       assignedSubjects: [],
       active: true,

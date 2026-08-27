@@ -30,17 +30,17 @@ export const LessonNoteModal: React.FC<LessonNoteModalProps> = ({
   const { school, currentUser, classes, actions } = useAppStore();
 
   // Filter classes & subjects
-  const availableClasses = currentUser && currentUser.role === 'TEACHER' && currentUser.assignedClassIds.length > 0
+  const availableClasses = currentUser && currentUser.role === 'TEACHER' && currentUser.assignedClassIds && currentUser.assignedClassIds.length > 0
     ? classes.filter(c => currentUser.assignedClassIds.includes(c.id))
     : classes;
 
-  const availableSubjects = currentUser && currentUser.role === 'TEACHER' && currentUser.assignedSubjects.length > 0
+  const availableSubjects = currentUser && currentUser.role === 'TEACHER' && currentUser.assignedSubjects && currentUser.assignedSubjects.length > 0
     ? currentUser.assignedSubjects
     : (school?.id ? actions.getSchoolSubjects(school.id) : ['Mathematics', 'English Language', 'Physics', 'Chemistry', 'Biology', 'Basic Science & Tech']);
 
   // Form State
   const [classId, setClassId] = useState(existingSubmission?.classId || availableClasses[0]?.id || '');
-  const [subject, setSubject] = useState(existingSubmission?.subject || availableSubjects[0] || '');
+  const [subject, setSubject] = useState(existingSubmission?.subject || availableSubjects?.[0] || 'Mathematics');
   const [title, setTitle] = useState(existingSubmission?.title || '');
   const [weekNumber, setWeekNumber] = useState<number>(existingSubmission?.lessonNoteContent?.weekNumber || 3);
   const [durationMinutes, setDurationMinutes] = useState<number>(existingSubmission?.lessonNoteContent?.durationMinutes || 80);

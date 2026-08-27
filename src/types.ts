@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export type UserRole = 'PROPRIETOR' | 'VICE_PRINCIPAL' | 'SCHOOL_ADMIN' | 'TEACHER' | 'PARENT' | 'STUDENT' | 'DRIVER';
+export type UserRole = 'PROPRIETOR' | 'PRINCIPAL' | 'VICE_PRINCIPAL' | 'SCHOOL_ADMIN' | 'TEACHER' | 'PARENT' | 'STUDENT' | 'DRIVER';
 
 export type AdminPermission =
   | 'ADMISSIONS'
@@ -525,6 +525,8 @@ export interface CurriculumTopic {
   assessmentMethod: string;
   status: 'COMPLETED' | 'IN_PROGRESS' | 'BEHIND' | 'NOT_STARTED';
   actualTaughtDate?: string;
+  resources?: string[];
+  teacherNotes?: string;
 }
 
 export interface CurriculumSubject {
@@ -537,6 +539,17 @@ export interface CurriculumSubject {
   academicTerm: string;
   topics: CurriculumTopic[];
   progressPercent: number; // calculated e.g. 75%
+  assignedTeacherId?: string;
+  assignedTeacherName?: string;
+  assignedDate?: string;
+  curriculumStandard?: string; // e.g. NERDC, Cambridge, WAEC, British, Custom
+  description?: string;
+  uploadedFileUrl?: string;
+  uploadedFileName?: string;
+  uploadedFileSize?: string;
+  uploadedAt?: string;
+  lastModifiedBy?: string;
+  lastModifiedDate?: string;
 }
 
 // CBT Engine

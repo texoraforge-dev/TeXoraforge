@@ -46,7 +46,7 @@ export function AdmitStudentModal({
   const [enrolledSubjects, setEnrolledSubjects] = useState<string[]>([]);
   const [customSubjectInput, setCustomSubjectInput] = useState('');
 
-  const selectedClass = classes.find(c => c.id === classId) || classes[0];
+  const selectedClass = classes.find(c => c.id === classId) || classes[0] || null;
   const classCurriculumSubjects = selectedClass ? actions.getClassSubjects(selectedClass.id) : availableSubjects;
 
   const handleAddCustomSubject = (e?: React.FormEvent) => {

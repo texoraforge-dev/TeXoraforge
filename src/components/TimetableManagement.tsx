@@ -47,7 +47,7 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
 }) => {
   const { school, currentUser, classes, users, classTimetables, examTimetables, actions } = useAppStore();
 
-  const isAdmin = currentUser?.role === 'SCHOOL_ADMIN';
+  const isAdmin = currentUser?.role === 'SCHOOL_ADMIN' || currentUser?.role === 'PROPRIETOR' || currentUser?.role === 'PRINCIPAL' || currentUser?.role === 'VICE_PRINCIPAL';
   const isTeacher = currentUser?.role === 'TEACHER';
   const isParent = currentUser?.role === 'PARENT';
   const isStudent = currentUser?.role === 'STUDENT';
@@ -75,7 +75,7 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
 
   // Current Active Class object
   const activeClass = useMemo(() => {
-    return classes.find(c => c.id === selectedClassId) || classes[0];
+    return classes.find(c => c.id === selectedClassId) || classes[0] || null;
   }, [classes, selectedClassId]);
 
   // Teachers list for dropdowns
@@ -184,7 +184,7 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
     setEditingPeriodIndex(null);
     setPeriodForm({
       time: presetTime || '08:00 AM - 08:45 AM',
-      subject: schoolSubjects[0] || 'Mathematics',
+      subject: schoolSubjects?.[0] || 'Mathematics',
       teacherName: teacherUsers[0]?.name || '',
       venue: activeClass ? `${activeClass.name} Classroom` : 'Classroom 1',
       isBreak: false
@@ -347,7 +347,7 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
       date: defaultDate,
       day: getDayOfWeekName(defaultDate),
       timeSlot: '09:00 AM - 11:30 AM',
-      subject: schoolSubjects[0] || 'Mathematics',
+      subject: schoolSubjects?.[0] || 'Mathematics',
       hallOrVenue: 'Main Multipurpose Hall',
       invigilators: teacherUsers.map(t => t.name).slice(0, 2).join(', '),
       instructions: 'Candidates must bring complete stationery set.'
@@ -1392,7 +1392,7 @@ export const TimetableManagement: React.FC<TimetableManagementProps> = ({
                     >
                       <option value="">Unassigned / Subject Teacher</option>
                       {teacherUsers.map(t => (
-                        <option key={t.id} value={t.name}>{t.name} ({t.assignedSubjects.join(', ') || 'Teacher'})</option>
+                        <option key={t.id} value={t.name}>{t.name} ({(t.assignedSubjects || []).join(', ') || 'Teacher'})</option>
                       ))}
                     </select>
                   </div>

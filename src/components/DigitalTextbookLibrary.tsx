@@ -74,7 +74,7 @@ export const DigitalTextbookLibrary: React.FC<DigitalTextbookLibraryProps> = ({
 }) => {
   const { currentUser } = useAppStore();
   const userRole = currentUser?.role || (initialRole === 'ADMIN' ? 'SCHOOL_ADMIN' : initialRole);
-  const canManageTextbooks = userRole === 'PROPRIETOR' || userRole === 'VICE_PRINCIPAL' || userRole === 'SCHOOL_ADMIN';
+  const canManageTextbooks = userRole === 'PROPRIETOR' || userRole === 'PRINCIPAL' || userRole === 'VICE_PRINCIPAL' || userRole === 'SCHOOL_ADMIN';
 
   // Custom added textbooks & deleted textbook IDs from localStorage
   const [customBooks, setCustomBooks] = useState<DigitalTextbook[]>(() => {
@@ -173,11 +173,11 @@ export const DigitalTextbookLibrary: React.FC<DigitalTextbookLibraryProps> = ({
   }, [allTextbooks, selectedBookId]);
 
   const selectedChapter = useMemo(() => {
-    if (!selectedBook) return null;
+    if (!selectedBook || !selectedBook.chapters) return null;
     if (selectedChapterId) {
-      return selectedBook.chapters.find(c => c.id === selectedChapterId) || selectedBook.chapters[0];
+      return selectedBook.chapters.find(c => c.id === selectedChapterId) || selectedBook.chapters[0] || null;
     }
-    return selectedBook.chapters[0];
+    return selectedBook.chapters[0] || null;
   }, [selectedBook, selectedChapterId]);
 
   // Discipline counts for quick navigation
@@ -307,7 +307,7 @@ export const DigitalTextbookLibrary: React.FC<DigitalTextbookLibraryProps> = ({
     if (chapterId) {
       setSelectedChapterId(chapterId);
     } else {
-      setSelectedChapterId(bk?.chapters[0]?.id || null);
+      setSelectedChapterId(bk?.chapters?.[0]?.id || null);
     }
     setUserAnswers({});
     setRevealedSolutions({});
@@ -1078,7 +1078,7 @@ export const DigitalTextbookLibrary: React.FC<DigitalTextbookLibraryProps> = ({
                       {b.title}
                     </h4>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">
-                      {b.author.split(',')[0]}
+                      {b.author ? b.author.split(',')[0] : 'Author'}
                     </p>
                   </div>
                 </button>

@@ -469,9 +469,25 @@ Your capabilities:
       });
     } catch (error: any) {
       console.error("[Texora Voice API Error]:", error?.message || error);
+      let cleanErrorMessage = "Failed to generate AI response from Gemini.";
+      if (typeof error?.message === "string") {
+        try {
+          const parsed = JSON.parse(error.message);
+          cleanErrorMessage = parsed?.error?.message || error.message;
+        } catch {
+          cleanErrorMessage = error.message;
+        }
+      } else if (error?.error?.message) {
+        cleanErrorMessage = error.error.message;
+      } else if (typeof error === "string") {
+        cleanErrorMessage = error;
+      } else if (error?.statusText) {
+        cleanErrorMessage = error.statusText;
+      }
+
       return res.status(502).json({
         success: false,
-        error: error?.message || "Failed to generate AI response from Gemini.",
+        error: cleanErrorMessage,
         details: error?.status || error?.code || "API_ERROR"
       });
     }

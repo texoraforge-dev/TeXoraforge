@@ -443,7 +443,15 @@ export const VoiceAssistantWidget: React.FC = () => {
           if (errData.isMissingApiKey) {
             aiText = `⚠️ API Key Missing: GEMINI_API_KEY is not set in your Vercel Project Environment Variables. Please add GEMINI_API_KEY in Vercel Dashboard → Project Settings → Environment Variables.`;
           } else {
-            aiText = `⚠️ Gemini API Error (${response.status}): ${errData.error || 'The model was unable to process the request.'}`;
+            let errorMsg = 'The model was unable to process the request.';
+            if (typeof errData.error === 'string') {
+              errorMsg = errData.error;
+            } else if (errData.error && typeof errData.error === 'object') {
+              errorMsg = errData.error.message || JSON.stringify(errData.error);
+            } else if (errData.message) {
+              errorMsg = typeof errData.message === 'string' ? errData.message : JSON.stringify(errData.message);
+            }
+            aiText = `⚠️ Gemini API Error (${response.status}): ${errorMsg}`;
           }
         } catch {
           aiText = `⚠️ Gemini API Error (${response.status}): Unable to reach AI service.`;

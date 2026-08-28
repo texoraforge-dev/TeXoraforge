@@ -31,6 +31,7 @@ import { GlobalSearch } from './GlobalSearch';
 import { SupabaseService } from '../lib/supabaseService';
 import { getRoleBadgeInfo } from '../lib/permissions';
 import { ImageUploadBox } from './ImageUploadBox';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface NavbarProps {
   darkMode: boolean;
@@ -170,13 +171,40 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
 
           {/* Theme Toggle */}
-          <button
+          <motion.button
+            whileTap={{ scale: 0.88 }}
+            whileHover={{ scale: 1.06 }}
             onClick={() => setDarkMode(!darkMode)}
-            className="p-2 rounded-lg text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-            title="Toggle Light/Dark Theme"
+            className="relative p-2 rounded-xl text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer overflow-hidden border border-slate-200/60 dark:border-slate-700/60 shadow-xs"
+            title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            aria-label="Toggle Light/Dark Theme"
           >
-            {darkMode ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-slate-600" />}
-          </button>
+            <AnimatePresence mode="wait" initial={false}>
+              {darkMode ? (
+                <motion.div
+                  key="sun-icon"
+                  initial={{ rotate: -90, scale: 0.5, opacity: 0 }}
+                  animate={{ rotate: 0, scale: 1, opacity: 1 }}
+                  exit={{ rotate: 90, scale: 0.5, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: "easeOut" }}
+                  className="flex items-center justify-center"
+                >
+                  <Sun className="h-4.5 w-4.5 text-amber-400 fill-amber-400/20 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]" />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="moon-icon"
+                  initial={{ rotate: 90, scale: 0.5, opacity: 0 }}
+                  animate={{ rotate: 0, scale: 1, opacity: 1 }}
+                  exit={{ rotate: -90, scale: 0.5, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: "easeOut" }}
+                  className="flex items-center justify-center"
+                >
+                  <Moon className="h-4.5 w-4.5 text-slate-700 fill-slate-700/10 drop-shadow-[0_0_6px_rgba(51,65,85,0.3)]" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.button>
 
           {/* Notifications Trigger */}
           {currentUser && (

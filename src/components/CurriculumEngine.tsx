@@ -40,6 +40,7 @@ import {
 } from 'lucide-react';
 import { useAppStore } from '../storage';
 import { CurriculumSubject, CurriculumTopic, User } from '../types';
+import { DEFAULT_SCHOOL_SUBJECTS, SUBJECT_OPTIONS_BY_TIER } from '../mockData';
 
 export const CurriculumEngine: React.FC = () => {
   const { school, classes, curricula, users, actions, currentUser } = useAppStore();
@@ -75,12 +76,188 @@ export const CurriculumEngine: React.FC = () => {
   const [editingTopic, setEditingTopic] = useState<{ topic: CurriculumTopic; isNew: boolean } | null>(null);
   const [editingCurriculum, setEditingCurriculum] = useState<CurriculumSubject | null>(null);
 
+  // Synchronized Modal Class and Subject state for Add & Upload Syllabus
+  const [createModalClassId, setCreateModalClassId] = useState<string>(classes[0]?.id || '');
+  const [createModalSubject, setCreateModalSubject] = useState<string>('Mathematics');
+  const [createCustomSubject, setCreateCustomSubject] = useState<string>('');
+
+  const [uploadModalClassId, setUploadModalClassId] = useState<string>(classes[0]?.id || '');
+  const [uploadModalSubject, setUploadModalSubject] = useState<string>('Mathematics');
+  const [uploadCustomSubject, setUploadCustomSubject] = useState<string>('');
+  const [uploadedFileObj, setUploadedFileObj] = useState<File | null>(null);
+  const [uploadedFileName, setUploadedFileName] = useState<string>('WAEC_NERDC_Official_Syllabus_2025.pdf');
+
   // Status feedback toast
   const [feedback, setFeedback] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setFeedback({ message, type });
     setTimeout(() => setFeedback(null), 4000);
+  };
+
+  // Helper to group all school classes in clean pedagogical hierarchy
+  const groupedClasses = useMemo(() => {
+    const groups: { title: string; items: typeof classes }[] = [
+      { title: 'Senior Secondary School (SSS / SS)', items: [] },
+      { title: 'Junior Secondary School (JSS / Basic 7-9)', items: [] },
+      { title: 'Primary School (Basic 1-6)', items: [] },
+      { title: 'Nursery & Kindergarten (Early Years)', items: [] },
+      { title: 'Other School Classes', items: [] }
+    ];
+
+    classes.forEach(c => {
+      const cat = (c.category || '').toUpperCase();
+      const name = (c.name || '').toUpperCase();
+      const lvl = (c.level || '').toUpperCase();
+
+      if (cat.includes('SENIOR') || name.includes('SSS') || name.includes('SS ') || name.includes('SS1') || name.includes('SS2') || name.includes('SS3') || lvl.includes('SENIOR')) {
+        groups[0].items.push(c);
+      } else if (cat.includes('JUNIOR') || name.includes('JSS') || name.includes('JS ') || name.includes('JS1') || name.includes('JS2') || name.includes('JS3') || name.includes('BASIC 7') || name.includes('BASIC 8') || name.includes('BASIC 9') || lvl.includes('JUNIOR')) {
+        groups[1].items.push(c);
+      } else if (cat.includes('PRIMARY') || name.includes('PRIMARY') || name.includes('BASIC 1') || name.includes('BASIC 2') || name.includes('BASIC 3') || name.includes('BASIC 4') || name.includes('BASIC 5') || name.includes('BASIC 6') || lvl.includes('PRIMARY')) {
+        groups[2].items.push(c);
+      } else if (cat.includes('NURSERY') || cat.includes('KG') || cat.includes('KINDERGARTEN') || cat.includes('CRECHE') || cat.includes('PRE-NURSERY') || name.includes('NURSERY') || name.includes('KG') || name.includes('CRECHE') || name.includes('PRE-NURSERY') || lvl.includes('EARLY')) {
+        groups[3].items.push(c);
+      } else {
+        groups[4].items.push(c);
+      }
+    });
+
+    return groups.filter(g => g.items.length > 0);
+  }, [classes]);
+
+  // Master Comprehensive Academic Subjects Catalogue covering all education tiers
+  const masterAllSubjects = useMemo(() => {
+    const rawList = [
+      ...(school?.subjects || []),
+      ...DEFAULT_SCHOOL_SUBJECTS,
+      ...(SUBJECT_OPTIONS_BY_TIER['Senior Secondary'] || []),
+      ...(SUBJECT_OPTIONS_BY_TIER['Junior Secondary'] || []),
+      ...(SUBJECT_OPTIONS_BY_TIER['Primary'] || []),
+      ...(SUBJECT_OPTIONS_BY_TIER['Pre-Nursery & Nursery'] || []),
+      ...classes.flatMap(c => c.subjects || []),
+      ...curricula.map(c => c.subject),
+      // Comprehensive Standard Subjects across all exam boards & curricula
+      'Mathematics',
+      'English Language',
+      'Physics',
+      'Chemistry',
+      'Biology',
+      'Further Mathematics',
+      'Basic Science & Tech',
+      'Basic Science',
+      'Basic Technology',
+      'Computer Studies',
+      'Computer Science',
+      'Information & Comm. Technology (ICT)',
+      'Economics',
+      'Commerce',
+      'Financial Accounting',
+      'Literature in English',
+      'Government',
+      'Civic Education',
+      'Agricultural Science',
+      'Social Studies',
+      'Business Studies',
+      'Creative & Cultural Arts',
+      'Creative Arts',
+      'Physical & Health Ed',
+      'Geography',
+      'History',
+      'Technical Drawing',
+      'Food & Nutrition',
+      'Home Economics',
+      'Christian Religious Studies (CRS)',
+      'Islamic Religious Studies (IRS)',
+      'French Language',
+      'Music',
+      'Numeracy',
+      'Literacy & Phonics',
+      'Rhymes & Songs',
+      'Basic Science & Nature',
+      'Social Norms',
+      'Handwriting & Coloring',
+      'Verbal Reasoning',
+      'Quantitative Reasoning',
+      'Vocational Aptitude',
+      'Robotics & Artificial Intelligence',
+      'Coding & Web Development',
+      'Diction & Phonetics',
+      'Yoruba Language',
+      'Igbo Language',
+      'Hausa Language',
+      'Arabic Language'
+    ];
+
+    const seen = new Set<string>();
+    const result: string[] = [];
+    rawList.forEach(s => {
+      if (!s) return;
+      const trimmed = s.trim();
+      const lower = trimmed.toLowerCase();
+      if (!seen.has(lower) && trimmed.length > 0) {
+        seen.add(lower);
+        result.push(trimmed);
+      }
+    });
+
+    return result.sort((a, b) => a.localeCompare(b));
+  }, [school?.subjects, classes, curricula]);
+
+  // Helper to dynamically calculate complete synchronized subjects for any selected class
+  const getSubjectsForClass = (targetClassId?: string) => {
+    let classSubs: string[] = [];
+    if (targetClassId) {
+      classSubs = actions.getClassSubjects(targetClassId) || [];
+      if (classSubs.length === 0) {
+        const found = classes.find(c => c.id === targetClassId);
+        if (found && found.subjects && found.subjects.length > 0) {
+          classSubs = found.subjects;
+        } else if (found && SUBJECT_OPTIONS_BY_TIER[found.category]) {
+          classSubs = SUBJECT_OPTIONS_BY_TIER[found.category];
+        }
+      }
+    }
+
+    const classSeen = new Set<string>();
+    const cleanClassSubs: string[] = [];
+    classSubs.forEach(s => {
+      const lower = s.trim().toLowerCase();
+      if (!classSeen.has(lower) && s.trim().length > 0) {
+        classSeen.add(lower);
+        cleanClassSubs.push(s.trim());
+      }
+    });
+
+    const otherSubjects = masterAllSubjects.filter(s => !classSeen.has(s.toLowerCase().trim()));
+
+    return {
+      classSubjects: cleanClassSubs,
+      otherSchoolSubjects: otherSubjects,
+      allMerged: cleanClassSubs.length > 0 ? [...cleanClassSubs, ...otherSubjects] : masterAllSubjects,
+      masterAllSubjects
+    };
+  };
+
+  // Open modal handlers with instant synchronization
+  const handleOpenCreateModal = () => {
+    const initialClassId = selectedClassId || classes[0]?.id || '';
+    setCreateModalClassId(initialClassId);
+    const subs = getSubjectsForClass(initialClassId);
+    setCreateModalSubject(subs.classSubjects[0] || subs.allMerged[0] || 'Mathematics');
+    setCreateCustomSubject('');
+    setShowCreateModal(true);
+  };
+
+  const handleOpenUploadModal = () => {
+    const initialClassId = selectedClassId || classes[0]?.id || '';
+    setUploadModalClassId(initialClassId);
+    const subs = getSubjectsForClass(initialClassId);
+    setUploadModalSubject(subs.classSubjects[0] || subs.allMerged[0] || 'Mathematics');
+    setUploadCustomSubject('');
+    setUploadedFileObj(null);
+    setUploadedFileName('WAEC_NERDC_Official_Syllabus_2025.pdf');
+    setShowUploadModal(true);
   };
 
   const activeClass = classes.find(c => c.id === selectedClassId) || classes[0];
@@ -443,7 +620,7 @@ export const CurriculumEngine: React.FC = () => {
               <>
                 <button
                   type="button"
-                  onClick={() => setShowCreateModal(true)}
+                  onClick={handleOpenCreateModal}
                   className="px-4 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md shadow-indigo-600/30 flex items-center gap-2 transition-all cursor-pointer"
                 >
                   <Plus className="w-4 h-4" />
@@ -452,7 +629,7 @@ export const CurriculumEngine: React.FC = () => {
 
                 <button
                   type="button"
-                  onClick={() => setShowUploadModal(true)}
+                  onClick={handleOpenUploadModal}
                   className="px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-xs backdrop-blur-sm flex items-center gap-2 transition-all cursor-pointer"
                 >
                   <UploadCloud className="w-4 h-4 text-indigo-300" />
@@ -528,38 +705,67 @@ export const CurriculumEngine: React.FC = () => {
           {/* Class & Subject Selector Bar */}
           <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-              <div className="w-full sm:w-56">
+              <div className="w-full sm:w-64">
                 <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider">
                   Select Class
                 </label>
                 <select
                   value={selectedClassId}
-                  onChange={e => setSelectedClassId(e.target.value)}
+                  onChange={e => {
+                    const newClassId = e.target.value;
+                    setSelectedClassId(newClassId);
+                    const subInfo = getSubjectsForClass(newClassId);
+                    if (!subInfo.allMerged.some(s => s.toLowerCase() === selectedSubject.toLowerCase())) {
+                      setSelectedSubject(subInfo.classSubjects[0] || subInfo.allMerged[0] || 'Mathematics');
+                    }
+                  }}
                   className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500"
                 >
-                  {classes.map(c => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} ({c.level})
-                    </option>
+                  {groupedClasses.map(group => (
+                    <optgroup key={group.title} label={group.title}>
+                      {group.items.map(c => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}{c.arm ? ` - ${c.arm}` : ''} ({c.level || c.category})
+                        </option>
+                      ))}
+                    </optgroup>
                   ))}
                 </select>
               </div>
 
-              <div className="w-full sm:w-64">
+              <div className="w-full sm:w-72">
                 <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider">
                   Academic Subject
                 </label>
-                <select
-                  value={selectedSubject}
-                  onChange={e => setSelectedSubject(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500"
-                >
-                  {((activeClass ? actions.getClassSubjects(activeClass.id) : school?.subjects) || []).map(subj => (
-                    <option key={subj} value={subj}>
-                      {subj}
-                    </option>
-                  ))}
-                </select>
+                {(() => {
+                  const subInfo = getSubjectsForClass(selectedClassId);
+                  return (
+                    <select
+                      value={selectedSubject}
+                      onChange={e => setSelectedSubject(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500"
+                    >
+                      {subInfo.classSubjects.length > 0 && (
+                        <optgroup label={`⭐ Offered in ${activeClass?.name || 'Class'} (${subInfo.classSubjects.length})`}>
+                          {subInfo.classSubjects.map(subj => (
+                            <option key={subj} value={subj}>
+                              {subj}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                      {subInfo.otherSchoolSubjects.length > 0 && (
+                        <optgroup label={`📚 All Academic Subjects (${subInfo.otherSchoolSubjects.length})`}>
+                          {subInfo.otherSchoolSubjects.map(subj => (
+                            <option key={subj} value={subj}>
+                              {subj}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                    </select>
+                  );
+                })()}
               </div>
             </div>
 
@@ -921,7 +1127,7 @@ export const CurriculumEngine: React.FC = () => {
               {isAdmin && (
                 <button
                   type="button"
-                  onClick={() => setShowCreateModal(true)}
+                  onClick={handleOpenCreateModal}
                   className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer ml-auto"
                 >
                   <Plus className="w-3.5 h-3.5" /> New Curriculum
@@ -1114,32 +1320,61 @@ export const CurriculumEngine: React.FC = () => {
               </label>
               <select
                 value={selectedClassId}
-                onChange={e => setSelectedClassId(e.target.value)}
+                onChange={e => {
+                  const newClassId = e.target.value;
+                  setSelectedClassId(newClassId);
+                  const subInfo = getSubjectsForClass(newClassId);
+                  if (!subInfo.allMerged.some(s => s.toLowerCase() === selectedSubject.toLowerCase())) {
+                    setSelectedSubject(subInfo.classSubjects[0] || subInfo.allMerged[0] || 'Mathematics');
+                  }
+                }}
                 className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-bold"
               >
-                {classes.map(c => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} ({c.level})
-                  </option>
+                {groupedClasses.map(group => (
+                  <optgroup key={group.title} label={group.title}>
+                    {group.items.map(c => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}{c.arm ? ` - ${c.arm}` : ''} ({c.level || c.category})
+                      </option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Subject
+                Academic Subject
               </label>
-              <select
-                value={selectedSubject}
-                onChange={e => setSelectedSubject(e.target.value)}
-                className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-bold"
-              >
-                {((activeClass ? actions.getClassSubjects(activeClass.id) : school?.subjects) || []).map(subj => (
-                  <option key={subj} value={subj}>
-                    {subj}
-                  </option>
-                ))}
-              </select>
+              {(() => {
+                const subInfo = getSubjectsForClass(selectedClassId);
+                return (
+                  <select
+                    value={selectedSubject}
+                    onChange={e => setSelectedSubject(e.target.value)}
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-bold"
+                  >
+                    {subInfo.classSubjects.length > 0 && (
+                      <optgroup label={`⭐ Offered in ${activeClass?.name || 'Class'} (${subInfo.classSubjects.length})`}>
+                        {subInfo.classSubjects.map(subj => (
+                          <option key={subj} value={subj}>
+                            {subj}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                    {subInfo.otherSchoolSubjects.length > 0 && (
+                      <optgroup label={`📚 All Academic Subjects (${subInfo.otherSchoolSubjects.length})`}>
+                        {subInfo.otherSchoolSubjects.map(subj => (
+                          <option key={subj} value={subj}>
+                            {subj}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                  </select>
+                );
+              })()}
             </div>
 
             <div>
@@ -1229,7 +1464,7 @@ export const CurriculumEngine: React.FC = () => {
                     Create New Curriculum Scheme
                   </h3>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Proprietor / Leadership Syllabus Authoring
+                    Proprietor / Leadership Syllabus Authoring & Subject Allocation
                   </p>
                 </div>
               </div>
@@ -1245,8 +1480,21 @@ export const CurriculumEngine: React.FC = () => {
               onSubmit={e => {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
-                const classId = formData.get('classId') as string;
-                const subject = formData.get('subject') as string;
+                const classId = createModalClassId;
+                let subject = createModalSubject;
+                if (subject === '__CUSTOM__') {
+                  subject = createCustomSubject.trim();
+                  if (!subject) {
+                    showToast('Please enter a custom subject name', 'error');
+                    return;
+                  }
+                  // Register new custom subject to school subjects if not present
+                  const existingSchoolSubs = school?.subjects || [];
+                  if (!existingSchoolSubs.some(s => s.toLowerCase() === subject.toLowerCase()) && school?.id) {
+                    actions.updateSchoolSubjects(school.id, [...existingSchoolSubs, subject]);
+                  }
+                }
+
                 const standard = formData.get('standard') as string;
                 const teacherId = formData.get('teacherId') as string;
                 const description = formData.get('description') as string;
@@ -1272,7 +1520,7 @@ export const CurriculumEngine: React.FC = () => {
                       id: `t_init_1`,
                       weekNumber: 1,
                       topic: `Introduction to ${subject}`,
-                      subtopics: ['Core Definitions', 'Overview of Concepts'],
+                      subtopics: ['Core Definitions', 'Overview of Key Concepts'],
                       learningObjectives: ['Define key terminology', 'Identify applications'],
                       activities: ['Introductory classroom interactive discussion'],
                       assessmentMethod: 'Short Quiz',
@@ -1290,53 +1538,107 @@ export const CurriculumEngine: React.FC = () => {
               }}
               className="space-y-4 text-xs"
             >
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Class
+                    Select Class (All School Classes)
                   </label>
                   <select
-                    name="classId"
-                    defaultValue={selectedClassId}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-2.5 font-semibold text-xs"
+                    value={createModalClassId}
+                    onChange={e => {
+                      const newId = e.target.value;
+                      setCreateModalClassId(newId);
+                      const subInfo = getSubjectsForClass(newId);
+                      if (createModalSubject !== '__CUSTOM__' && !subInfo.allMerged.some(s => s.toLowerCase() === createModalSubject.toLowerCase())) {
+                        setCreateModalSubject(subInfo.classSubjects[0] || subInfo.allMerged[0] || 'Mathematics');
+                      }
+                    }}
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-2.5 font-semibold text-xs text-slate-900 dark:text-white"
                   >
-                    {classes.map(c => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
+                    {groupedClasses.map(group => (
+                      <optgroup key={group.title} label={group.title}>
+                        {group.items.map(c => (
+                          <option key={c.id} value={c.id}>
+                            {c.name}{c.arm ? ` - ${c.arm}` : ''} ({c.level || c.category})
+                          </option>
+                        ))}
+                      </optgroup>
                     ))}
                   </select>
                 </div>
 
                 <div>
                   <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Subject
+                    Academic Subject (All Subjects)
                   </label>
-                  <select
-                    name="subject"
-                    defaultValue={selectedSubject}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-2.5 font-semibold text-xs"
-                  >
-                    {(school?.subjects || ['Mathematics', 'English Language', 'Physics']).map(s => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
+                  {(() => {
+                    const subInfo = getSubjectsForClass(createModalClassId);
+                    const selectedCls = classes.find(c => c.id === createModalClassId);
+                    return (
+                      <select
+                        value={createModalSubject}
+                        onChange={e => setCreateModalSubject(e.target.value)}
+                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-2.5 font-semibold text-xs text-slate-900 dark:text-white"
+                      >
+                        {subInfo.classSubjects.length > 0 && (
+                          <optgroup label={`⭐ Offered in ${selectedCls?.name || 'Class'} (${subInfo.classSubjects.length})`}>
+                            {subInfo.classSubjects.map(s => (
+                              <option key={`create_cls_${s}`} value={s}>
+                                {s}
+                              </option>
+                            ))}
+                          </optgroup>
+                        )}
+                        <optgroup label={`📚 All Academic Subjects (${subInfo.otherSchoolSubjects.length})`}>
+                          {subInfo.otherSchoolSubjects.map(s => (
+                            <option key={`create_all_${s}`} value={s}>
+                              {s}
+                            </option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="➕ Custom / New Subject">
+                          <option value="__CUSTOM__">+ Enter Custom / New Subject...</option>
+                        </optgroup>
+                      </select>
+                    );
+                  })()}
                 </div>
               </div>
+
+              {createModalSubject === '__CUSTOM__' && (
+                <div className="bg-indigo-50/60 dark:bg-indigo-950/30 p-3 rounded-2xl border border-indigo-200 dark:border-indigo-800 space-y-1">
+                  <label className="block text-[11px] font-bold text-indigo-700 dark:text-indigo-300">
+                    New Subject Name
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Artificial Intelligence & Robotics, French Language, Coding"
+                    value={createCustomSubject}
+                    onChange={e => setCreateCustomSubject(e.target.value)}
+                    className="w-full bg-white dark:bg-slate-900 border border-indigo-300 dark:border-indigo-700 rounded-xl p-2.5 text-xs font-bold text-slate-800 dark:text-slate-100"
+                    required
+                  />
+                  <p className="text-[10px] text-indigo-600/80 dark:text-indigo-400/80">
+                    This subject will also be added to the school's global offered subjects catalogue.
+                  </p>
+                </div>
+              )}
 
               <div>
                 <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
                   Curriculum Standard / Examination Board
                 </label>
-                <input
-                  type="text"
+                <select
                   name="standard"
                   defaultValue="NERDC / WAEC National Standard"
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-2.5 text-xs"
-                  required
-                />
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-2.5 text-xs font-semibold"
+                >
+                  <option value="NERDC / WAEC National Standard">NERDC / WAEC National Standard</option>
+                  <option value="Cambridge IGCSE & Checkpoint">Cambridge IGCSE & Checkpoint</option>
+                  <option value="British National Curriculum">British National Curriculum</option>
+                  <option value="STEM & Practical Vocational">STEM & Practical Vocational</option>
+                  <option value="National Basic Education Scheme">National Basic Education Scheme</option>
+                </select>
               </div>
 
               <div>
@@ -1404,7 +1706,7 @@ export const CurriculumEngine: React.FC = () => {
                     Upload Curriculum & Scheme Document
                   </h3>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Supports PDF, DOCX, CSV syllabus sheets
+                    Supports PDF, DOCX, XLSX, and CSV official syllabus sheets
                   </p>
                 </div>
               </div>
@@ -1420,9 +1722,21 @@ export const CurriculumEngine: React.FC = () => {
               onSubmit={e => {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
-                const classId = formData.get('classId') as string;
-                const subject = formData.get('subject') as string;
-                const docName = (formData.get('docName') as string) || 'Official_Curriculum_Syllabus.pdf';
+                const classId = uploadModalClassId;
+                let subject = uploadModalSubject;
+                if (subject === '__CUSTOM__') {
+                  subject = uploadCustomSubject.trim();
+                  if (!subject) {
+                    showToast('Please specify the subject name', 'error');
+                    return;
+                  }
+                  const existingSchoolSubs = school?.subjects || [];
+                  if (!existingSchoolSubs.some(s => s.toLowerCase() === subject.toLowerCase()) && school?.id) {
+                    actions.updateSchoolSubjects(school.id, [...existingSchoolSubs, subject]);
+                  }
+                }
+
+                const docName = uploadedFileName || 'Official_Curriculum_Syllabus.pdf';
                 const standard = formData.get('standard') as string;
                 const teacherId = formData.get('teacherId') as string;
 
@@ -1433,11 +1747,11 @@ export const CurriculumEngine: React.FC = () => {
                 const autoParsedTopics: CurriculumTopic[] = Array.from({ length: 10 }).map((_, idx) => ({
                   id: `up_topic_${Date.now()}_${idx + 1}`,
                   weekNumber: idx + 1,
-                  topic: `${subject} Week ${idx + 1}: Module & Practical Applications`,
-                  subtopics: [`Curriculum Standard Chapter ${idx + 1}`, `Worked Exercises`],
-                  learningObjectives: [`Master topic objectives from ${docName}`],
-                  activities: ['Classroom instruction and group exercises'],
-                  assessmentMethod: idx % 2 === 0 ? 'Class Quiz' : 'Assignment',
+                  topic: `${subject} Week ${idx + 1}: Core Syllabus Objectives & Practical Applications`,
+                  subtopics: [`Standard Topic Unit ${idx + 1}`, `Worked Examples & In-Class Exercises`],
+                  learningObjectives: [`Master curriculum benchmarks from ${docName}`],
+                  activities: ['Classroom instruction, interactive lab/demonstration and group exercises'],
+                  assessmentMethod: idx % 2 === 0 ? 'Weekly Class Quiz' : 'Homework Assessment',
                   status: idx === 0 ? 'COMPLETED' : 'NOT_STARTED',
                   resources: [docName]
                 }));
@@ -1451,9 +1765,9 @@ export const CurriculumEngine: React.FC = () => {
                   academicSession: school?.academicSession || '2025/2026',
                   academicTerm: school?.academicTerm || 'First Term',
                   curriculumStandard: standard || 'NERDC / National Standard',
-                  description: `Uploaded official syllabus: ${docName}`,
+                  description: `Uploaded official syllabus document: ${docName}`,
                   uploadedFileName: docName,
-                  uploadedFileSize: '2.4 MB',
+                  uploadedFileSize: uploadedFileObj ? `${(uploadedFileObj.size / (1024 * 1024)).toFixed(2)} MB` : '2.4 MB',
                   uploadedAt: new Date().toISOString(),
                   assignedTeacherId: targetTeacher?.id,
                   assignedTeacherName: targetTeacher?.name,
@@ -1466,58 +1780,144 @@ export const CurriculumEngine: React.FC = () => {
                 setSelectedClassId(targetClass.id);
                 setSelectedSubject(subject);
                 setShowUploadModal(false);
-                showToast(`Successfully uploaded and attached ${docName}!`);
+                showToast(`Successfully uploaded syllabus: ${docName}!`);
               }}
               className="space-y-4 text-xs"
             >
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Target Class</label>
+                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Target Class (All School Classes)</label>
                   <select
-                    name="classId"
-                    defaultValue={selectedClassId}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-2.5 font-semibold text-xs"
+                    value={uploadModalClassId}
+                    onChange={e => {
+                      const newId = e.target.value;
+                      setUploadModalClassId(newId);
+                      const subInfo = getSubjectsForClass(newId);
+                      if (uploadModalSubject !== '__CUSTOM__' && !subInfo.allMerged.some(s => s.toLowerCase() === uploadModalSubject.toLowerCase())) {
+                        setUploadModalSubject(subInfo.classSubjects[0] || subInfo.allMerged[0] || 'Mathematics');
+                      }
+                    }}
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-2.5 font-semibold text-xs text-slate-900 dark:text-white"
                   >
-                    {classes.map(c => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
+                    {groupedClasses.map(group => (
+                      <optgroup key={group.title} label={group.title}>
+                        {group.items.map(c => (
+                          <option key={c.id} value={c.id}>
+                            {c.name}{c.arm ? ` - ${c.arm}` : ''} ({c.level || c.category})
+                          </option>
+                        ))}
+                      </optgroup>
                     ))}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Subject</label>
-                  <select
-                    name="subject"
-                    defaultValue={selectedSubject}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-2.5 font-semibold text-xs"
-                  >
-                    {(school?.subjects || ['Mathematics', 'English Language', 'Physics']).map(s => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
+                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Academic Subject (All Subjects)</label>
+                  {(() => {
+                    const subInfo = getSubjectsForClass(uploadModalClassId);
+                    const selectedCls = classes.find(c => c.id === uploadModalClassId);
+                    return (
+                      <select
+                        value={uploadModalSubject}
+                        onChange={e => setUploadModalSubject(e.target.value)}
+                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-2.5 font-semibold text-xs text-slate-900 dark:text-white"
+                      >
+                        {subInfo.classSubjects.length > 0 && (
+                          <optgroup label={`⭐ Offered in ${selectedCls?.name || 'Class'} (${subInfo.classSubjects.length})`}>
+                            {subInfo.classSubjects.map(s => (
+                              <option key={`up_cls_${s}`} value={s}>
+                                {s}
+                              </option>
+                            ))}
+                          </optgroup>
+                        )}
+                        <optgroup label={`📚 All Academic Subjects (${subInfo.otherSchoolSubjects.length})`}>
+                          {subInfo.otherSchoolSubjects.map(s => (
+                            <option key={`up_all_${s}`} value={s}>
+                              {s}
+                            </option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="➕ Custom / New Subject">
+                          <option value="__CUSTOM__">+ Enter Custom / New Subject...</option>
+                        </optgroup>
+                      </select>
+                    );
+                  })()}
                 </div>
               </div>
 
-              {/* Upload Drop Zone Box */}
-              <div className="border-2 border-dashed border-indigo-300 dark:border-indigo-800 rounded-2xl p-6 text-center space-y-2 bg-indigo-50/50 dark:bg-indigo-950/20">
-                <UploadCloud className="w-8 h-8 text-indigo-600 dark:text-indigo-400 mx-auto" />
-                <p className="font-bold text-slate-800 dark:text-slate-200">
-                  Click or drag official syllabus document here
-                </p>
-                <p className="text-[11px] text-slate-400">
-                  PDF, DOCX, Excel spreadsheets up to 25MB
-                </p>
+              {uploadModalSubject === '__CUSTOM__' && (
+                <div className="bg-indigo-50/60 dark:bg-indigo-950/30 p-3 rounded-2xl border border-indigo-200 dark:border-indigo-800 space-y-1">
+                  <label className="block text-[11px] font-bold text-indigo-700 dark:text-indigo-300">
+                    Specify Subject Name
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Further Mathematics, Government, Computer Studies"
+                    value={uploadCustomSubject}
+                    onChange={e => setUploadCustomSubject(e.target.value)}
+                    className="w-full bg-white dark:bg-slate-900 border border-indigo-300 dark:border-indigo-700 rounded-xl p-2.5 text-xs font-bold text-slate-800 dark:text-slate-100"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Real Interactive Upload Drop Zone Box */}
+              <div
+                onClick={() => {
+                  const input = document.getElementById('syllabus-file-input') as HTMLInputElement;
+                  input?.click();
+                }}
+                onDragOver={e => e.preventDefault()}
+                onDrop={e => {
+                  e.preventDefault();
+                  if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    const file = e.dataTransfer.files[0];
+                    setUploadedFileObj(file);
+                    setUploadedFileName(file.name);
+                  }
+                }}
+                className="border-2 border-dashed border-indigo-300 dark:border-indigo-800 rounded-2xl p-5 text-center space-y-2 bg-indigo-50/50 dark:bg-indigo-950/20 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-all cursor-pointer"
+              >
                 <input
-                  type="text"
-                  name="docName"
-                  placeholder="File name e.g. Ministry_Approved_Syllabus_2025.pdf"
-                  defaultValue="WAEC_NECO_Senior_Syllabus_2025.pdf"
-                  className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl p-2 text-xs font-mono"
+                  id="syllabus-file-input"
+                  type="file"
+                  accept=".pdf,.docx,.doc,.xlsx,.xls,.csv"
+                  className="hidden"
+                  onChange={e => {
+                    if (e.target.files && e.target.files[0]) {
+                      const file = e.target.files[0];
+                      setUploadedFileObj(file);
+                      setUploadedFileName(file.name);
+                    }
+                  }}
                 />
+                <UploadCloud className="w-8 h-8 text-indigo-600 dark:text-indigo-400 mx-auto" />
+                <div>
+                  <p className="font-bold text-slate-800 dark:text-slate-200 text-xs">
+                    {uploadedFileObj ? `Selected: ${uploadedFileName}` : 'Click or drag official syllabus document here'}
+                  </p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    {uploadedFileObj ? `${(uploadedFileObj.size / (1024 * 1024)).toFixed(2)} MB • Ready to auto-parse` : 'PDF, DOCX, Excel spreadsheets up to 25MB'}
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Curriculum Standard / Examination Board
+                </label>
+                <select
+                  name="standard"
+                  defaultValue="NERDC / WAEC National Standard"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-2.5 text-xs font-semibold"
+                >
+                  <option value="NERDC / WAEC National Standard">NERDC / WAEC National Standard</option>
+                  <option value="Cambridge IGCSE & Checkpoint">Cambridge IGCSE & Checkpoint</option>
+                  <option value="British National Curriculum">British National Curriculum</option>
+                  <option value="STEM & Practical Vocational">STEM & Practical Vocational</option>
+                </select>
               </div>
 
               <div>

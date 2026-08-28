@@ -18,7 +18,8 @@ async function callGeminiWithSmartFallback(
     tools?: any[];
   }
 ) {
-  const models = options.models || ["gemini-3.7-flash", "gemini-flash-latest", "gemini-3.1-flash-lite"];
+  // Use recommended active models from Gemini SDK specification
+  const models = options.models || ["gemini-3.7-flash", "gemini-3.1-pro-preview", "gemini-flash-latest", "gemini-3.1-flash-lite"];
   const tools = options.tools || [];
   let lastError: any = null;
 
@@ -37,7 +38,11 @@ async function callGeminiWithSmartFallback(
         return { response, modelUsed: model, toolsUsed: true };
       } catch (err: any) {
         lastError = err;
-        console.warn(`[Gemini Fallback] Model ${model} with tools failed (${err?.message || err?.status}). Retrying...`);
+        const isQuota = err?.status === 'RESOURCE_EXHAUSTED' || err?.message?.includes('429') || err?.message?.includes('quota');
+        const isUnavailable = err?.status === 'UNAVAILABLE' || err?.message?.includes('503');
+        if (!isQuota && !isUnavailable) {
+          console.warn(`[Gemini Engine] Model ${model} with tools error:`, err?.message || err?.status);
+        }
         // If 429 or tool issue, proceed to try without tools or next model
       }
     }
@@ -56,11 +61,15 @@ async function callGeminiWithSmartFallback(
       return { response, modelUsed: model, toolsUsed: false };
     } catch (err: any) {
       lastError = err;
-      console.warn(`[Gemini Fallback] Model ${model} text-only failed (${err?.message || err?.status}).`);
+      const isQuota = err?.status === 'RESOURCE_EXHAUSTED' || err?.message?.includes('429') || err?.message?.includes('quota');
+      const isUnavailable = err?.status === 'UNAVAILABLE' || err?.message?.includes('503');
+      if (!isQuota && !isUnavailable) {
+        console.warn(`[Gemini Engine] Model ${model} text generation note:`, err?.message || err?.status);
+      }
     }
   }
 
-  throw lastError || new Error("All Gemini models exhausted.");
+  throw lastError || new Error("All Gemini models temporarily unavailable.");
 }
 
 // Intelligent fallback synthesizer for Texora Voice Assistant during 429 API rate limit periods

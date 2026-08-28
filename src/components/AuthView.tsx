@@ -274,57 +274,58 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-4 bg-slate-900 text-slate-100 relative overflow-hidden">
-      {/* Subtle Background Glows */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-10 right-10 w-80 h-80 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-4 bg-slate-950 text-slate-100 relative overflow-hidden">
+      {/* Dynamic Ambient Background Lights */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-10 right-10 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-10 left-10 w-72 h-72 bg-amber-600/10 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="w-full max-w-xl bg-slate-800/90 backdrop-blur-xl border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden relative z-10">
+      <div className="w-full max-w-xl bg-slate-900/90 backdrop-blur-2xl border border-slate-800/80 rounded-3xl shadow-2xl overflow-hidden relative z-10 ring-1 ring-white/10">
         
         {/* Banner Header */}
-        <div className="p-6 sm:p-8 text-center border-b border-slate-700/80 bg-slate-900/60 flex flex-col items-center">
+        <div className="p-6 sm:p-8 text-center border-b border-slate-800/80 bg-slate-950/60 flex flex-col items-center">
           <div className="mb-3">
             <Logo size="xl" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white font-display">
             TeXora <span className="text-indigo-400">Forge</span>
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-md mx-auto">
-            The Next-Gen School Lesson & Academic Management Platform
+            The World-Class Academic & School Management Platform
           </p>
         </div>
 
-        {/* Tab Switcher */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 bg-slate-900/80 p-1 border-b border-slate-700/80 text-[11px] font-bold gap-1">
+        {/* Navigation Tabs */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 bg-slate-950/90 p-1.5 border-b border-slate-800/80 text-[11px] font-bold gap-1">
           <button
             type="button"
             onClick={() => { setTab('STUDENT_CODE'); setErrorMessage(''); setSuccessMessage(''); }}
-            className={`py-2.5 text-center transition-all rounded-lg flex items-center justify-center gap-1.5 ${
+            className={`py-2.5 text-center transition-all rounded-xl flex items-center justify-center gap-1.5 cursor-pointer ${
               tab === 'STUDENT_CODE'
-                ? 'bg-indigo-950/90 text-indigo-300 shadow-xs border border-indigo-700/80'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-850'
             }`}
           >
-            <GraduationCap className="h-3.5 w-3.5 text-indigo-400" /> Student
+            <GraduationCap className="h-3.5 w-3.5" /> Student
           </button>
           <button
             type="button"
             onClick={() => { setTab('DRIVER_CODE'); setErrorMessage(''); setSuccessMessage(''); }}
-            className={`py-2.5 text-center transition-all rounded-lg flex items-center justify-center gap-1.5 ${
+            className={`py-2.5 text-center transition-all rounded-xl flex items-center justify-center gap-1.5 cursor-pointer ${
               tab === 'DRIVER_CODE'
-                ? 'bg-amber-950/90 text-amber-300 shadow-xs border border-amber-600/80'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-amber-600 text-slate-950 font-black shadow-md shadow-amber-600/30'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-850'
             }`}
           >
-            <Bus className="h-3.5 w-3.5 text-amber-400" /> Driver
+            <Bus className="h-3.5 w-3.5" /> Driver
           </button>
           <button
             type="button"
             onClick={() => { setTab('LOGIN'); setErrorMessage(''); setSuccessMessage(''); }}
-            className={`py-2.5 text-center transition-all rounded-lg flex items-center justify-center gap-1.5 ${
+            className={`py-2.5 text-center transition-all rounded-xl flex items-center justify-center gap-1.5 cursor-pointer ${
               tab === 'LOGIN'
-                ? 'bg-slate-800 text-indigo-400 shadow-xs border border-slate-700'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-850'
             }`}
           >
             <Lock className="h-3.5 w-3.5" /> Staff
@@ -332,21 +333,21 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
           <button
             type="button"
             onClick={() => { setTab('PARENT_CODE'); setErrorMessage(''); setSuccessMessage(''); }}
-            className={`py-2.5 text-center transition-all rounded-lg flex items-center justify-center gap-1.5 ${
+            className={`py-2.5 text-center transition-all rounded-xl flex items-center justify-center gap-1.5 cursor-pointer ${
               tab === 'PARENT_CODE'
-                ? 'bg-emerald-950/80 text-emerald-400 shadow-xs border border-emerald-800/80'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-850'
             }`}
           >
-            <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" /> Parent
+            <ShieldCheck className="h-3.5 w-3.5" /> Parent
           </button>
           <button
             type="button"
             onClick={() => { setTab('REGISTER_SCHOOL'); setErrorMessage(''); setSuccessMessage(''); }}
-            className={`py-2.5 text-center transition-all rounded-lg flex items-center justify-center gap-1.5 ${
+            className={`py-2.5 text-center transition-all rounded-xl flex items-center justify-center gap-1.5 cursor-pointer ${
               tab === 'REGISTER_SCHOOL'
-                ? 'bg-slate-800 text-indigo-400 shadow-xs border border-slate-700'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-850'
             }`}
           >
             <Building2 className="h-3.5 w-3.5" /> School
@@ -355,14 +356,14 @@ export const AuthView: React.FC<AuthViewProps> = ({ onSuccess }) => {
 
         <div className="p-6 sm:p-8 space-y-6">
           {errorMessage && (
-            <div className="p-3.5 rounded-xl bg-rose-950/60 border border-rose-800/80 text-rose-300 text-xs flex items-start gap-2.5">
+            <div className="p-3.5 rounded-2xl bg-rose-950/70 border border-rose-800/80 text-rose-300 text-xs flex items-start gap-2.5 shadow-sm">
               <AlertCircle className="h-4 w-4 text-rose-400 shrink-0 mt-0.5" />
               <span>{errorMessage}</span>
             </div>
           )}
 
           {successMessage && (
-            <div className="p-3.5 rounded-xl bg-emerald-950/60 border border-emerald-800/80 text-emerald-300 text-xs flex items-start gap-2.5">
+            <div className="p-3.5 rounded-2xl bg-emerald-950/70 border border-emerald-800/80 text-emerald-300 text-xs flex items-start gap-2.5 shadow-sm">
               <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
               <span>{successMessage}</span>
             </div>

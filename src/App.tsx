@@ -103,23 +103,33 @@ export default function App() {
     };
   }, []);
 
-  // Sync dark mode class on document element & save locally
+  // Sync dark mode class on document element & save locally with smooth animation
   useEffect(() => {
+    const root = document.documentElement;
+    // Add smooth transition class during theme shift
+    root.classList.add('theme-transition');
+
     if (darkMode) {
-      document.documentElement.classList.add('dark');
+      root.classList.add('dark');
       try {
         localStorage.setItem('texora_theme_preference', 'dark');
       } catch {
         // ignore
       }
     } else {
-      document.documentElement.classList.remove('dark');
+      root.classList.remove('dark');
       try {
         localStorage.setItem('texora_theme_preference', 'light');
       } catch {
         // ignore
       }
     }
+
+    const timer = setTimeout(() => {
+      root.classList.remove('theme-transition');
+    }, 350);
+
+    return () => clearTimeout(timer);
   }, [darkMode]);
 
   // Sync theme with User Profile from Firestore on login or switch

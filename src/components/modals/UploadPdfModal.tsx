@@ -24,16 +24,17 @@ interface UploadPdfModalProps {
 export const UploadPdfModal: React.FC<UploadPdfModalProps> = ({ isOpen, onClose }) => {
   const { school, currentUser, classes, actions } = useAppStore();
 
-  const availableClasses = currentUser && currentUser.role === 'TEACHER' && currentUser.assignedClassIds.length > 0
-    ? classes.filter(c => currentUser.assignedClassIds.includes(c.id))
-    : classes;
+  const availableClasses = classes;
+  const [classId, setClassId] = useState(classes[0]?.id || '');
 
-  const availableSubjects = currentUser && currentUser.role === 'TEACHER' && currentUser.assignedSubjects && currentUser.assignedSubjects.length > 0
-    ? currentUser.assignedSubjects
-    : (school?.subjects && school.subjects.length > 0 ? school.subjects : ['Mathematics', 'English Language', 'Physics', 'Chemistry', 'Biology']);
+  const selectedClass = classes.find(c => c.id === classId);
+  const classSubjects = classId ? actions.getClassSubjects(classId) : [];
+  const schoolSubs = school?.subjects && school.subjects.length > 0 ? school.subjects : ['Mathematics', 'English Language', 'Physics', 'Chemistry', 'Biology', 'Civic Education', 'Agricultural Science', 'Economics'];
+  const userAssigned = currentUser?.assignedSubjects || [];
+  
+  const allSubjects = Array.from(new Set([...classSubjects, ...(selectedClass?.subjects || []), ...schoolSubs, ...userAssigned]));
 
-  const [classId, setClassId] = useState(availableClasses[0]?.id || '');
-  const [subject, setSubject] = useState(availableSubjects?.[0] || 'Mathematics');
+  const [subject, setSubject] = useState(allSubjects[0] || 'Mathematics');
   const [title, setTitle] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileDataUrl, setFileDataUrl] = useState<string>('');
@@ -191,7 +192,7 @@ export const UploadPdfModal: React.FC<UploadPdfModalProps> = ({ isOpen, onClose 
                 onChange={e => setSubject(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-bold"
               >
-                {availableSubjects.map(s => (
+                {allSubjects.map(s => (
                   <option key={s} value={s}>{s}</option>
                 ))}
               </select>

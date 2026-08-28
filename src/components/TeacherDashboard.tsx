@@ -72,24 +72,26 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
     <div className="space-y-6">
       
       {/* Welcome Banner */}
-      <div className="p-6 sm:p-8 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-slate-800 text-white shadow-xl relative overflow-hidden">
-        <div className="relative z-10 max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-semibold mb-3">
-            <Sparkles className="h-3.5 w-3.5 text-emerald-400" />
-            <span>Subject Teacher Portal</span>
+      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950/70 border border-indigo-800/40 text-white shadow-2xl relative overflow-hidden ring-1 ring-indigo-500/20">
+        <div className="absolute -right-16 -top-16 w-72 h-72 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 max-w-3xl">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 text-xs font-bold mb-3 shadow-xs">
+            <Sparkles className="h-3.5 w-3.5 text-emerald-400 animate-pulse" />
+            <span>Subject Educator & Classroom Command</span>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight font-display text-white">
             Welcome back, {currentUser.name}!
           </h1>
           
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <span className="text-xs text-slate-400 font-bold">Assigned Classes:</span>
             {assignedClassNames.length === 0 ? (
-              <span className="text-xs text-amber-400">None assigned yet</span>
+              <span className="text-xs text-amber-400 font-medium">None assigned yet</span>
             ) : (
               assignedClassNames.map((c, i) => (
-                <span key={i} className="px-2.5 py-0.5 rounded-md bg-indigo-500/30 text-indigo-200 text-xs font-bold border border-indigo-400/30">
+                <span key={i} className="px-2.5 py-1 rounded-lg bg-indigo-500/25 text-indigo-200 text-xs font-bold border border-indigo-400/30">
                   {c}
                 </span>
               ))
@@ -97,37 +99,37 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
 
             <span className="text-xs text-slate-400 font-bold ml-2">Subjects:</span>
             {(currentUser.assignedSubjects || []).map((s, i) => (
-              <span key={i} className="px-2.5 py-0.5 rounded-md bg-slate-800 text-slate-200 text-xs font-semibold border border-slate-700">
+              <span key={i} className="px-2.5 py-1 rounded-lg bg-slate-800/90 text-slate-200 text-xs font-bold border border-slate-700">
                 {s}
               </span>
             ))}
           </div>
 
-          <div className="mt-6 flex flex-wrap items-center gap-3">
+          <div className="mt-6 flex flex-wrap items-center gap-2.5">
             <button
               onClick={() => onNavigate('ai_studio')}
-              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-black flex items-center gap-2 shadow-lg shadow-purple-900/40 transition-all cursor-pointer"
+              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-black flex items-center gap-2 shadow-lg shadow-purple-900/30 transition-all cursor-pointer hover:-translate-y-0.5"
             >
               <Wand2 className="h-4 w-4 text-amber-300" /> AI Creative & Video Studio
             </button>
 
             <button
               onClick={onOpenCreateLessonNote}
-              className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-2 shadow-md transition-all cursor-pointer"
+              className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-2 shadow-md shadow-indigo-900/20 transition-all cursor-pointer hover:-translate-y-0.5"
             >
               <Plus className="h-4 w-4" /> Create Lesson Note
             </button>
 
             <button
               onClick={onOpenUploadPdf}
-              className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold flex items-center gap-2 transition-all cursor-pointer"
+              className="px-4 py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold flex items-center gap-2 transition-all cursor-pointer hover:-translate-y-0.5"
             >
               <Upload className="h-4 w-4 text-indigo-400" /> Upload PDF Lesson Note
             </button>
 
             <button
               onClick={() => onNavigate('textbook_library')}
-              className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-2 shadow-md transition-all cursor-pointer"
+              className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-2 shadow-md transition-all cursor-pointer hover:-translate-y-0.5"
             >
               <BookOpen className="h-4 w-4" /> Textbook Library
             </button>
@@ -136,10 +138,10 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
       </div>
 
       {/* Scope Isolation Banner */}
-      <div className="p-3.5 rounded-xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 text-sky-900 dark:text-sky-300 text-xs flex items-center gap-2.5">
-        <ShieldAlert className="h-4 w-4 text-sky-600 dark:text-sky-400 shrink-0" />
+      <div className="p-4 rounded-2xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 text-sky-900 dark:text-sky-300 text-xs flex items-center gap-3 shadow-xs">
+        <ShieldAlert className="h-4.5 w-4.5 text-sky-600 dark:text-sky-400 shrink-0" />
         <span>
-          <strong className="font-bold">Strict Access Control Engaged:</strong> Your view is isolated exclusively to your assigned classes ({assignedClassNames.join(', ') || 'None'}) and subjects ({(currentUser.assignedSubjects || []).join(', ')}).
+          <strong className="font-bold">Strict Role Isolation:</strong> Your portal view is isolated exclusively to your assigned classes ({assignedClassNames.join(', ') || 'None'}) and subjects ({(currentUser.assignedSubjects || []).join(', ')}).
         </span>
       </div>
 

@@ -25,6 +25,53 @@ import {
 } from './firebase';
 import { User, School, Student, GeneratedAIMediaItem } from '../types';
 
+export enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+export interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string | null;
+    email?: string | null;
+    emailVerified?: boolean | null;
+    isAnonymous?: boolean | null;
+    tenantId?: string | null;
+    providerInfo?: {
+      providerId?: string | null;
+      email?: string | null;
+    }[];
+  };
+}
+
+export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+      tenantId: auth.currentUser?.tenantId,
+      providerInfo: auth.currentUser?.providerData?.map(provider => ({
+        providerId: provider.providerId,
+        email: provider.email,
+      })) || []
+    },
+    operationType,
+    path
+  };
+  console.warn('Firestore Operation Info:', JSON.stringify(errInfo));
+  return errInfo;
+}
+
 export class FirebaseService {
   /**
    * Google Sign-in with Firebase Auth
@@ -54,6 +101,7 @@ export class FirebaseService {
    * Save User Dark Mode / Theme Preference directly to Firestore Profile
    */
   static async saveUserThemePreference(userId: string, darkMode: boolean): Promise<void> {
+    const path = `users/${userId}`;
     try {
       const userRef = doc(db, 'users', userId);
       await setDoc(userRef, {
@@ -63,7 +111,7 @@ export class FirebaseService {
         updatedAt: serverTimestamp(),
       }, { merge: true });
     } catch (err) {
-      console.warn('Firestore theme persistence notice:', err);
+      handleFirestoreError(err, OperationType.WRITE, path);
     }
   }
 
@@ -71,6 +119,7 @@ export class FirebaseService {
    * Fetch User Dark Mode / Theme Preference from Firestore Profile
    */
   static async getUserThemePreference(userId: string): Promise<boolean | null> {
+    const path = `users/${userId}`;
     try {
       const userRef = doc(db, 'users', userId);
       const snap = await getDoc(userRef);
@@ -84,7 +133,7 @@ export class FirebaseService {
       }
       return null;
     } catch (err) {
-      console.warn('Error reading user theme from Firestore:', err);
+      handleFirestoreError(err, OperationType.GET, path);
       return null;
     }
   }
@@ -93,6 +142,7 @@ export class FirebaseService {
    * Listen to real-time theme updates for a user profile
    */
   static listenToUserThemePreference(userId: string, onThemeChange: (darkMode: boolean) => void): () => void {
+    const path = `users/${userId}`;
     try {
       const userRef = doc(db, 'users', userId);
       return onSnapshot(userRef, (snap) => {
@@ -107,10 +157,10 @@ export class FirebaseService {
           }
         }
       }, (err) => {
-        console.warn('Firestore theme snapshot notice:', err);
+        handleFirestoreError(err, OperationType.GET, path);
       });
     } catch (err) {
-      console.warn('Error setting up theme snapshot:', err);
+      handleFirestoreError(err, OperationType.GET, path);
       return () => {};
     }
   }
@@ -119,6 +169,7 @@ export class FirebaseService {
    * Sync or Save User Profile to Firestore
    */
   static async syncUserProfile(user: Partial<User> & { id: string }): Promise<void> {
+    const path = `users/${user.id}`;
     try {
       const userRef = doc(db, 'users', user.id);
       await setDoc(userRef, {
@@ -126,7 +177,7 @@ export class FirebaseService {
         updatedAt: serverTimestamp(),
       }, { merge: true });
     } catch (err) {
-      console.error('Error syncing user profile to Firestore:', err);
+      handleFirestoreError(err, OperationType.WRITE, path);
     }
   }
 
@@ -134,6 +185,7 @@ export class FirebaseService {
    * Get User Profile from Firestore
    */
   static async getUserProfile(userId: string): Promise<User | null> {
+    const path = `users/${userId}`;
     try {
       const userRef = doc(db, 'users', userId);
       const snap = await getDoc(userRef);
@@ -142,7 +194,7 @@ export class FirebaseService {
       }
       return null;
     } catch (err) {
-      console.error('Error fetching user profile from Firestore:', err);
+      handleFirestoreError(err, OperationType.GET, path);
       return null;
     }
   }
@@ -151,6 +203,7 @@ export class FirebaseService {
    * Save School to Firestore
    */
   static async saveSchool(school: School): Promise<void> {
+    const path = `schools/${school.id}`;
     try {
       const schoolRef = doc(db, 'schools', school.id);
       await setDoc(schoolRef, {
@@ -158,7 +211,7 @@ export class FirebaseService {
         updatedAt: serverTimestamp(),
       }, { merge: true });
     } catch (err) {
-      console.error('Error saving school to Firestore:', err);
+      handleFirestoreError(err, OperationType.WRITE, path);
     }
   }
 
@@ -166,12 +219,13 @@ export class FirebaseService {
    * Fetch All Schools from Firestore
    */
   static async getSchools(): Promise<School[]> {
+    const path = 'schools';
     try {
       const colRef = collection(db, 'schools');
       const snap = await getDocs(colRef);
       return snap.docs.map(doc => doc.data() as School);
     } catch (err) {
-      console.error('Error fetching schools from Firestore:', err);
+      handleFirestoreError(err, OperationType.LIST, path);
       return [];
     }
   }
@@ -180,6 +234,7 @@ export class FirebaseService {
    * Save AI Generated Media item (Image/Veo Video) to Firestore
    */
   static async saveAIMediaItem(item: GeneratedAIMediaItem): Promise<void> {
+    const path = `ai_media/${item.id}`;
     try {
       const mediaRef = doc(db, 'ai_media', item.id);
       await setDoc(mediaRef, {
@@ -187,7 +242,7 @@ export class FirebaseService {
         timestamp: serverTimestamp()
       }, { merge: true });
     } catch (err) {
-      console.error('Error persisting AI Media item to Firestore:', err);
+      handleFirestoreError(err, OperationType.WRITE, path);
     }
   }
 
@@ -195,12 +250,13 @@ export class FirebaseService {
    * Fetch AI Media history from Firestore
    */
   static async getAIMediaHistory(): Promise<GeneratedAIMediaItem[]> {
+    const path = 'ai_media';
     try {
       const colRef = collection(db, 'ai_media');
       const snap = await getDocs(colRef);
       return snap.docs.map(doc => doc.data() as GeneratedAIMediaItem);
     } catch (err) {
-      console.error('Error fetching AI Media items from Firestore:', err);
+      handleFirestoreError(err, OperationType.LIST, path);
       return [];
     }
   }
@@ -212,17 +268,18 @@ export class FirebaseService {
     collectionName: string,
     onData: (data: T[]) => void
   ): () => void {
+    const path = collectionName;
     try {
       const colRef = collection(db, collectionName);
       const unsubscribe = onSnapshot(colRef, (snapshot) => {
         const items = snapshot.docs.map(doc => doc.data() as T);
         onData(items);
       }, (error) => {
-        console.warn(`Firestore subscription note for ${collectionName}:`, error);
+        handleFirestoreError(error, OperationType.LIST, path);
       });
       return unsubscribe;
     } catch (err) {
-      console.error(`Error setting up Firestore subscription for ${collectionName}:`, err);
+      handleFirestoreError(err, OperationType.LIST, path);
       return () => {};
     }
   }

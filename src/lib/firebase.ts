@@ -16,6 +16,7 @@ import {
   Auth
 } from 'firebase/auth';
 import {
+  initializeFirestore,
   getFirestore,
   Firestore,
   collection,
@@ -33,18 +34,7 @@ import {
   serverTimestamp,
   DocumentData
 } from 'firebase/firestore';
-
-// Default Firebase credentials from provisioning
-const firebaseConfig = {
-  projectId: "gen-lang-client-0346532684",
-  appId: "1:626116306791:web:6321c270ccc62ca1bd31c2",
-  apiKey: "AIzaSyADti05pdzIjoSZyLlyczREXLd0rjX1jXg",
-  authDomain: "gen-lang-client-0346532684.firebaseapp.com",
-  firestoreDatabaseId: "ai-studio-remixtexoraforge-93206435-4953-4da8-92b5-de7539ed824a",
-  storageBucket: "gen-lang-client-0346532684.firebasestorage.app",
-  messagingSenderId: "626116306791",
-  oAuthClientId: "626116306791-munsqpks22utcmlh5d1qrmlt9k9186u1.apps.googleusercontent.com"
-};
+import firebaseConfig from '../../firebase-applet-config.json';
 
 // Initialize Firebase safely
 let app: FirebaseApp;
@@ -54,9 +44,22 @@ if (!getApps().length) {
   app = getApp();
 }
 
-// Authentication & Firestore instances
+// Authentication instance
 export const auth: Auth = getAuth(app);
-export const db: Firestore = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+
+// Firestore instance configured with long polling to prevent connection timeout in sandboxed/iframe environments
+let firestoreDb: Firestore;
+try {
+  firestoreDb = initializeFirestore(app, {
+    experimentalForceLongPolling: true,
+    experimentalAutoDetectLongPolling: true,
+  }, firebaseConfig.firestoreDatabaseId);
+} catch {
+  // If already initialized, get instance
+  firestoreDb = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+}
+
+export const db: Firestore = firestoreDb;
 export const googleAuthProvider = new GoogleAuthProvider();
 googleAuthProvider.setCustomParameters({
   prompt: 'select_account'

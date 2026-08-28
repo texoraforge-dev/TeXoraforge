@@ -59,7 +59,10 @@ export const StudentEarlyWarningSystem: React.FC = () => {
     try {
       const response = await fetch('/api/ai/suggest-lesson', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify({
           className: selectedProfile.className,
           subject: targetSubject,
@@ -69,8 +72,16 @@ export const StudentEarlyWarningSystem: React.FC = () => {
         })
       });
 
-      const data = await response.json();
-      const ai = data.suggestions || {};
+      const contentType = response.headers.get('content-type') || '';
+      const rawText = await response.text();
+
+      let ai: any = {};
+      if (response.ok && contentType.includes('application/json')) {
+        try {
+          const data = JSON.parse(rawText);
+          ai = data.suggestions || data.data || {};
+        } catch {}
+      }
 
       const newPackage: RemedialPackage = {
         id: `rem_${Date.now()}`,

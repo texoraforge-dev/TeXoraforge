@@ -233,7 +233,10 @@ export const CBTTeacherAuthoringModal: React.FC<CBTTeacherAuthoringModalProps> =
     try {
       const response = await fetch('/api/ai/suggest-lesson', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify({
           className: currentClassObj?.name || 'SS 3',
           subject: selectedSubject,
@@ -242,8 +245,17 @@ export const CBTTeacherAuthoringModal: React.FC<CBTTeacherAuthoringModalProps> =
           prompt: `Generate 4 high-yield CBT multiple choice questions on "${aiTopicPrompt}" for ${selectedSubject} (${currentClassObj?.name}).`
         })
       });
-      const data = await response.json();
-      const ai = data.suggestions || {};
+
+      const contentType = response.headers.get('content-type') || '';
+      const rawText = await response.text();
+
+      let ai: any = {};
+      if (response.ok && contentType.includes('application/json')) {
+        try {
+          const data = JSON.parse(rawText);
+          ai = data.suggestions || data.data || {};
+        } catch {}
+      }
       const evalQs: string[] = ai.evaluationQuestions || [
         `What is the primary scientific principle of ${aiTopicPrompt}?`,
         `Which equation or definition applies directly to ${aiTopicPrompt}?`,

@@ -457,18 +457,44 @@ export const VoiceAssistantWidget: React.FC = () => {
         })
       });
 
+      const contentType = response.headers.get('content-type') || '';
+      const rawResponse = await response.text();
+
       let aiText = '';
       let groundingData: any = undefined;
 
-      if (response.ok) {
-        const responseRaw = await response.text();
+      if (!response.ok) {
+        console.warn(`Texora Voice API returned HTTP ${response.status}:`, rawResponse.slice(0, 300));
+        // Try parsing JSON error if available
+        if (contentType.includes('application/json')) {
+          try {
+            const errData = JSON.parse(rawResponse);
+            if (errData.text) {
+              aiText = errData.text;
+              groundingData = errData.grounding;
+            }
+          } catch {}
+        }
+        if (!aiText) {
+          aiText = synthesizeClientVoiceResponse(trimmed);
+        }
+      } else if (!contentType.includes('application/json')) {
+        console.warn(`Texora Voice API returned non-JSON response (${contentType}):`, rawResponse.slice(0, 300));
+        aiText = synthesizeClientVoiceResponse(trimmed);
+      } else {
         try {
-          const data = JSON.parse(responseRaw);
+          const data = JSON.parse(rawResponse);
           if (data && data.success && data.text) {
             aiText = data.text;
             groundingData = data.grounding;
+          } else if (data && data.text) {
+            aiText = data.text;
+            groundingData = data.grounding;
+          } else {
+            aiText = synthesizeClientVoiceResponse(trimmed);
           }
-        } catch {
+        } catch (parseErr) {
+          console.warn('JSON parsing error on Voice API response:', parseErr);
           aiText = synthesizeClientVoiceResponse(trimmed);
         }
       }

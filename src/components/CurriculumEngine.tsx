@@ -385,7 +385,10 @@ export const CurriculumEngine: React.FC = () => {
     try {
       const response = await fetch('/api/ai/suggest-lesson', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify({
           className: activeClass?.name || 'SS 3',
           subject: selectedSubject,
@@ -397,9 +400,15 @@ export const CurriculumEngine: React.FC = () => {
 
       let generatedTopics: CurriculumTopic[] = [];
 
-      if (response.ok) {
-        const data = await response.json();
-        const aiSuggestions = data.suggestions || {};
+      const contentType = response.headers.get('content-type') || '';
+      const rawText = await response.text();
+
+      if (response.ok && contentType.includes('application/json')) {
+        let aiSuggestions: any = {};
+        try {
+          const data = JSON.parse(rawText);
+          aiSuggestions = data.suggestions || data.data || {};
+        } catch {}
 
         generatedTopics = Array.from({ length: aiWeekCount }).map((_, idx) => ({
           id: `cur_topic_${Date.now()}_${idx + 1}`,

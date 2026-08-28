@@ -300,7 +300,10 @@ export const AIMediaStudio: React.FC<AIMediaStudioProps> = ({ onBack, onInsertIn
     try {
       const response = await fetch('/api/ai/image/generate-or-edit', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify({
           prompt: imagePrompt.trim(),
           base64Image: imageMode === 'edit' ? uploadedEditImage : undefined,
@@ -310,9 +313,20 @@ export const AIMediaStudio: React.FC<AIMediaStudioProps> = ({ onBack, onInsertIn
         })
       });
 
-      const data = await response.json();
+      const contentType = response.headers.get('content-type') || '';
+      const rawText = await response.text();
 
-      if (!response.ok || !data.success) {
+      if (!response.ok) {
+        throw new Error(`AI request failed (HTTP ${response.status}): ${rawText.slice(0, 150)}`);
+      }
+
+      if (!contentType.includes('application/json')) {
+        throw new Error(`Unexpected server response format (${contentType})`);
+      }
+
+      const data = JSON.parse(rawText);
+
+      if (!data.success) {
         throw new Error(data.details || data.error || 'Failed to generate image with Gemini 3.1.');
       }
 
@@ -380,7 +394,10 @@ export const AIMediaStudio: React.FC<AIMediaStudioProps> = ({ onBack, onInsertIn
       // Step 1: Start Veo Operation
       const startRes = await fetch('/api/ai/video/generate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify({
           prompt: videoPrompt.trim() || 'Animate this photo with subtle natural cinematic motion',
           base64Image: videoSourceImage,
@@ -389,8 +406,18 @@ export const AIMediaStudio: React.FC<AIMediaStudioProps> = ({ onBack, onInsertIn
         })
       });
 
-      const startData = await startRes.json();
-      if (!startRes.ok || !startData.success) {
+      const startContentType = startRes.headers.get('content-type') || '';
+      const startRaw = await startRes.text();
+
+      if (!startRes.ok) {
+        throw new Error(`Veo start failed (HTTP ${startRes.status}): ${startRaw.slice(0, 150)}`);
+      }
+      if (!startContentType.includes('application/json')) {
+        throw new Error(`Unexpected server response format (${startContentType})`);
+      }
+
+      const startData = JSON.parse(startRaw);
+      if (!startData.success) {
         throw new Error(startData.details || startData.error || 'Failed to initialize Veo generation.');
       }
 
@@ -420,11 +447,21 @@ export const AIMediaStudio: React.FC<AIMediaStudioProps> = ({ onBack, onInsertIn
 
         const pollRes = await fetch('/api/ai/video/status', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
           body: JSON.stringify({ operationName })
         });
 
-        const pollData = await pollRes.json();
+        const pollContentType = pollRes.headers.get('content-type') || '';
+        const pollRaw = await pollRes.text();
+
+        if (!pollRes.ok || !pollContentType.includes('application/json')) {
+          continue; // transient error during polling, retry
+        }
+
+        const pollData = JSON.parse(pollRaw);
 
         if (pollData.error) {
           throw new Error(`Veo generation encountered an issue: ${pollData.error}`);

@@ -238,7 +238,10 @@ export function ParentPortal({ initialTab, onNavigate }: ParentPortalProps) {
     try {
       const response = await fetch('/api/ai/suggest-lesson', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify({
           className: activeClass?.name || 'SS 3',
           subject: aiSubject,
@@ -248,8 +251,17 @@ export function ParentPortal({ initialTab, onNavigate }: ParentPortalProps) {
         })
       });
 
-      const data = await response.json();
-      const resText = data.suggestions?.summary || data.data?.summary || `Here is guidance for ${aiTopic} in ${aiSubject}:\n\n1. Break the problem into small, manageable parts.\n2. Practice with 2-3 similar examples.\n3. Verify the final answer step by step.`;
+      const contentType = response.headers.get('content-type') || '';
+      const rawText = await response.text();
+
+      let resText = `Here is guidance for ${aiTopic} in ${aiSubject}:\n\n1. Break the problem into small, manageable parts.\n2. Practice with 2-3 similar examples.\n3. Verify the final answer step by step.`;
+
+      if (response.ok && contentType.includes('application/json')) {
+        try {
+          const data = JSON.parse(rawText);
+          resText = data.suggestions?.summary || data.data?.summary || resText;
+        } catch {}
+      }
       setAiResponse(resText);
     } catch (err) {
       setAiResponse('TeXora AI Tutor encountered a network issue. Please retry.');

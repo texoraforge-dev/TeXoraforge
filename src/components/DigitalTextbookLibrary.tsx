@@ -406,7 +406,10 @@ export const DigitalTextbookLibrary: React.FC<DigitalTextbookLibraryProps> = ({
     try {
       const response = await fetch('/api/ai/generate-textbook-chapter', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify({
           bookTitle: title,
           subject: subject,
@@ -416,8 +419,19 @@ export const DigitalTextbookLibrary: React.FC<DigitalTextbookLibraryProps> = ({
         })
       });
 
-      const data = await response.json();
-      if (!response.ok || !data.success) {
+      const contentType = response.headers.get('content-type') || '';
+      const rawText = await response.text();
+
+      if (!response.ok) {
+        throw new Error(`AI request failed (HTTP ${response.status}): ${rawText.slice(0, 150)}`);
+      }
+
+      if (!contentType.includes('application/json')) {
+        throw new Error(`Unexpected response format from textbook generator (${contentType})`);
+      }
+
+      const data = JSON.parse(rawText);
+      if (!data.success || !data.chapter) {
         throw new Error(data.error || 'Failed to generate chapter content with AI.');
       }
 

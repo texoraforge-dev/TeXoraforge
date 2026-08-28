@@ -90,7 +90,10 @@ export const LessonNoteModal: React.FC<LessonNoteModalProps> = ({
     try {
       const res = await fetch('/api/ai/suggest-lesson', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify({
           topic,
           subject,
@@ -99,8 +102,19 @@ export const LessonNoteModal: React.FC<LessonNoteModalProps> = ({
         })
       });
 
-      const json = await res.json();
-      if (!res.ok || !json.success) {
+      const contentType = res.headers.get('content-type') || '';
+      const rawText = await res.text();
+
+      if (!res.ok) {
+        throw new Error(`AI request failed (HTTP ${res.status}): ${rawText.slice(0, 150)}`);
+      }
+
+      if (!contentType.includes('application/json')) {
+        throw new Error(`Unexpected server response format (${contentType})`);
+      }
+
+      const json = JSON.parse(rawText);
+      if (!json.success || !json.data) {
         throw new Error(json.error || 'AI generation failed');
       }
 

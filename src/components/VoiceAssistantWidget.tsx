@@ -261,35 +261,6 @@ export const VoiceAssistantWidget: React.FC = () => {
     setIsSpeaking(false);
   };
 
-  // Safe client fallback synthesizer
-  const synthesizeClientVoiceResponse = (prompt: string): string => {
-    const lower = prompt.toLowerCase();
-    
-    if (lower.includes("quantum") || lower.includes("superposition")) {
-      return "Quantum superposition is the fundamental principle of quantum mechanics where a physical system exists simultaneously in multiple states until it is measured. A classic illustration is Schrödinger's cat thought experiment. In computing, quantum bits or qubits use superposition to perform complex calculations exponentially faster than classical bits.";
-    }
-    if (lower.includes("solve") || lower.includes("x^2") || lower.includes("equation") || lower.includes("quadratic")) {
-      return "To solve a quadratic equation like ax² + bx + c = 0, we can use the quadratic formula: x = (-b ± √(b² - 4ac)) / (2a). For 2x² + 5x - 3 = 0, we identify a=2, b=5, c=-3. The discriminant is 25 - 4(2)(-3) = 49. The square root of 49 is 7. This gives roots x = (-5 + 7)/4 = 0.5, and x = (-5 - 7)/4 = -3.";
-    }
-    if (lower.includes("dna") || lower.includes("transcription") || lower.includes("translation")) {
-      return "DNA transcription and translation are the two phases of protein synthesis. In transcription, RNA polymerase reads the DNA template in the nucleus to synthesize messenger RNA (mRNA). In translation, the mRNA moves to ribosomes in the cytoplasm, where transfer RNA (tRNA) delivers matching amino acids according to codons to build polypeptide chains.";
-    }
-    if (lower.includes("waec") || lower.includes("neco") || lower.includes("jamb") || lower.includes("literature") || lower.includes("theme")) {
-      return "In WAEC and NECO examinations, central themes frequently explore the conflict between tradition and modernization, social justice and governance, identity and cultural heritage, and resilience through adversity. Always analyze how the author uses characterization, symbolism, and dramatic irony to communicate these core motifs.";
-    }
-    if (lower.includes("study") || lower.includes("tip") || lower.includes("exam") || lower.includes("motivation")) {
-      return "Here are 5 high-impact study strategies: 1. Use the Pomodoro Technique with 25-minute focused sprints. 2. Practice Active Recall by testing yourself without looking at notes. 3. Apply Spaced Repetition across multiple days. 4. Master past examination questions under timed conditions. 5. Teach concepts out loud using the Feynman Technique.";
-    }
-    if (lower.includes("space") || lower.includes("exploration") || lower.includes("mars") || lower.includes("moon")) {
-      return "Modern space exploration is advancing rapidly with NASA's Artemis lunar program, the James Webb Space Telescope unveiling early cosmic structures, and deep robotic exploration across Mars. Private aerospace innovations are drastically reducing orbital launch costs and enabling sustainable deep space missions.";
-    }
-    if (lower.includes("hello") || lower.includes("hi") || lower.includes("who are you") || lower.includes("texora")) {
-      return "Hello! I am Texora, your AI educational companion and school intelligence assistant. I am speaking with an American female voice. How can I assist you with your academic questions today?";
-    }
-
-    return `Here is a clear breakdown for "${prompt}": In academic study, understanding foundational definitions, governing mechanisms, and step-by-step logic provides the strongest foundation. When reviewing this topic, break down the key terms, verify with standard curriculum guidelines, and test your understanding with practice problems. Please let me know which specific part you'd like me to explain further!`;
-  };
-
   // Cross-browser speech recognition initializer
   const startListening = () => {
     if (typeof window === 'undefined') return;
@@ -462,25 +433,25 @@ export const VoiceAssistantWidget: React.FC = () => {
 
       let aiText = '';
       let groundingData: any = undefined;
+      let isApiError = false;
 
       if (!response.ok) {
-        console.warn(`Texora Voice API returned HTTP ${response.status}:`, rawResponse.slice(0, 300));
-        // Try parsing JSON error if available
-        if (contentType.includes('application/json')) {
-          try {
-            const errData = JSON.parse(rawResponse);
-            if (errData.text) {
-              aiText = errData.text;
-              groundingData = errData.grounding;
-            }
-          } catch {}
-        }
-        if (!aiText) {
-          aiText = synthesizeClientVoiceResponse(trimmed);
+        console.error(`Texora Voice API returned HTTP ${response.status}:`, rawResponse);
+        isApiError = true;
+        try {
+          const errData = JSON.parse(rawResponse);
+          if (errData.isMissingApiKey) {
+            aiText = `⚠️ API Key Missing: GEMINI_API_KEY is not set in your Vercel Project Environment Variables. Please add GEMINI_API_KEY in Vercel Dashboard → Project Settings → Environment Variables.`;
+          } else {
+            aiText = `⚠️ Gemini API Error (${response.status}): ${errData.error || 'The model was unable to process the request.'}`;
+          }
+        } catch {
+          aiText = `⚠️ Gemini API Error (${response.status}): Unable to reach AI service.`;
         }
       } else if (!contentType.includes('application/json')) {
-        console.warn(`Texora Voice API returned non-JSON response (${contentType}):`, rawResponse.slice(0, 300));
-        aiText = synthesizeClientVoiceResponse(trimmed);
+        console.error(`Texora Voice API returned non-JSON response (${contentType}):`, rawResponse.slice(0, 300));
+        isApiError = true;
+        aiText = `⚠️ API Response Error: Received unexpected non-JSON response from server endpoint.`;
       } else {
         try {
           const data = JSON.parse(rawResponse);
@@ -491,16 +462,14 @@ export const VoiceAssistantWidget: React.FC = () => {
             aiText = data.text;
             groundingData = data.grounding;
           } else {
-            aiText = synthesizeClientVoiceResponse(trimmed);
+            isApiError = true;
+            aiText = `⚠️ Gemini API Error: ${data?.error || 'Empty response received from Gemini model.'}`;
           }
         } catch (parseErr) {
-          console.warn('JSON parsing error on Voice API response:', parseErr);
-          aiText = synthesizeClientVoiceResponse(trimmed);
+          console.error('JSON parsing error on Voice API response:', parseErr);
+          isApiError = true;
+          aiText = `⚠️ Parsing Error: Failed to parse Gemini response.`;
         }
-      }
-
-      if (!aiText) {
-        aiText = synthesizeClientVoiceResponse(trimmed);
       }
 
       const aiMessage: MessageItem = {
@@ -514,18 +483,22 @@ export const VoiceAssistantWidget: React.FC = () => {
       setMessages(prev => [...prev, aiMessage]);
 
       // Speak response out loud in American Female Voice
-      speakText(aiText);
+      if (isApiError) {
+        speakText("I encountered an issue reaching the Gemini AI service. Please check the error details in the conversation.");
+      } else {
+        speakText(aiText);
+      }
     } catch (err: any) {
-      console.warn('Network issue reaching voice API, using local voice synthesis:', err);
-      const fallbackText = synthesizeClientVoiceResponse(trimmed);
+      console.error('Network issue reaching voice API:', err);
+      const errorText = `⚠️ Network Error: Unable to communicate with the server endpoint (${err?.message || 'Connection failed'}). Please check your network connection or server deployment.`;
       const aiMessage: MessageItem = {
         id: 'msg-ai-' + Date.now(),
         sender: 'ai',
-        text: fallbackText,
+        text: errorText,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       setMessages(prev => [...prev, aiMessage]);
-      speakText(fallbackText);
+      speakText("Network connection error reaching the AI service.");
     } finally {
       setIsProcessing(false);
     }

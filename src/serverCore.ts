@@ -10,7 +10,7 @@ import dotenv from "dotenv";
 // Load environment variables if present
 dotenv.config();
 
-// Helper for calling Gemini with multi-tier model fallback and graceful tool degradation on 429 quota exhaustion
+// Helper for calling Gemini with multi-tier model fallback and graceful tool degradation on 429/503 quota exhaustion
 export async function callGeminiWithSmartFallback(
   ai: GoogleGenAI,
   options: {
@@ -21,7 +21,7 @@ export async function callGeminiWithSmartFallback(
   }
 ) {
   // Use recommended active models from Gemini SDK specification
-  const models = options.models || ["gemini-3.7-flash", "gemini-3.1-pro-preview", "gemini-flash-latest", "gemini-3.1-flash-lite"];
+  const models = options.models || ["gemini-3.7-flash", "gemini-3.1-flash-lite", "gemini-flash-latest", "gemini-3.1-pro-preview"];
   const tools = options.tools || [];
   let lastError: any = null;
 
@@ -37,19 +37,21 @@ export async function callGeminiWithSmartFallback(
             tools,
           }
         });
-        return { response, modelUsed: model, toolsUsed: true };
+        if (response && response.text) {
+          return { response, modelUsed: model, toolsUsed: true };
+        }
       } catch (err: any) {
         lastError = err;
         const isQuota = err?.status === 'RESOURCE_EXHAUSTED' || err?.message?.includes('429') || err?.message?.includes('quota');
         const isUnavailable = err?.status === 'UNAVAILABLE' || err?.message?.includes('503');
         if (!isQuota && !isUnavailable) {
-          console.warn(`[Gemini Engine] Model ${model} with tools error:`, err?.message || err?.status);
+          console.warn(`[Gemini Engine] Model ${model} with tools note:`, err?.message || err?.status);
         }
       }
     }
   }
 
-  // 2. Try models in sequence without tools (pure text generation)
+  // 2. Try models in sequence without tools (pure text generation with full intelligence & system prompt)
   for (const model of models) {
     try {
       const cleanConfig = { ...(options.config || {}) };
@@ -59,7 +61,9 @@ export async function callGeminiWithSmartFallback(
         contents: options.contents,
         config: cleanConfig
       });
-      return { response, modelUsed: model, toolsUsed: false };
+      if (response && response.text) {
+        return { response, modelUsed: model, toolsUsed: false };
+      }
     } catch (err: any) {
       lastError = err;
       const isQuota = err?.status === 'RESOURCE_EXHAUSTED' || err?.message?.includes('429') || err?.message?.includes('quota');
@@ -400,11 +404,10 @@ Return ONLY a valid JSON object matching this exact schema:
     try {
       const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) {
-        const fallbackText = synthesizeTexoraVoiceResponse(prompt);
-        return res.json({
-          success: true,
-          text: fallbackText,
-          grounding: { searchQueries: [], searchChunks: [], isSearchGrounded: false }
+        return res.status(500).json({
+          success: false,
+          error: "GEMINI_API_KEY is not configured in the server environment. Please set GEMINI_API_KEY in your Vercel Project Settings > Environment Variables.",
+          isMissingApiKey: true
         });
       }
 
@@ -420,7 +423,7 @@ Return ONLY a valid JSON object matching this exact schema:
       const systemInstruction = `You are Texora, an intelligent, empathetic, highly articulate, and omni-knowledgeable AI Voice and Educational Companion.
 Your capabilities:
 1. Unlimited Knowledge: Answer any question across global news, sciences, mathematics, literature, history, technology, health, languages, pop culture, trivia, philosophy, and human knowledge.
-2. Academic Tutoring: Explain complex concepts step-by-step for primary, secondary (WAEC, NECO, JAMB, IGCSE, SAT), and university levels.
+2. Academic Tutoring: Provide deep, comprehensive, step-by-step explanations for primary, secondary (WAEC, NECO, JAMB, IGCSE, SAT), and university levels.
 3. School Management: Provide advice on lesson planning, CBT question creation, timetable optimization, and pedagogical techniques.
 4. Voice Optimization: Keep your spoken phrasing crisp, lively, and natural for voice readout. Avoid bulky ascii art or unreadable tables. Use clear bullet points or short paragraphs.
 5. Identity: Your name is strictly "Texora". When greeting or introducing yourself, use "Texora".`;
@@ -438,14 +441,18 @@ Your capabilities:
       }
       contents.push({ role: 'user', parts: [{ text: prompt.trim() }] });
 
-      const { response, toolsUsed } = await callGeminiWithSmartFallback(ai, {
-        models: ["gemini-3.7-flash", "gemini-3.1-pro-preview", "gemini-flash-latest", "gemini-3.1-flash-lite"],
+      const { response, toolsUsed, modelUsed } = await callGeminiWithSmartFallback(ai, {
+        models: ["gemini-3.7-flash", "gemini-3.1-flash-lite", "gemini-flash-latest", "gemini-3.1-pro-preview"],
         contents,
         tools: [{ googleSearch: {} }],
         config: { systemInstruction }
       });
 
-      const responseText = response.text || synthesizeTexoraVoiceResponse(prompt);
+      const responseText = response.text || "";
+      if (!responseText) {
+        throw new Error("Received empty response from Gemini model.");
+      }
+
       const groundingMetadata = response.candidates?.[0]?.groundingMetadata;
       const searchQueries = groundingMetadata?.webSearchQueries || [];
       const searchChunks = groundingMetadata?.groundingChunks || [];
@@ -453,6 +460,7 @@ Your capabilities:
       return res.json({
         success: true,
         text: responseText,
+        modelUsed,
         grounding: {
           searchQueries,
           searchChunks: searchChunks.slice(0, 5),
@@ -460,12 +468,11 @@ Your capabilities:
         }
       });
     } catch (error: any) {
-      console.warn("Gemini API note in texora-voice-chat, responding with local voice synthesis:", error?.message || error);
-      const synthesized = synthesizeTexoraVoiceResponse(prompt);
-      return res.json({
-        success: true,
-        text: synthesized,
-        grounding: { searchQueries: [], searchChunks: [], isSearchGrounded: false }
+      console.error("[Texora Voice API Error]:", error?.message || error);
+      return res.status(502).json({
+        success: false,
+        error: error?.message || "Failed to generate AI response from Gemini.",
+        details: error?.status || error?.code || "API_ERROR"
       });
     }
   });

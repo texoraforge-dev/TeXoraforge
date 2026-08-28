@@ -18,6 +18,7 @@ import {
 import {
   initializeFirestore,
   getFirestore,
+  setLogLevel,
   Firestore,
   collection,
   doc,
@@ -36,6 +37,9 @@ import {
 } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 
+// Suppress Firestore client polling offline retry logs
+setLogLevel('error');
+
 // Initialize Firebase safely
 let app: FirebaseApp;
 if (!getApps().length) {
@@ -50,10 +54,13 @@ export const auth: Auth = getAuth(app);
 // Firestore instance configured with long polling to prevent connection timeout in sandboxed/iframe environments
 let firestoreDb: Firestore;
 try {
-  firestoreDb = initializeFirestore(app, {
-    experimentalForceLongPolling: true,
-    experimentalAutoDetectLongPolling: true,
-  }, firebaseConfig.firestoreDatabaseId);
+  firestoreDb = initializeFirestore(
+    app,
+    {
+      experimentalForceLongPolling: true,
+    },
+    firebaseConfig.firestoreDatabaseId
+  );
 } catch {
   // If already initialized, get instance
   firestoreDb = getFirestore(app, firebaseConfig.firestoreDatabaseId);

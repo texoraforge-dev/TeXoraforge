@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Mic,
   MicOff,
@@ -26,7 +26,9 @@ import {
   Play,
   Pause,
   Zap,
-  BookOpen
+  BookOpen,
+  Info,
+  AlertCircle
 } from 'lucide-react';
 
 interface MessageItem {
@@ -52,12 +54,14 @@ export const VoiceAssistantWidget: React.FC = () => {
   const [speechEnabled, setSpeechEnabled] = useState<boolean>(true);
   const [continuousMode, setContinuousMode] = useState<boolean>(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [browserSupportError, setBrowserSupportError] = useState<string | null>(null);
+  const [activeVoiceName, setActiveVoiceName] = useState<string>('American Female (TeXora Voice)');
 
   const [messages, setMessages] = useState<MessageItem[]>([
     {
       id: 'welcome-msg',
       sender: 'ai',
-      text: 'Hello! I am Texora, your AI Voice & Knowledge Companion. Tap the mic and speak anytime—I have unlimited real-time knowledge grounded with Google Search. Ask me anything about science, exams, global news, calculations, or school operations!',
+      text: 'Hello! I am Texora, your AI Voice & Knowledge Companion. Tap the mic or type anytime—I have unlimited real-time knowledge grounded with Google Search. Ask me anything about science, exams, curriculum, or school operations!',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -65,7 +69,7 @@ export const VoiceAssistantWidget: React.FC = () => {
   const recognitionRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const silenceTimerRef = useRef<any>(null);
-  const currentUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -75,7 +79,98 @@ export const VoiceAssistantWidget: React.FC = () => {
     scrollToBottom();
   }, [messages, isProcessing, interimTranscript]);
 
-  // Clean up speech on unmount
+  // Dedicated finder for American Female Voices across all browsers and OSs
+  const findAmericanFemaleVoice = useCallback((voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null => {
+    if (!voices || voices.length === 0) return null;
+
+    // 1. High-priority American female names across Windows, macOS, iOS, Android, and Chrome
+    const usFemalePriorityNames = [
+      'Microsoft Jenny Online (Natural) - English (United States)',
+      'Microsoft Aria Online (Natural) - English (United States)',
+      'Microsoft Zira - English (United States)',
+      'Microsoft Ava Online (Natural) - English (United States)',
+      'Microsoft Michelle Online (Natural) - English (United States)',
+      'Microsoft Ana Online (Natural) - English (United States)',
+      'Samantha',
+      'Victoria',
+      'Ava',
+      'Allison',
+      'Susan',
+      'Zoe',
+      'Nicky',
+      'Karen',
+      'Google US English',
+      'en-US-Standard-C',
+      'en-US-Wavenet-C',
+      'en-US-Wavenet-F',
+      'en-US-Neural2-F',
+      'en_US'
+    ];
+
+    for (const target of usFemalePriorityNames) {
+      const match = voices.find(v => 
+        (v.name.includes(target) || v.voiceURI.includes(target)) && 
+        (v.lang.toLowerCase().startsWith('en') || v.lang === '')
+      );
+      if (match) return match;
+    }
+
+    // 2. Any en-US voice with female keywords
+    const femaleKeywords = /female|woman|girl|samantha|victoria|jenny|aria|zira|ava|susan|karen|allison|zoe|nicky/i;
+    const femaleUS = voices.find(v => {
+      const isUS = v.lang.toLowerCase().replace('_', '-').startsWith('en-us');
+      return isUS && femaleKeywords.test(v.name);
+    });
+    if (femaleUS) return femaleUS;
+
+    // 3. Any en-US voice that does NOT contain male indicators
+    const maleNames = /david|mark|george|daniel|guy|ryan|christopher|eric|james|richard|steffan|male|guy/i;
+    const usNonMale = voices.find(v => {
+      const isUS = v.lang.toLowerCase().replace('_', '-').startsWith('en-us');
+      return isUS && !maleNames.test(v.name);
+    });
+    if (usNonMale) return usNonMale;
+
+    // 4. Any en-US voice
+    const anyUS = voices.find(v => v.lang.toLowerCase().replace('_', '-').startsWith('en-us'));
+    if (anyUS) return anyUS;
+
+    // 5. Any English voice without male indicators
+    const anyEnFemale = voices.find(v => v.lang.toLowerCase().startsWith('en') && !maleNames.test(v.name));
+    if (anyEnFemale) return anyEnFemale;
+
+    // 6. Default to first voice
+    return voices[0] || null;
+  }, []);
+
+  // Populate and refresh voice catalog across all browser types
+  const refreshVoices = useCallback(() => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    const voices = window.speechSynthesis.getVoices();
+    if (voices && voices.length > 0) {
+      voicesRef.current = voices;
+      const bestFemale = findAmericanFemaleVoice(voices);
+      if (bestFemale) {
+        setActiveVoiceName(`${bestFemale.name} (US Female)`);
+      }
+    }
+  }, [findAmericanFemaleVoice]);
+
+  useEffect(() => {
+    refreshVoices();
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = refreshVoices;
+      // Retry loading voices for browsers with asynchronous voice registries (like Safari/Chrome)
+      const t1 = setTimeout(refreshVoices, 500);
+      const t2 = setTimeout(refreshVoices, 1500);
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
+    }
+  }, [refreshVoices]);
+
+  // Clean up on unmount
   useEffect(() => {
     return () => {
       if (recognitionRef.current) {
@@ -89,9 +184,116 @@ export const VoiceAssistantWidget: React.FC = () => {
     };
   }, []);
 
-  // Initialize and trigger listening immediately
+  // Text-To-Speech response with Web Speech Synthesis (Enforced American Female Voice)
+  const speakText = (text: string) => {
+    if (!speechEnabled || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+
+    try {
+      // If paused in Safari/iOS, resume first
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+      window.speechSynthesis.cancel();
+
+      // Clean formatting symbols for smooth, natural audio articulation
+      const cleanText = text
+        .replace(/\[\d+\]/g, '') // remove citation numbers [1], [2]
+        .replace(/\*\*/g, '')
+        .replace(/\*/g, '')
+        .replace(/#{1,6}\s+/g, '')
+        .replace(/`{1,3}[^`]*`{1,3}/g, 'code snippet')
+        .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
+        .replace(/https?:\/\/\S+/g, '')
+        .replace(/[_~]/g, '')
+        .trim();
+
+      if (!cleanText) return;
+
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      utterance.lang = 'en-US';
+      
+      // Pitch set to 1.08 gives a natural, warm, melodic American Female vocal frequency
+      utterance.pitch = 1.08;
+      utterance.rate = 1.0;
+
+      // Select American female voice
+      if (voicesRef.current.length === 0) {
+        voicesRef.current = window.speechSynthesis.getVoices();
+      }
+      const femaleVoice = findAmericanFemaleVoice(voicesRef.current);
+      if (femaleVoice) {
+        utterance.voice = femaleVoice;
+        setActiveVoiceName(`${femaleVoice.name} (US Female)`);
+      }
+
+      utterance.onstart = () => {
+        setIsSpeaking(true);
+      };
+
+      utterance.onend = () => {
+        setIsSpeaking(false);
+        // If continuous mode is enabled, listen again for natural dialogue
+        if (continuousMode) {
+          setTimeout(() => {
+            startListening();
+          }, 800);
+        }
+      };
+
+      utterance.onerror = (e) => {
+        console.warn('Speech synthesis playback note:', e);
+        setIsSpeaking(false);
+      };
+
+      // Prevent garbage collection in Chrome/Safari
+      (window as any).__texoraUtterance = utterance;
+      window.speechSynthesis.speak(utterance);
+    } catch (err) {
+      console.warn('Speech synthesis error:', err);
+      setIsSpeaking(false);
+    }
+  };
+
+  const stopSpeaking = () => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    setIsSpeaking(false);
+  };
+
+  // Safe client fallback synthesizer
+  const synthesizeClientVoiceResponse = (prompt: string): string => {
+    const lower = prompt.toLowerCase();
+    
+    if (lower.includes("quantum") || lower.includes("superposition")) {
+      return "Quantum superposition is the fundamental principle of quantum mechanics where a physical system exists simultaneously in multiple states until it is measured. A classic illustration is Schrödinger's cat thought experiment. In computing, quantum bits or qubits use superposition to perform complex calculations exponentially faster than classical bits.";
+    }
+    if (lower.includes("solve") || lower.includes("x^2") || lower.includes("equation") || lower.includes("quadratic")) {
+      return "To solve a quadratic equation like ax² + bx + c = 0, we can use the quadratic formula: x = (-b ± √(b² - 4ac)) / (2a). For 2x² + 5x - 3 = 0, we identify a=2, b=5, c=-3. The discriminant is 25 - 4(2)(-3) = 49. The square root of 49 is 7. This gives roots x = (-5 + 7)/4 = 0.5, and x = (-5 - 7)/4 = -3.";
+    }
+    if (lower.includes("dna") || lower.includes("transcription") || lower.includes("translation")) {
+      return "DNA transcription and translation are the two phases of protein synthesis. In transcription, RNA polymerase reads the DNA template in the nucleus to synthesize messenger RNA (mRNA). In translation, the mRNA moves to ribosomes in the cytoplasm, where transfer RNA (tRNA) delivers matching amino acids according to codons to build polypeptide chains.";
+    }
+    if (lower.includes("waec") || lower.includes("neco") || lower.includes("jamb") || lower.includes("literature") || lower.includes("theme")) {
+      return "In WAEC and NECO examinations, central themes frequently explore the conflict between tradition and modernization, social justice and governance, identity and cultural heritage, and resilience through adversity. Always analyze how the author uses characterization, symbolism, and dramatic irony to communicate these core motifs.";
+    }
+    if (lower.includes("study") || lower.includes("tip") || lower.includes("exam") || lower.includes("motivation")) {
+      return "Here are 5 high-impact study strategies: 1. Use the Pomodoro Technique with 25-minute focused sprints. 2. Practice Active Recall by testing yourself without looking at notes. 3. Apply Spaced Repetition across multiple days. 4. Master past examination questions under timed conditions. 5. Teach concepts out loud using the Feynman Technique.";
+    }
+    if (lower.includes("space") || lower.includes("exploration") || lower.includes("mars") || lower.includes("moon")) {
+      return "Modern space exploration is advancing rapidly with NASA's Artemis lunar program, the James Webb Space Telescope unveiling early cosmic structures, and deep robotic exploration across Mars. Private aerospace innovations are drastically reducing orbital launch costs and enabling sustainable deep space missions.";
+    }
+    if (lower.includes("hello") || lower.includes("hi") || lower.includes("who are you") || lower.includes("texora")) {
+      return "Hello! I am Texora, your AI educational companion and school intelligence assistant. I am speaking with an American female voice. How can I assist you with your academic questions today?";
+    }
+
+    return `Here is a clear breakdown for "${prompt}": In academic study, understanding foundational definitions, governing mechanisms, and step-by-step logic provides the strongest foundation. When reviewing this topic, break down the key terms, verify with standard curriculum guidelines, and test your understanding with practice problems. Please let me know which specific part you'd like me to explain further!`;
+  };
+
+  // Cross-browser speech recognition initializer
   const startListening = () => {
     if (typeof window === 'undefined') return;
+    setBrowserSupportError(null);
 
     // Stop speaking if currently talking
     if ('speechSynthesis' in window) {
@@ -101,7 +303,7 @@ export const VoiceAssistantWidget: React.FC = () => {
 
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      alert('Speech recognition is not natively supported in this browser. Please type your query to Texora.');
+      setBrowserSupportError('Voice input is best supported in Chrome, Edge, and Safari. You can type queries anytime, and Texora will speak back in an American Female voice!');
       return;
     }
 
@@ -120,6 +322,7 @@ export const VoiceAssistantWidget: React.FC = () => {
       recognition.onstart = () => {
         setIsListening(true);
         setInterimTranscript('');
+        setBrowserSupportError(null);
       };
 
       recognition.onresult = (event: any) => {
@@ -144,10 +347,8 @@ export const VoiceAssistantWidget: React.FC = () => {
           setQuery(finalTrans);
           setInterimTranscript('');
           setIsListening(false);
-          // Auto send captured voice query
           handleSendQuery(finalTrans);
         } else if (currentInterim) {
-          // Reset silence timer for auto-submitting long spoken thoughts
           if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
           silenceTimerRef.current = setTimeout(() => {
             if (currentInterim.trim()) {
@@ -159,14 +360,19 @@ export const VoiceAssistantWidget: React.FC = () => {
               setIsListening(false);
               handleSendQuery(currentInterim);
             }
-          }, 2400);
+          }, 2200);
         }
       };
 
       recognition.onerror = (event: any) => {
-        console.warn('Speech recognition status/error:', event.error);
+        console.warn('Speech recognition event:', event.error);
         setIsListening(false);
         setInterimTranscript('');
+        if (event.error === 'not-allowed') {
+          setBrowserSupportError('Microphone permission was denied. Please allow microphone access in your browser address bar.');
+        } else if (event.error === 'no-speech') {
+          // No speech detected, silently reset
+        }
       };
 
       recognition.onend = () => {
@@ -175,9 +381,10 @@ export const VoiceAssistantWidget: React.FC = () => {
 
       recognitionRef.current = recognition;
       recognition.start();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error starting speech recognition:', err);
       setIsListening(false);
+      setBrowserSupportError('Unable to start microphone. Please ensure permissions are granted or type your question below.');
     }
   };
 
@@ -197,14 +404,18 @@ export const VoiceAssistantWidget: React.FC = () => {
   };
 
   const handleOpenAndListen = () => {
+    // Unlock speech synthesis context synchronously on user tap
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+    }
+
     if (!isOpen) {
       setIsOpen(true);
-      // Immediately start listening when opened as requested: "The app should listen once tapped"
-      setTimeout(() => {
-        startListening();
-      }, 300);
+      // Synchronously initiate listening to respect browser security gestures
+      startListening();
     } else {
-      // If already open, toggle listening
       if (isListening) {
         stopListening();
       } else {
@@ -213,99 +424,13 @@ export const VoiceAssistantWidget: React.FC = () => {
     }
   };
 
-  // Text-To-Speech response with Web Speech Synthesis
-  const speakText = (text: string) => {
-    if (!speechEnabled || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-
-    try {
-      window.speechSynthesis.cancel();
-
-      // Clean markdown symbols for natural voice readout
-      const cleanText = text
-        .replace(/\*\*/g, '')
-        .replace(/\*/g, '')
-        .replace(/#{1,6}\s+/g, '')
-        .replace(/`{1,3}[^`]*`{1,3}/g, 'code block')
-        .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
-        .trim();
-
-      const utterance = new SpeechSynthesisUtterance(cleanText);
-      utterance.rate = 1.05;
-      utterance.pitch = 1.0;
-      utterance.lang = 'en-US';
-
-      // Pick a natural sounding English voice if available
-      const voices = window.speechSynthesis.getVoices();
-      const naturalVoice = voices.find(v => (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Samantha') || v.name.includes('Daniel') || v.name.includes('English')) && v.lang.startsWith('en'));
-      if (naturalVoice) {
-        utterance.voice = naturalVoice;
-      }
-
-      utterance.onstart = () => {
-        setIsSpeaking(true);
-      };
-
-      utterance.onend = () => {
-        setIsSpeaking(false);
-        // If continuous mode is enabled, start listening again for next prompt!
-        if (continuousMode) {
-          setTimeout(() => {
-            startListening();
-          }, 800);
-        }
-      };
-
-      utterance.onerror = () => {
-        setIsSpeaking(false);
-      };
-
-      currentUtteranceRef.current = utterance;
-      window.speechSynthesis.speak(utterance);
-    } catch (err) {
-      console.warn('Speech synthesis error:', err);
-      setIsSpeaking(false);
-    }
-  };
-
-  const stopSpeaking = () => {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-    }
-    setIsSpeaking(false);
-  };
-
-  const synthesizeClientVoiceResponse = (prompt: string): string => {
-    const lower = prompt.toLowerCase();
-    
-    if (lower.includes("quantum") || lower.includes("superposition")) {
-      return "Quantum superposition is the fundamental principle of quantum mechanics where a physical system exists simultaneously in multiple states until it is measured. A classic illustration is Schrödinger's cat thought experiment. In computing, quantum bits or qubits use superposition to perform complex calculations exponentially faster than classical bits.";
-    }
-    if (lower.includes("solve") || lower.includes("x^2") || lower.includes("equation") || lower.includes("quadratic")) {
-      return "To solve a quadratic equation like ax² + bx + c = 0, we can use the quadratic formula: x = (-b ± √(b² - 4ac)) / (2a). For 2x² + 5x - 3 = 0, we identify a=2, b=5, c=-3. The discriminant is 25 - 4(2)(-3) = 49. The square root of 49 is 7. This gives roots x = (-5 + 7)/4 = 0.5, and x = (-5 - 7)/4 = -3.";
-    }
-    if (lower.includes("dna") || lower.includes("transcription") || lower.includes("translation")) {
-      return "DNA transcription and translation are the two phases of protein synthesis. In transcription, RNA polymerase reads the DNA template in the nucleus to synthesize messenger RNA (mRNA). In translation, the mRNA moves to ribosomes in the cytoplasm, where transfer RNA (tRNA) delivers matching amino acids according to codons to build polypeptide chains.";
-    }
-    if (lower.includes("waec") || lower.includes("neco") || lower.includes("jamb") || lower.includes("literature") || lower.includes("theme")) {
-      return "In WAEC and NECO examinations, central themes frequently explore the conflict between tradition and modernization, social justice and governance, identity and cultural heritage, and resilience through adversity. Always analyze how the author uses characterization, symbolism, and dramatic irony to communicate these core motifs.";
-    }
-    if (lower.includes("study") || lower.includes("tip") || lower.includes("exam") || lower.includes("motivation")) {
-      return "Here are 5 high-impact study strategies: 1. Use the Pomodoro Technique with 25-minute focused sprints. 2. Practice Active Recall by testing yourself without looking at notes. 3. Apply Spaced Repetition across multiple days. 4. Master past examination questions under timed conditions. 5. Teach concepts out loud using the Feynman Technique.";
-    }
-    if (lower.includes("space") || lower.includes("exploration") || lower.includes("mars") || lower.includes("moon")) {
-      return "Modern space exploration is advancing rapidly with NASA's Artemis lunar program, the James Webb Space Telescope unveiling early cosmic structures, and deep robotic exploration across Mars. Private aerospace innovations are drastically reducing orbital launch costs and enabling sustainable deep space missions.";
-    }
-    if (lower.includes("hello") || lower.includes("hi") || lower.includes("who are you") || lower.includes("texora")) {
-      return "Hello! I am Texora, your AI educational companion and school intelligence assistant. I am ready to help you with mathematics, sciences, literature, lesson planning, and academic questions. How can I assist you right now?";
-    }
-
-    return `Here is an insightful breakdown for "${prompt}": In academic study, understanding foundational definitions, governing mechanisms, and step-by-step logic provides the strongest foundation. When reviewing this topic, break down the key terms, verify with standard curriculum guidelines, and test your understanding with practice problems. Please let me know which specific part you'd like me to explain further!`;
-  };
-
   const handleSendQuery = async (queryToSend?: string) => {
     const rawText = queryToSend || query;
     const trimmed = rawText.trim();
     if (!trimmed || isProcessing) return;
+
+    // Stop speech synthesis if speaking
+    stopSpeaking();
 
     const userMessage: MessageItem = {
       id: 'msg-' + Date.now(),
@@ -344,12 +469,10 @@ export const VoiceAssistantWidget: React.FC = () => {
             groundingData = data.grounding;
           }
         } catch {
-          // If response body was not valid JSON
           aiText = synthesizeClientVoiceResponse(trimmed);
         }
       }
 
-      // If no valid text received from API, use intelligent built-in synthesizer
       if (!aiText) {
         aiText = synthesizeClientVoiceResponse(trimmed);
       }
@@ -364,7 +487,7 @@ export const VoiceAssistantWidget: React.FC = () => {
 
       setMessages(prev => [...prev, aiMessage]);
 
-      // Speak response out loud
+      // Speak response out loud in American Female Voice
       speakText(aiText);
     } catch (err: any) {
       console.warn('Network issue reaching voice API, using local voice synthesis:', err);
@@ -401,7 +524,7 @@ export const VoiceAssistantWidget: React.FC = () => {
     <>
       {/* Floating Immediate Listen Button */}
       <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3">
-        {/* Floating Quick Listening Indicator Badge if listening in background */}
+        {/* Floating Quick Listening Indicator Badge */}
         {isListening && (
           <div className="hidden sm:flex items-center gap-2 bg-rose-600/95 text-white px-4 py-2 rounded-full shadow-xl border border-rose-400 animate-pulse text-xs font-black">
             <Radio className="w-4 h-4 animate-spin text-amber-300" />
@@ -419,7 +542,7 @@ export const VoiceAssistantWidget: React.FC = () => {
               ? 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white ring-4 ring-emerald-400/40 shadow-emerald-900/40'
               : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-indigo-900/40'
           }`}
-          title="Texora AI Voice Assistant - Tap to listen immediately"
+          title="Texora AI Voice Assistant (American Female Voice) - Tap to listen immediately"
         >
           {isListening ? (
             <Mic className="h-7 w-7 text-white animate-bounce" />
@@ -457,10 +580,12 @@ export const VoiceAssistantWidget: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <h3 className="text-sm font-black tracking-tight text-white">Texora AI</h3>
                   <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-indigo-500/30 text-indigo-300 border border-indigo-400/30 flex items-center gap-1">
-                    <Globe className="w-2.5 h-2.5 text-emerald-400" /> Unlimited Live Knowledge
+                    <Globe className="w-2.5 h-2.5 text-emerald-400" /> Live Search Grounding
                   </span>
                 </div>
-                <p className="text-[11px] text-indigo-200 font-medium">Voice & General Intelligence Engine</p>
+                <p className="text-[11px] text-pink-200 font-semibold flex items-center gap-1">
+                  <span>🇺🇸 American Female Voice</span>
+                </p>
               </div>
             </div>
 
@@ -472,7 +597,7 @@ export const VoiceAssistantWidget: React.FC = () => {
                     ? 'bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30'
                     : 'bg-slate-800 text-slate-500 hover:bg-slate-700'
                 }`}
-                title={speechEnabled ? 'Voice Readout Enabled' : 'Voice Readout Muted'}
+                title={speechEnabled ? 'Voice Output Active' : 'Voice Output Muted'}
               >
                 {speechEnabled ? <Volume2 className="h-4 w-4 text-emerald-400" /> : <VolumeX className="h-4 w-4" />}
               </button>
@@ -530,10 +655,10 @@ export const VoiceAssistantWidget: React.FC = () => {
                       {isListening
                         ? 'Texora is Listening...'
                         : isSpeaking
-                        ? 'Texora Speaking...'
+                        ? 'Texora Speaking (US Female Voice)...'
                         : isProcessing
                         ? 'Searching Google & Thinking...'
-                        : 'Tap Mic to Speak'}
+                        : 'Tap Mic or Type Below'}
                     </span>
                     {isListening && (
                       <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
@@ -541,10 +666,10 @@ export const VoiceAssistantWidget: React.FC = () => {
                   </div>
                   <p className="text-[10px] text-slate-300">
                     {isListening
-                      ? 'Speak your question or instruction clearly'
+                      ? 'Speak clearly into your microphone'
                       : isSpeaking
-                      ? 'Voice narration active'
-                      : 'Immediate voice capture with Google grounding'}
+                      ? 'American Female speech synthesis active'
+                      : 'Real-time academic guidance with web grounding'}
                   </p>
                 </div>
               </div>
@@ -567,10 +692,10 @@ export const VoiceAssistantWidget: React.FC = () => {
                       ? 'bg-indigo-600 text-white shadow-md'
                       : 'bg-white/10 text-slate-300 hover:bg-white/20'
                   }`}
-                  title="When enabled, Texora automatically listens again after answering"
+                  title="When enabled, Texora automatically listens again after speaking"
                 >
                   <Zap className={`w-3.5 h-3.5 ${continuousMode ? 'text-amber-300 fill-amber-300' : ''}`} />
-                  <span>Hands-Free Auto-Dialogue</span>
+                  <span>Auto-Dialogue</span>
                 </button>
               </div>
             </div>
@@ -592,6 +717,14 @@ export const VoiceAssistantWidget: React.FC = () => {
                     }}
                   />
                 ))}
+              </div>
+            )}
+
+            {/* Browser notification badge if mic unsupported or permission issue */}
+            {browserSupportError && (
+              <div className="w-full mt-2 p-2.5 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-200 text-[11px] flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-300" />
+                <span>{browserSupportError}</span>
               </div>
             )}
 
@@ -624,7 +757,7 @@ export const VoiceAssistantWidget: React.FC = () => {
                     <span className="font-extrabold flex items-center gap-1">
                       {m.sender === 'ai' ? (
                         <>
-                          <Sparkles className="w-3 h-3 text-amber-400" /> Texora Intelligence
+                          <Sparkles className="w-3 h-3 text-amber-400" /> Texora Intelligence (US Female)
                         </>
                       ) : (
                         'You'
@@ -682,10 +815,11 @@ export const VoiceAssistantWidget: React.FC = () => {
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => speakText(m.text)}
-                          className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer"
-                          title="Replay Voice Audio"
+                          className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer flex items-center gap-1 text-[10px]"
+                          title="Read out in American Female Voice"
                         >
-                          <Volume2 className="w-3.5 h-3.5" />
+                          <Volume2 className="w-3.5 h-3.5 text-pink-500" />
+                          <span>Vocalize</span>
                         </button>
                         <button
                           onClick={() => copyToClipboard(m.id, m.text)}

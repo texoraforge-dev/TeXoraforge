@@ -371,9 +371,10 @@ Return ONLY a valid JSON object matching this exact schema:
 
   // Texora AI Voice Assistant endpoint with Google Search Grounding and Smart Fallback
   app.post("/api/ai/texora-voice-chat", async (req, res) => {
-    const { prompt, conversationHistory } = req.body;
+    res.setHeader("Content-Type", "application/json");
+    const { prompt, conversationHistory } = req.body || {};
     if (!prompt || typeof prompt !== 'string' || !prompt.trim()) {
-      return res.status(400).json({ error: "Voice prompt query is required." });
+      return res.status(400).json({ success: false, error: "Voice prompt query is required." });
     }
 
     try {
@@ -408,17 +409,17 @@ Your capabilities:
       if (Array.isArray(conversationHistory) && conversationHistory.length > 0) {
         const recent = conversationHistory.slice(-6);
         for (const item of recent) {
-          if (item.sender === 'user') {
-            contents.push({ role: 'user', parts: [{ text: item.text }] });
-          } else if (item.sender === 'ai') {
-            contents.push({ role: 'model', parts: [{ text: item.text }] });
+          if (item && item.sender === 'user' && item.text) {
+            contents.push({ role: 'user', parts: [{ text: String(item.text) }] });
+          } else if (item && item.sender === 'ai' && item.text) {
+            contents.push({ role: 'model', parts: [{ text: String(item.text) }] });
           }
         }
       }
       contents.push({ role: 'user', parts: [{ text: prompt.trim() }] });
 
       const { response, toolsUsed } = await callGeminiWithSmartFallback(ai, {
-        models: ["gemini-3.7-flash", "gemini-flash-latest", "gemini-3.1-flash-lite"],
+        models: ["gemini-3.7-flash", "gemini-3.1-pro-preview", "gemini-flash-latest", "gemini-3.1-flash-lite"],
         contents,
         tools: [{ googleSearch: {} }],
         config: { systemInstruction }
@@ -439,7 +440,7 @@ Your capabilities:
         }
       });
     } catch (error: any) {
-      console.warn("Gemini API error in texora-voice-chat, switching to local intelligence:", error?.message);
+      console.warn("Gemini API note in texora-voice-chat, responding with local voice synthesis:", error?.message || error);
       const synthesized = synthesizeTexoraVoiceResponse(prompt);
       return res.json({
         success: true,

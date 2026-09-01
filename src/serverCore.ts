@@ -10,6 +10,15 @@ import dotenv from "dotenv";
 // Load environment variables if present
 dotenv.config();
 
+export function getGeminiApiKey(): string | undefined {
+  const key = process.env.GEMINI_API_KEY ||
+    process.env.GOOGLE_API_KEY ||
+    process.env.VITE_GEMINI_API_KEY ||
+    process.env.GEMINI_KEY ||
+    process.env.GOOGLE_GENAI_API_KEY;
+  return key ? key.trim() : undefined;
+}
+
 // Helper for calling Gemini with multi-tier model fallback and graceful tool degradation on 429/503 quota exhaustion
 export async function callGeminiWithSmartFallback(
   ai: GoogleGenAI,
@@ -20,12 +29,12 @@ export async function callGeminiWithSmartFallback(
     tools?: any[];
   }
 ) {
-  // Use recommended active models from Gemini SDK specification
-  const models = options.models || ["gemini-3.7-flash", "gemini-3.1-flash-lite", "gemini-flash-latest", "gemini-3.1-pro-preview"];
+  // gemini-3.1-flash-lite is the primary production model optimized for reliability and quota efficiency
+  const models = options.models || ["gemini-3.1-flash-lite", "gemini-3.7-flash", "gemini-flash-latest", "gemini-3.1-pro-preview"];
   const tools = options.tools || [];
   let lastError: any = null;
 
-  // 1. Try models in sequence with tools (if provided)
+  // 1. Try models in sequence with tools (if explicitly provided)
   if (tools.length > 0) {
     for (const model of models) {
       try {
@@ -37,8 +46,9 @@ export async function callGeminiWithSmartFallback(
             tools,
           }
         });
-        if (response && response.text) {
-          return { response, modelUsed: model, toolsUsed: true };
+        const text = response?.text || response?.candidates?.[0]?.content?.parts?.map((p: any) => p.text).join('') || '';
+        if (text) {
+          return { response, modelUsed: model, toolsUsed: true, text };
         }
       } catch (err: any) {
         lastError = err;
@@ -61,8 +71,9 @@ export async function callGeminiWithSmartFallback(
         contents: options.contents,
         config: cleanConfig
       });
-      if (response && response.text) {
-        return { response, modelUsed: model, toolsUsed: false };
+      const text = response?.text || response?.candidates?.[0]?.content?.parts?.map((p: any) => p.text).join('') || '';
+      if (text) {
+        return { response, modelUsed: model, toolsUsed: false, text };
       }
     } catch (err: any) {
       lastError = err;
@@ -258,18 +269,29 @@ export function createServerApp() {
     next();
   });
 
+  // URL normalization middleware for Vercel / serverless deployments
+  app.use((req, res, next) => {
+    const matchedPath = (req.headers['x-matched-path'] as string) || (req.headers['x-forwarded-url'] as string) || (req.headers['x-rewrite-url'] as string);
+    if (matchedPath && (req.url === '/api/index' || req.url === '/api' || req.url.startsWith('/api/index?'))) {
+      req.url = matchedPath;
+    }
+    next();
+  });
+
   // Body parsers
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
   // Health check API
-  app.get("/api/health", (_req, res) => {
+  const healthHandler = (_req: express.Request, res: express.Response) => {
     res.setHeader("Content-Type", "application/json");
     res.json({ status: "ok", service: "TeXora Forge Academic Server" });
-  });
+  };
+  app.get("/api/health", healthHandler);
+  app.get("/health", healthHandler);
 
   // AI Assistant endpoint for structured lesson notes and pedagogical guidance
-  app.post("/api/ai/suggest-lesson", async (req, res) => {
+  const suggestLessonHandler = async (req: express.Request, res: express.Response) => {
     res.setHeader("Content-Type", "application/json");
     const { topic, className, subject, durationMinutes, prompt: customPrompt, subTopic } = req.body || {};
     const effectiveTopic = topic || "Academic Topic";
@@ -277,7 +299,7 @@ export function createServerApp() {
     const effectiveClass = className || "Secondary Class";
 
     try {
-      const apiKey = process.env.GEMINI_API_KEY;
+      const apiKey = getGeminiApiKey();
       if (!apiKey) {
         const synth = synthesizeStructuredLesson(effectiveTopic, effectiveSubject, effectiveClass, subTopic);
         return res.json({ success: true, data: synth, suggestions: synth });
@@ -366,7 +388,7 @@ Return ONLY a valid JSON object matching this exact schema:
 }`;
 
       const { response } = await callGeminiWithSmartFallback(ai, {
-        models: ["gemini-3.7-flash", "gemini-flash-latest", "gemini-3.1-flash-lite"],
+        models: ["gemini-3.1-flash-lite", "gemini-3.7-flash", "gemini-flash-latest"],
         contents: systemPrompt,
         config: { responseMimeType: "application/json" }
       });
@@ -391,10 +413,12 @@ Return ONLY a valid JSON object matching this exact schema:
         notice: "Generated using built-in curriculum intelligence."
       });
     }
-  });
+  };
+  app.post("/api/ai/suggest-lesson", suggestLessonHandler);
+  app.post("/ai/suggest-lesson", suggestLessonHandler);
 
-  // Texora AI Voice Assistant endpoint with Google Search Grounding and Smart Fallback
-  app.post("/api/ai/texora-voice-chat", async (req, res) => {
+  // Texora AI Voice Assistant endpoint with primary gemini-3.1-flash-lite model and intelligent fallback
+  const texoraVoiceChatHandler = async (req: express.Request, res: express.Response) => {
     res.setHeader("Content-Type", "application/json");
     const { prompt, conversationHistory } = req.body || {};
     if (!prompt || typeof prompt !== 'string' || !prompt.trim()) {
@@ -402,12 +426,19 @@ Return ONLY a valid JSON object matching this exact schema:
     }
 
     try {
-      const apiKey = process.env.GEMINI_API_KEY;
+      const apiKey = getGeminiApiKey();
       if (!apiKey) {
-        return res.status(500).json({
-          success: false,
-          error: "GEMINI_API_KEY is not configured in the server environment. Please set GEMINI_API_KEY in your Vercel Project Settings > Environment Variables.",
-          isMissingApiKey: true
+        console.warn("[Texora Voice API]: No GEMINI_API_KEY detected. Using built-in Texora intelligence synthesizer.");
+        const fallbackResponse = synthesizeTexoraVoiceResponse(prompt);
+        return res.json({
+          success: true,
+          text: fallbackResponse,
+          modelUsed: "built-in-intelligence",
+          grounding: {
+            searchQueries: [],
+            searchChunks: [],
+            isSearchGrounded: false
+          }
         });
       }
 
@@ -441,19 +472,19 @@ Your capabilities:
       }
       contents.push({ role: 'user', parts: [{ text: prompt.trim() }] });
 
-      const { response, toolsUsed, modelUsed } = await callGeminiWithSmartFallback(ai, {
-        models: ["gemini-3.7-flash", "gemini-3.1-flash-lite", "gemini-flash-latest", "gemini-3.1-pro-preview"],
+      // Call primary gemini-3.1-flash-lite model without search tool for high speed and 100% quota reliability
+      const { response, toolsUsed, modelUsed, text: generatedText } = await callGeminiWithSmartFallback(ai, {
+        models: ["gemini-3.1-flash-lite", "gemini-3.7-flash", "gemini-flash-latest"],
         contents,
-        tools: [{ googleSearch: {} }],
         config: { systemInstruction }
       });
 
-      const responseText = response.text || "";
+      const responseText = generatedText || response?.text || "";
       if (!responseText) {
         throw new Error("Received empty response from Gemini model.");
       }
 
-      const groundingMetadata = response.candidates?.[0]?.groundingMetadata;
+      const groundingMetadata = response?.candidates?.[0]?.groundingMetadata;
       const searchQueries = groundingMetadata?.webSearchQueries || [];
       const searchChunks = groundingMetadata?.groundingChunks || [];
 
@@ -469,37 +500,30 @@ Your capabilities:
       });
     } catch (error: any) {
       console.error("[Texora Voice API Error]:", error?.message || error);
-      let cleanErrorMessage = "Failed to generate AI response from Gemini.";
-      if (typeof error?.message === "string") {
-        try {
-          const parsed = JSON.parse(error.message);
-          cleanErrorMessage = parsed?.error?.message || error.message;
-        } catch {
-          cleanErrorMessage = error.message;
-        }
-      } else if (error?.error?.message) {
-        cleanErrorMessage = error.error.message;
-      } else if (typeof error === "string") {
-        cleanErrorMessage = error;
-      } else if (error?.statusText) {
-        cleanErrorMessage = error.statusText;
-      }
-
-      return res.status(502).json({
-        success: false,
-        error: cleanErrorMessage,
-        details: error?.status || error?.code || "API_ERROR"
+      const fallbackResponse = synthesizeTexoraVoiceResponse(prompt);
+      return res.json({
+        success: true,
+        text: fallbackResponse,
+        modelUsed: "fallback-synthesizer",
+        grounding: {
+          searchQueries: [],
+          searchChunks: [],
+          isSearchGrounded: false
+        },
+        notice: `Model response fallback activated (${error?.message || "Service error"}).`
       });
     }
-  });
+  };
+  app.post("/api/ai/texora-voice-chat", texoraVoiceChatHandler);
+  app.post("/ai/texora-voice-chat", texoraVoiceChatHandler);
 
   // AI Textbook Chapter Content Generator
-  app.post("/api/ai/generate-textbook-chapter", async (req, res) => {
+  const generateTextbookChapterHandler = async (req: express.Request, res: express.Response) => {
     res.setHeader("Content-Type", "application/json");
     const { bookTitle, subject, chapterNumber, chapterTitle, gradeLevel } = req.body || {};
 
     try {
-      const apiKey = process.env.GEMINI_API_KEY;
+      const apiKey = getGeminiApiKey();
       if (!apiKey) {
         const fallback = synthesizeTextbookChapter(bookTitle, subject, chapterNumber, chapterTitle, gradeLevel);
         return res.json({ success: true, chapter: fallback });
@@ -567,7 +591,7 @@ Return ONLY a valid JSON object matching this schema:
 }`;
 
       const { response } = await callGeminiWithSmartFallback(ai, {
-        models: ["gemini-3.7-flash", "gemini-flash-latest", "gemini-3.1-flash-lite"],
+        models: ["gemini-3.1-flash-lite", "gemini-3.7-flash", "gemini-flash-latest"],
         contents: prompt,
         config: { responseMimeType: "application/json" }
       });
@@ -580,13 +604,15 @@ Return ONLY a valid JSON object matching this schema:
       const fallback = synthesizeTextbookChapter(bookTitle, subject, chapterNumber, chapterTitle, gradeLevel);
       return res.json({ success: true, chapter: fallback });
     }
-  });
+  };
+  app.post("/api/ai/generate-textbook-chapter", generateTextbookChapterHandler);
+  app.post("/ai/generate-textbook-chapter", generateTextbookChapterHandler);
 
   // AI Create & Edit Images endpoint using gemini-3.1-flash-image-preview
-  app.post("/api/ai/image/generate-or-edit", async (req, res) => {
+  const imageGenerateHandler = async (req: express.Request, res: express.Response) => {
     res.setHeader("Content-Type", "application/json");
     try {
-      const apiKey = process.env.GEMINI_API_KEY;
+      const apiKey = getGeminiApiKey();
       if (!apiKey) {
         return res.status(400).json({
           error: "GEMINI_API_KEY is missing. Please configure it in the Secrets panel."
@@ -681,13 +707,15 @@ Return ONLY a valid JSON object matching this schema:
         details: error.message || String(error),
       });
     }
-  });
+  };
+  app.post("/api/ai/image/generate-or-edit", imageGenerateHandler);
+  app.post("/ai/image/generate-or-edit", imageGenerateHandler);
 
   // Start Video Generation using Veo (veo-3.1-fast-generate-preview)
-  app.post("/api/ai/video/generate", async (req, res) => {
+  const videoGenerateHandler = async (req: express.Request, res: express.Response) => {
     res.setHeader("Content-Type", "application/json");
     try {
-      const apiKey = process.env.GEMINI_API_KEY;
+      const apiKey = getGeminiApiKey();
       if (!apiKey) {
         return res.status(400).json({
           error: "GEMINI_API_KEY is missing. Please configure it in the Secrets panel."
@@ -750,13 +778,15 @@ Return ONLY a valid JSON object matching this schema:
         details: error.message || String(error),
       });
     }
-  });
+  };
+  app.post("/api/ai/video/generate", videoGenerateHandler);
+  app.post("/ai/video/generate", videoGenerateHandler);
 
   // Check Veo Video Operation Status
-  app.post("/api/ai/video/status", async (req, res) => {
+  const videoStatusHandler = async (req: express.Request, res: express.Response) => {
     res.setHeader("Content-Type", "application/json");
     try {
-      const apiKey = process.env.GEMINI_API_KEY;
+      const apiKey = getGeminiApiKey();
       if (!apiKey) {
         return res.status(400).json({
           error: "GEMINI_API_KEY is missing."
@@ -798,12 +828,14 @@ Return ONLY a valid JSON object matching this schema:
         details: error.message || String(error),
       });
     }
-  });
+  };
+  app.post("/api/ai/video/status", videoStatusHandler);
+  app.post("/ai/video/status", videoStatusHandler);
 
   // Download Generated Veo Video stream
-  app.post("/api/ai/video/download", async (req, res) => {
+  const videoDownloadHandler = async (req: express.Request, res: express.Response) => {
     try {
-      const apiKey = process.env.GEMINI_API_KEY;
+      const apiKey = getGeminiApiKey();
       if (!apiKey) {
         res.setHeader("Content-Type", "application/json");
         return res.status(400).json({
@@ -860,6 +892,40 @@ Return ONLY a valid JSON object matching this schema:
       return res.status(500).json({
         error: "Failed to download video stream.",
         details: error.message || String(error),
+      });
+    }
+  };
+  app.post("/api/ai/video/download", videoDownloadHandler);
+  app.post("/ai/video/download", videoDownloadHandler);
+
+  // Global 404 handler for API routes
+  app.use((req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.status(404).json({
+      success: false,
+      error: `Route not found: ${req.method} ${req.url}`,
+      availableRoutes: [
+        "/api/ai/texora-voice-chat",
+        "/api/ai/suggest-lesson",
+        "/api/ai/generate-textbook-chapter",
+        "/api/ai/image/generate-or-edit",
+        "/api/ai/video/generate",
+        "/api/ai/video/status",
+        "/api/ai/video/download",
+        "/api/health"
+      ]
+    });
+  });
+
+  // Global error handler middleware
+  app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    console.error("[Global Server Error Handler]:", err);
+    if (!res.headersSent) {
+      res.setHeader("Content-Type", "application/json");
+      res.status(500).json({
+        success: false,
+        error: err?.message || "An unexpected server error occurred.",
+        details: err?.code || "INTERNAL_SERVER_ERROR"
       });
     }
   });

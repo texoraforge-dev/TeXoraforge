@@ -7,4 +7,6 @@ import { createServerApp } from '../src/serverCore';
 
 const app = createServerApp();
 
-export default app;
+export default function handler(req: any, res: any) {
+  return app(req, res);
+}

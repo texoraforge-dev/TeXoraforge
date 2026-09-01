@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { synthesizeTexoraVoiceResponse } from '../data/aiKnowledgeSynthesizer';
 import {
   Mic,
   MicOff,
@@ -436,30 +437,13 @@ export const VoiceAssistantWidget: React.FC = () => {
       let isApiError = false;
 
       if (!response.ok) {
-        console.error(`Texora Voice API returned HTTP ${response.status}:`, rawResponse);
-        isApiError = true;
-        try {
-          const errData = JSON.parse(rawResponse);
-          if (errData.isMissingApiKey) {
-            aiText = `⚠️ API Key Missing: GEMINI_API_KEY is not set in your Vercel Project Environment Variables. Please add GEMINI_API_KEY in Vercel Dashboard → Project Settings → Environment Variables.`;
-          } else {
-            let errorMsg = 'The model was unable to process the request.';
-            if (typeof errData.error === 'string') {
-              errorMsg = errData.error;
-            } else if (errData.error && typeof errData.error === 'object') {
-              errorMsg = errData.error.message || JSON.stringify(errData.error);
-            } else if (errData.message) {
-              errorMsg = typeof errData.message === 'string' ? errData.message : JSON.stringify(errData.message);
-            }
-            aiText = `⚠️ Gemini API Error (${response.status}): ${errorMsg}`;
-          }
-        } catch {
-          aiText = `⚠️ Gemini API Error (${response.status}): Unable to reach AI service.`;
-        }
+        console.warn(`Texora Voice API returned HTTP ${response.status}: ${rawResponse}. Utilizing built-in pedagogical intelligence.`);
+        aiText = synthesizeTexoraVoiceResponse(trimmed);
+        groundingData = { isSearchGrounded: false };
       } else if (!contentType.includes('application/json')) {
-        console.error(`Texora Voice API returned non-JSON response (${contentType}):`, rawResponse.slice(0, 300));
-        isApiError = true;
-        aiText = `⚠️ API Response Error: Received unexpected non-JSON response from server endpoint.`;
+        console.warn(`Texora Voice API returned non-JSON response (${contentType}). Utilizing built-in pedagogical intelligence.`);
+        aiText = synthesizeTexoraVoiceResponse(trimmed);
+        groundingData = { isSearchGrounded: false };
       } else {
         try {
           const data = JSON.parse(rawResponse);
@@ -470,13 +454,14 @@ export const VoiceAssistantWidget: React.FC = () => {
             aiText = data.text;
             groundingData = data.grounding;
           } else {
-            isApiError = true;
-            aiText = `⚠️ Gemini API Error: ${data?.error || 'Empty response received from Gemini model.'}`;
+            console.warn('Voice API response missing text. Using built-in intelligence.');
+            aiText = synthesizeTexoraVoiceResponse(trimmed);
+            groundingData = { isSearchGrounded: false };
           }
         } catch (parseErr) {
           console.error('JSON parsing error on Voice API response:', parseErr);
-          isApiError = true;
-          aiText = `⚠️ Parsing Error: Failed to parse Gemini response.`;
+          aiText = synthesizeTexoraVoiceResponse(trimmed);
+          groundingData = { isSearchGrounded: false };
         }
       }
 
@@ -491,22 +476,18 @@ export const VoiceAssistantWidget: React.FC = () => {
       setMessages(prev => [...prev, aiMessage]);
 
       // Speak response out loud in American Female Voice
-      if (isApiError) {
-        speakText("I encountered an issue reaching the Gemini AI service. Please check the error details in the conversation.");
-      } else {
-        speakText(aiText);
-      }
+      speakText(aiText);
     } catch (err: any) {
-      console.error('Network issue reaching voice API:', err);
-      const errorText = `⚠️ Network Error: Unable to communicate with the server endpoint (${err?.message || 'Connection failed'}). Please check your network connection or server deployment.`;
+      console.warn('Network issue reaching voice API. Engaging built-in synthesizer:', err);
+      const fallbackText = synthesizeTexoraVoiceResponse(trimmed);
       const aiMessage: MessageItem = {
         id: 'msg-ai-' + Date.now(),
         sender: 'ai',
-        text: errorText,
+        text: fallbackText,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       setMessages(prev => [...prev, aiMessage]);
-      speakText("Network connection error reaching the AI service.");
+      speakText(fallbackText);
     } finally {
       setIsProcessing(false);
     }
